@@ -559,23 +559,12 @@ ${chatText}`;
           }
 
           try {
-            // Fetch updated active conversation to ensure latest user content is included in chatHistory
             const updatedConversation = get().conversations.find(conv => conv.id === activeConversationId);
-            const chatHistory = (updatedConversation?.messages || [])
-              .filter(m => m.id !== 'welcome-msg')
-              .slice(-10) // Limit to last 10 messages
-              .map(m => ({
-                role: m.role,
-                content: m.content
-              }));
-
-            console.log("NEXUS Debug: Chat History sent to AI:", chatHistory);
 
             // --- Start Ultra-Fast Multi-Turn RAG Search Engine ---
             const pinnedArticles = knowledgeArticles.filter(a => a.pinned);
             const unpinnedArticles = knowledgeArticles.filter(a => !a.pinned);
 
-            // Include current prompt + last 2 user messages so follow-up questions retain knowledge context
             const recentUserMessages = (updatedConversation?.messages || [])
               .filter(m => m.role === 'user')
               .slice(-3)
@@ -637,7 +626,34 @@ Whenever the user asks for a plan, roadmap, project breakdown, strategy, feature
 These action items will be automatically injected directly onto the user's Action Board in real-time!
 Do NOT generate "### Action Items" for casual conversational turns (like "yes", "hello", or simple factual questions).`;
 
-            console.log("NEXUS Debug: System Content sent to AI:", systemContent);
+            // Clean up and format chat messages for OpenAI compatibility:
+            // Ensure strictly non-empty content and avoid duplicate adjacent role payloads
+            const sanitizedHistory: { role: string; content: string }[] = [];
+            (updatedConversation?.messages || [])
+              .filter(m => m.id !== 'welcome-msg' && m.content.trim().length > 0)
+              .slice(-10)
+              .forEach(m => {
+                const role = m.role === 'agent' ? 'assistant' : 'user';
+                const last = sanitizedHistory[sanitizedHistory.length - 1];
+                if (last && last.role === role) {
+                  last.content += `\n${m.content}`;
+                } else {
+                  sanitizedHistory.push({ role, content: m.content });
+                }
+              });
+
+            const messagesPayload = [
+              { role: 'system', content: systemContent },
+              ...sanitizedHistory
+            ];
+
+            // If last message isn't the current user message, append it
+            const lastMsg = messagesPayload[messagesPayload.length - 1];
+            if (!lastMsg || lastMsg.role !== 'user' || lastMsg.content !== userContent) {
+              messagesPayload.push({ role: 'user', content: userContent });
+            }
+
+            console.log("NEXUS Debug: Sanitized Messages sent to AI:", messagesPayload);
 
             const headers: Record<string, string> = {
               'Content-Type': 'application/json'
@@ -657,22 +673,22 @@ Do NOT generate "### Action Items" for casual conversational turns (like "yes", 
                 model: model, 
                 temperature: temperature,
                 stream: true,
-                messages: [
-                  {
-                    role: 'system',
-                    content: systemContent
-                  },
-                  ...chatHistory,
-                  { role: 'user', content: userContent }
-                ]
+                messages: messagesPayload
               })
             });
 
             console.log(`NEXUS Debug: API Response Status: ${response.status} ${response.statusText}`);
             if (!response.ok) {
-              const errorBody = await response.text();
-              console.error("NEXUS Debug: API Error Body:", errorBody);
-              throw new Error(`API error: ${response.status} - ${errorBody}`);
+              let userFriendlyMsg = `API Error ${response.status}`;
+              try {
+                const rawErr = await response.text();
+                const jsonErr = JSON.parse(rawErr);
+                const detail = jsonErr?.error?.message || jsonErr?.message || jsonErr?.error || rawErr;
+                userFriendlyMsg = `Model ${model} Error: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`;
+              } catch {
+                // Ignore json parse error
+              }
+              throw new Error(userFriendlyMsg);
             }
 
             setProcessing(false); // Stop the bouncing dots
