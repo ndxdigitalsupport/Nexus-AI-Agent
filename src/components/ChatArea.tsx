@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target } from 'lucide-react';
+import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 
 export default function ChatArea() {
-  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory } = useStore();
+  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar } = useStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
@@ -113,11 +113,20 @@ export default function ChatArea() {
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-950/40 relative overflow-hidden">
       {/* Top Header Status Bar */}
-      <header className="h-14 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl px-6 flex items-center justify-between z-10 shrink-0 select-none">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary px-3 py-1 rounded-full text-xs font-mono shadow-glow-cyan">
+      <header className="h-14 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between z-10 shrink-0 select-none">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Mobile Navigation Drawer Toggle */}
+          <button
+            onClick={() => toggleMobileSidebar(true)}
+            className="md:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400 active:scale-95 transition-all"
+            title="Open Sidebar Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary px-2.5 sm:px-3 py-1 rounded-full text-xs font-mono shadow-glow-cyan">
             <Cpu className="w-3.5 h-3.5" />
-            <span className="truncate max-w-[180px] md:max-w-[280px] font-semibold">{currentModel}</span>
+            <span className="truncate max-w-[120px] sm:max-w-[180px] md:max-w-[280px] font-semibold">{currentModel}</span>
           </div>
 
           {/* Interactive Persona Dropdown Selector */}
@@ -328,17 +337,17 @@ export default function ChatArea() {
       </div>
 
       {/* Pinned Bottom Input Area */}
-      <div className="shrink-0 p-4 border-t border-white/10 bg-slate-900/80 backdrop-blur-xl">
+      <div className="shrink-0 p-2.5 sm:p-4 border-t border-white/10 bg-slate-900/90 backdrop-blur-xl">
         {/* Quick Action Plan Pill */}
-        <div className="flex items-center gap-2 mb-2.5 max-w-4xl mx-auto font-mono text-[11px]">
+        <div className="flex items-center gap-2 mb-2 max-w-4xl mx-auto font-mono text-[11px] overflow-x-auto custom-scrollbar pb-1">
           <button
             type="button"
             onClick={() => setInput('Create a detailed, step-by-step project execution plan for my goal and send all action items directly to my Action Board: ')}
-            className="group flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-amber-500/15 via-cyan-500/10 to-violet-500/15 hover:from-amber-500/25 hover:to-cyan-500/20 text-amber-300 border border-amber-500/40 rounded-xl transition-all duration-300 shadow-glow-violet active:scale-95"
+            className="group flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/15 via-cyan-500/10 to-violet-500/15 hover:from-amber-500/25 hover:to-cyan-500/20 text-amber-300 border border-amber-500/40 rounded-xl transition-all duration-300 shadow-glow-violet active:scale-95 shrink-0"
             title="Prompt AI to generate a full plan and automatically inject all tasks onto your Action Board"
           >
             <Target className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform shrink-0" />
-            <span className="font-semibold tracking-wide">Plan Project & Auto-Populate Board</span>
+            <span className="font-semibold tracking-wide text-xs">Plan Project & Auto-Populate Board</span>
           </button>
         </div>
 

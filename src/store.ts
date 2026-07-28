@@ -62,6 +62,10 @@ interface AppState {
   settings: AppSettings;
   isProcessing: boolean;
   isActionBoardOpen: boolean;
+  isMobileSidebarOpen: boolean;
+
+  // Mobile Navigation Action
+  toggleMobileSidebar: (isOpen?: boolean) => void;
 
   // Conversation Actions
   startNewConversation: () => void;
@@ -159,13 +163,18 @@ export const useStore = create<AppState>()(
         activePersonaId: 'nexus-personal-assistant',
         knowledgeArticles: [],
         settings: {
-          apiKey: 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8',
-          selectedModel: 'claude-fable-5',
-          customEndpoint: 'https://gpt-agent.cc/v1/chat/completions',
+          apiKey: '',
+          selectedModel: 'openrouter/free',
+          customEndpoint: 'https://openrouter.ai/api/v1/chat/completions',
           temperature: 0.7,
         },
         isProcessing: false,
         isActionBoardOpen: false,
+        isMobileSidebarOpen: false,
+
+        toggleMobileSidebar: (isOpen) => set((state) => ({
+          isMobileSidebarOpen: isOpen !== undefined ? isOpen : !state.isMobileSidebarOpen
+        })),
 
         toggleActionBoard: () => set((state) => ({ isActionBoardOpen: !state.isActionBoardOpen })),
 

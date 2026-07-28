@@ -10,9 +10,10 @@ export default function Home() {
       <ChatArea />
       
       {/* Collapsible Action Board Drawer */}
-      <div className={`h-full transition-all duration-300 ease-in-out shrink-0 overflow-hidden ${
-        isActionBoardOpen ? 'w-72 md:w-80 opacity-100' : 'w-0 opacity-0 pointer-events-none'
-      }`}>
+      <div className={`
+        fixed md:relative inset-y-0 right-0 z-50 md:z-auto h-full transition-all duration-300 ease-in-out shrink-0 overflow-hidden bg-[#0a0d1a] md:bg-transparent
+        ${isActionBoardOpen ? 'w-full sm:w-80 md:w-80 opacity-100 shadow-2xl' : 'w-0 opacity-0 pointer-events-none'}
+      `}>
         <TaskBoard />
       </div>
     </div>

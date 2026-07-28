@@ -17,7 +17,9 @@ export default function Sidebar() {
     togglePinConversation,
     setConversationCategory,
     addFolder,
-    deleteFolder
+    deleteFolder,
+    isMobileSidebarOpen,
+    toggleMobileSidebar
   } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,6 +44,7 @@ export default function Sidebar() {
 
   const handleNewChat = () => {
     startNewConversation();
+    toggleMobileSidebar(false);
     if (location.pathname !== '/') {
       navigate('/');
     }
@@ -49,6 +52,7 @@ export default function Sidebar() {
 
   const handleSelectConversation = (id: string) => {
     loadConversation(id);
+    toggleMobileSidebar(false);
     if (location.pathname !== '/') {
       navigate('/');
     }
@@ -138,22 +142,46 @@ export default function Sidebar() {
   const allFolderNames = Array.from(new Set(folders || []));
 
   return (
-    <aside className="w-16 md:w-64 glass-panel border-r border-white/10 h-full flex flex-col justify-between py-6 transition-all duration-300 relative z-20 shrink-0 select-none">
-      <div className="px-3 md:px-4 flex-grow flex flex-col min-h-0">
-        {/* Brand Header */}
-        <div className="flex items-center justify-center md:justify-start gap-3 mb-6 px-1 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900/80 border border-cyan-500/40 shadow-glow-cyan group hover:border-cyan-400 transition-all duration-300">
-            <img src="/favicon.svg" alt="Nexus Logo" className="w-7 h-7 transform group-hover:scale-105 transition-transform duration-300" />
-            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
-            </span>
+    <>
+      {/* Mobile Drawer Overlay Backdrop */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-40 transition-opacity"
+          onClick={() => toggleMobileSidebar(false)}
+        />
+      )}
+
+      <aside className={`
+        fixed md:static top-0 left-0 bottom-0 z-50
+        w-72 md:w-64 glass-panel border-r border-white/10 h-full flex flex-col justify-between py-6 
+        transition-transform duration-300 ease-in-out shrink-0 select-none bg-[#0a0d1a] md:bg-transparent
+        ${isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}
+      `}>
+        <div className="px-3 md:px-4 flex-grow flex flex-col min-h-0">
+          {/* Brand Header */}
+          <div className="flex items-center justify-between md:justify-start gap-3 mb-6 px-1">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => { navigate('/'); toggleMobileSidebar(false); }}>
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900/80 border border-cyan-500/40 shadow-glow-cyan group hover:border-cyan-400 transition-all duration-300">
+                <img src="/favicon.svg" alt="Nexus Logo" className="w-7 h-7 transform group-hover:scale-105 transition-transform duration-300" />
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-mono font-extrabold text-xl tracking-wider gradient-text">NEXUS</span>
+                <span className="text-[10px] font-mono text-cyan-400/80 tracking-widest uppercase font-semibold">AI Agent OS</span>
+              </div>
+            </div>
+
+            {/* Close Button on Mobile */}
+            <button 
+              onClick={() => toggleMobileSidebar(false)}
+              className="md:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-text"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <div className="hidden md:flex flex-col">
-            <span className="font-mono font-extrabold text-xl tracking-wider gradient-text">NEXUS</span>
-            <span className="text-[10px] font-mono text-cyan-400/80 tracking-widest uppercase font-semibold">AI Agent OS</span>
-          </div>
-        </div>
 
         {/* New Chat Button */}
         <button
@@ -397,6 +425,7 @@ export default function Sidebar() {
         onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
       />
     </aside>
+    </>
   );
 }
 
