@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle2, Circle, Trash2, Zap, Plus, Edit, CalendarDays, Sparkles, X } from 'lucide-react';
+import { CheckCircle2, Circle, Trash2, Zap, Plus, Edit, CalendarDays, Sparkles, X, Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { useStore, Task } from '@/store';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
@@ -252,15 +252,90 @@ export default function TaskBoard() {
         </div>
       </div>
 
-      {/* Task List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+      {/* Collapsible Phase & Plan Folders Task List */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
         {filteredAndSortedTasks.length === 0 ? (
           <div className="text-center py-10 px-4 text-text-muted">
             <Sparkles className="w-8 h-8 mx-auto mb-2 text-text-muted/40" />
             <p className="text-xs font-mono">No tasks found. Add tasks manually or click Extract from Chat!</p>
           </div>
         ) : (
-          filteredAndSortedTasks.map((task) => (
+          (() => {
+            // Group tasks by Phase / Category
+            const grouped: Record<string, Task[]> = {};
+            filteredAndSortedTasks.forEach(task => {
+              const phaseName = task.title.includes(' ➔ ') ? task.title.split(' ➔ ')[0] : 'General Action Items';
+              if (!grouped[phaseName]) grouped[phaseName] = [];
+              grouped[phaseName].push(task);
+            });
+
+            return Object.entries(grouped).map(([phaseGroup, phaseTasks]) => (
+              <CollapsiblePhaseFolder
+                key={phaseGroup}
+                phaseName={phaseGroup}
+                tasks={phaseTasks}
+                executingTaskId={executingTaskId}
+                isProcessing={isProcessing}
+                toggleTask={toggleTask}
+                deleteTask={deleteTask}
+                editTask={editTask}
+                handleExecuteTask={handleExecuteTask}
+              />
+            ));
+          })()
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function CollapsiblePhaseFolder({
+  phaseName,
+  tasks,
+  executingTaskId,
+  isProcessing,
+  toggleTask,
+  deleteTask,
+  editTask,
+  handleExecuteTask
+}: {
+  phaseName: string;
+  tasks: Task[];
+  executingTaskId: string | null;
+  isProcessing: boolean;
+  toggleTask: (id: string) => void;
+  deleteTask: (id: string) => void;
+  editTask: (id: string, newTitle?: string, newDueDate?: number, newPriority?: 'low' | 'medium' | 'high') => void;
+  handleExecuteTask: (id: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+  const completedInPhase = tasks.filter(t => t.completed).length;
+  const isGeneral = phaseName === 'General Action Items';
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/60 overflow-hidden transition-all shadow-md">
+      {/* Folder Accordion Header */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3.5 py-2.5 bg-slate-900/80 hover:bg-slate-900 flex items-center justify-between transition-colors border-b border-white/5 group"
+      >
+        <div className="flex items-center gap-2 min-w-0 pr-2">
+          <Folder className={`w-4 h-4 shrink-0 transition-transform ${isGeneral ? 'text-amber-400' : 'text-cyan-400 group-hover:scale-110'}`} />
+          <span className="font-mono text-xs font-bold text-text truncate">{phaseName}</span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-text-muted border border-white/10 shrink-0">
+            {completedInPhase}/{tasks.length}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0 text-text-muted group-hover:text-text">
+          {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </div>
+      </button>
+
+      {/* Nested Tasks Inside Folder */}
+      {isOpen && (
+        <div className="p-2.5 space-y-2.5 bg-slate-950/40">
+          {tasks.map(task => (
             <TaskCard
               key={task.id}
               task={task}
@@ -270,10 +345,10 @@ export default function TaskBoard() {
               onEdit={editTask}
               onExecute={() => handleExecuteTask(task.id)}
             />
-          ))
-        )}
-      </div>
-    </aside>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -365,26 +440,12 @@ function TaskCard({ task, isExecuting, onToggle, onDelete, onEdit, onExecute }: 
             </div>
           ) : (
             <div className="flex flex-col">
-              {task.title.includes(' ➔ ') ? (
-                <div>
-                  <span className="inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 mb-1">
-                    {task.title.split(' ➔ ')[0]}
-                  </span>
-                  <p
-                    className={`text-xs font-medium leading-snug break-words ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}
-                    onDoubleClick={() => setIsEditing(true)}
-                  >
-                    {task.title.split(' ➔ ').slice(1).join(' ➔ ').replace(/\*\*/g, '')}
-                  </p>
-                </div>
-              ) : (
-                <p
-                  className={`text-xs font-medium leading-snug break-words ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}
-                  onDoubleClick={() => setIsEditing(true)}
-                >
-                  {task.title.replace(/\*\*/g, '')}
-                </p>
-              )}
+              <p
+                className={`text-xs font-medium leading-snug break-words ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}
+                onDoubleClick={() => setIsEditing(true)}
+              >
+                {(task.title.includes(' ➔ ') ? task.title.split(' ➔ ').slice(1).join(' ➔ ') : task.title).replace(/\*\*/g, '')}
+              </p>
               <div className="flex items-center gap-2 mt-2">
                 {getPriorityBadge(task.priority)}
                 {task.dueDate && (
