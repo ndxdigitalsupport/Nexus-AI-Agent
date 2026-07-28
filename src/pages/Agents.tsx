@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore, Persona } from '@/store';
-import { Plus, Edit, Trash2, CheckCircle2, User, Sparkles, Bot, ShieldCheck, Zap } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckCircle2, User, Sparkles, Bot, ShieldCheck, Zap, ArrowLeft } from 'lucide-react';
 
 export default function Agents() {
+  const navigate = useNavigate();
   const { personas, activePersonaId, addPersona, updatePersona, deletePersona, setActivePersona } = useStore();
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [newPersonaName, setNewPersonaName] = useState('');
@@ -30,20 +32,30 @@ export default function Agents() {
   return (
     <div className="flex-1 h-full overflow-y-auto custom-scrollbar p-6 md:p-8 pb-12">
       <div className="max-w-5xl mx-auto w-full space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold font-mono neon-text">Persona & Role Manager</h1>
-            <p className="text-text-muted mt-1">Configure AI behavioral instructions, system roles, and expert personas.</p>
-          </div>
-
+        {/* Navigation Back Button & Header */}
+        <div className="flex flex-col gap-4">
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary via-cyan-400 to-cyan-500 text-slate-950 font-bold rounded-xl hover:brightness-110 transition-all shadow-glow-cyan"
+            onClick={() => navigate('/')}
+            className="self-start flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text text-xs font-mono transition-all group"
           >
-            <Plus className="w-4 h-4" />
-            <span>Create Custom Persona</span>
+            <ArrowLeft className="w-4 h-4 text-cyan-400 group-hover:-translate-x-1 transition-transform" />
+            <span>Back to Terminal</span>
           </button>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold font-mono neon-text">Persona & Role Manager</h1>
+              <p className="text-text-muted mt-1">Configure AI behavioral instructions, system roles, and expert personas.</p>
+            </div>
+
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary via-cyan-400 to-cyan-500 text-slate-950 font-bold rounded-xl hover:brightness-110 transition-all shadow-glow-cyan"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Custom Persona</span>
+            </button>
+          </div>
         </div>
 
         {/* Active Persona Banner */}

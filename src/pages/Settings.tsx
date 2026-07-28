@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
-import { Key, Cpu, Sliders, Check, Eye, EyeOff, RotateCcw, Sparkles, Server, Download, Upload, Database, AlertTriangle } from 'lucide-react';
+import { Key, Cpu, Sliders, Check, Eye, EyeOff, RotateCcw, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
 const MODEL_PRESETS = [
@@ -12,6 +13,7 @@ const MODEL_PRESETS = [
 ];
 
 export default function Settings() {
+  const navigate = useNavigate();
   const { settings, updateSettings, exportState, importState, resetAllData } = useStore();
 
   const [apiKey, setApiKey] = useState(settings?.apiKey || '');
@@ -134,18 +136,29 @@ export default function Settings() {
   return (
     <div className="flex-1 h-full overflow-y-auto p-6 md:p-8 custom-scrollbar">
       <div className="max-w-5xl mx-auto w-full pb-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold font-mono neon-text">Application Settings</h1>
-            <p className="text-text-muted mt-1">Configure your AI providers, API keys, models, and workspace backup data.</p>
-          </div>
+        {/* Navigation Back Button & Header */}
+        <div className="flex flex-col gap-4 mb-8">
+          <button
+            onClick={() => navigate('/')}
+            className="self-start flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text text-xs font-mono transition-all group"
+          >
+            <ArrowLeft className="w-4 h-4 text-cyan-400 group-hover:-translate-x-1 transition-transform" />
+            <span>Back to Terminal</span>
+          </button>
 
-          {saveSuccess && (
-            <div className="flex items-center gap-2 bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-sm font-medium animate-in fade-in">
-              <Check className="w-4 h-4" />
-              <span>Settings Saved!</span>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold font-mono neon-text">Application Settings</h1>
+              <p className="text-text-muted mt-1">Configure your AI providers, API keys, models, and workspace backup data.</p>
             </div>
-          )}
+
+            {saveSuccess && (
+              <div className="flex items-center gap-2 bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-sm font-medium animate-in fade-in">
+                <Check className="w-4 h-4" />
+                <span>Settings Saved!</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {importMessage && (
