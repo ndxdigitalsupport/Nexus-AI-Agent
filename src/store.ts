@@ -616,18 +616,21 @@ ${knowledgeBaseContent}
 
 TASK & PROJECT PLAN INSTRUCTION:
 Whenever the user asks to create a plan, roadmap, breakdown, or strategy (or clicks "Plan Project & Auto-Populate Board"):
-1. In your main response, present a clear, beautifully structured plan divided into logical phases (e.g. Phase 1: Setup & Architecture, Phase 2: Core Implementation, Phase 3: Testing & Deployment).
-2. At the VERY END of your message, output the organized plan tasks under the exact header:
+1. In your main response, present a clear, beautifully structured plan divided into logical phases.
+2. At the VERY END of your message, output the project name and phase tasks under the exact header:
 ### Action Items
-[Phase 1: Architecture & Tech Stack Setup]
-- [High] Choose frontend & backend framework (due: tomorrow)
-- [Medium] Setup database & authentication system
+Project: [Plan Name e.g., Finance App Development Plan]
 
-[Phase 2: Core Components & Logic]
+[Phase 1: Foundation & Strategy]
+- [High] Define core features & MVP scope (due: 2 days)
+- [Medium] Choose frontend & backend tech stack (due: 3 days)
+
+[Phase 2: Backend & API Development]
 - [High] Build REST / GraphQL API endpoints
-- [Medium] Implement core agent reasoning loop
+- [Medium] Implement authentication & security
 
 Rules for Action Items:
+- Start with Project: [Plan Title] so tasks are neatly grouped under the specific Project Plan folder.
 - Group tasks under clear phase headers in square brackets like [Phase 1: Phase Name].
 - List 2-3 specific, actionable step tasks under each phase header.
 - Do NOT generate "### Action Items" for casual conversational turns (like "hello", "yes", or simple factual questions).`;
@@ -774,9 +777,17 @@ Rules for Action Items:
               const tasksPart = fullContent.slice(match.index + match[0].length);
               if (tasksPart) {
                 const lines = tasksPart.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                let currentProjectName = '';
                 let currentPhasePrefix = '';
 
                 lines.forEach(line => {
+                  // Project header detection e.g. Project: Finance App Development Plan or Project: [App Plan]
+                  const projectMatch = line.match(/^(?:Project|Plan):\s*\[?([^\]\n]+)\]?/i);
+                  if (projectMatch) {
+                    currentProjectName = projectMatch[1].trim();
+                    return;
+                  }
+
                   // Phase header detection e.g. [Phase 1: Foundation & Setup]
                   const phaseMatch = line.match(/^\[(Phase\s*\d+[^\]]*)\]/i);
                   if (phaseMatch) {
@@ -816,7 +827,14 @@ Rules for Action Items:
                     }
 
                     if (title) {
-                      const finalTitle = currentPhasePrefix ? `${currentPhasePrefix} ➔ ${title}` : title;
+                      const prefixParts: string[] = [];
+                      if (currentProjectName) prefixParts.push(currentProjectName);
+                      if (currentPhasePrefix) prefixParts.push(currentPhasePrefix);
+
+                      const finalTitle = prefixParts.length > 0
+                        ? `${prefixParts.join(' ➔ ')} ➔ ${title}`
+                        : title;
+
                       addTask(finalTitle, dueDate, priority);
                     }
                   }

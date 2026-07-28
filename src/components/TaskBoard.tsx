@@ -252,7 +252,7 @@ export default function TaskBoard() {
         </div>
       </div>
 
-      {/* Collapsible Phase & Plan Folders Task List */}
+      {/* 2-Level Nested Plan & Phase Folders Task List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
         {filteredAndSortedTasks.length === 0 ? (
           <div className="text-center py-10 px-4 text-text-muted">
@@ -261,19 +261,31 @@ export default function TaskBoard() {
           </div>
         ) : (
           (() => {
-            // Group tasks by Phase / Category
-            const grouped: Record<string, Task[]> = {};
+            // Group tasks by Project -> Phase -> Tasks
+            const projectTree: Record<string, Record<string, Task[]>> = {};
+
             filteredAndSortedTasks.forEach(task => {
-              const phaseName = task.title.includes(' ➔ ') ? task.title.split(' ➔ ')[0] : 'General Action Items';
-              if (!grouped[phaseName]) grouped[phaseName] = [];
-              grouped[phaseName].push(task);
+              const parts = task.title.split(' ➔ ');
+              let projectName = 'General Tasks';
+              let phaseName = 'Action Items';
+
+              if (parts.length >= 3) {
+                projectName = parts[0];
+                phaseName = parts[1];
+              } else if (parts.length === 2) {
+                phaseName = parts[0];
+              }
+
+              if (!projectTree[projectName]) projectTree[projectName] = {};
+              if (!projectTree[projectName][phaseName]) projectTree[projectName][phaseName] = [];
+              projectTree[projectName][phaseName].push(task);
             });
 
-            return Object.entries(grouped).map(([phaseGroup, phaseTasks]) => (
-              <CollapsiblePhaseFolder
-                key={phaseGroup}
-                phaseName={phaseGroup}
-                tasks={phaseTasks}
+            return Object.entries(projectTree).map(([projectName, phases]) => (
+              <ProjectPlanFolder
+                key={projectName}
+                projectName={projectName}
+                phases={phases}
                 executingTaskId={executingTaskId}
                 isProcessing={isProcessing}
                 toggleTask={toggleTask}
@@ -286,6 +298,72 @@ export default function TaskBoard() {
         )}
       </div>
     </aside>
+  );
+}
+
+function ProjectPlanFolder({
+  projectName,
+  phases,
+  executingTaskId,
+  isProcessing,
+  toggleTask,
+  deleteTask,
+  editTask,
+  handleExecuteTask
+}: {
+  projectName: string;
+  phases: Record<string, Task[]>;
+  executingTaskId: string | null;
+  isProcessing: boolean;
+  toggleTask: (id: string) => void;
+  deleteTask: (id: string) => void;
+  editTask: (id: string, newTitle?: string, newDueDate?: number, newPriority?: 'low' | 'medium' | 'high') => void;
+  handleExecuteTask: (id: string) => void;
+}) {
+  const [isProjectOpen, setIsProjectOpen] = useState(true);
+  const allProjectTasks = Object.values(phases).flat();
+  const completedInProject = allProjectTasks.filter(t => t.completed).length;
+  const isGeneral = projectName === 'General Tasks';
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/80 overflow-hidden transition-all shadow-lg">
+      {/* Top Project Folder Header */}
+      <button
+        onClick={() => setIsProjectOpen(!isProjectOpen)}
+        className="w-full px-4 py-3 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 hover:bg-slate-800/80 flex items-center justify-between transition-all border-b border-white/10 group"
+      >
+        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+          <Folder className={`w-4 h-4 shrink-0 transition-transform ${isGeneral ? 'text-amber-400' : 'text-primary group-hover:scale-110'}`} />
+          <span className="font-mono text-xs font-bold text-text truncate tracking-wide">{projectName}</span>
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
+            {completedInProject}/{allProjectTasks.length}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0 text-text-muted group-hover:text-text">
+          {isProjectOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </div>
+      </button>
+
+      {/* Nested Phases Inside Project */}
+      {isProjectOpen && (
+        <div className="p-2 space-y-2 bg-slate-950/60">
+          {Object.entries(phases).map(([phaseName, phaseTasks]) => (
+            <CollapsiblePhaseFolder
+              key={phaseName}
+              phaseName={phaseName}
+              tasks={phaseTasks}
+              executingTaskId={executingTaskId}
+              isProcessing={isProcessing}
+              toggleTask={toggleTask}
+              deleteTask={deleteTask}
+              editTask={editTask}
+              handleExecuteTask={handleExecuteTask}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -310,31 +388,30 @@ function CollapsiblePhaseFolder({
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const completedInPhase = tasks.filter(t => t.completed).length;
-  const isGeneral = phaseName === 'General Action Items';
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-950/60 overflow-hidden transition-all shadow-md">
-      {/* Folder Accordion Header */}
+    <div className="rounded-xl border border-white/5 bg-slate-900/50 overflow-hidden transition-all">
+      {/* Sub-Phase Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3.5 py-2.5 bg-slate-900/80 hover:bg-slate-900 flex items-center justify-between transition-colors border-b border-white/5 group"
+        className="w-full px-3 py-2 bg-slate-900/90 hover:bg-slate-900 flex items-center justify-between transition-colors border-b border-white/5 group"
       >
         <div className="flex items-center gap-2 min-w-0 pr-2">
-          <Folder className={`w-4 h-4 shrink-0 transition-transform ${isGeneral ? 'text-amber-400' : 'text-cyan-400 group-hover:scale-110'}`} />
-          <span className="font-mono text-xs font-bold text-text truncate">{phaseName}</span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-text-muted border border-white/10 shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0"></span>
+          <span className="font-mono text-[11px] font-semibold text-text-muted group-hover:text-text truncate">{phaseName}</span>
+          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/5 text-text-muted border border-white/10 shrink-0">
             {completedInPhase}/{tasks.length}
           </span>
         </div>
 
         <div className="flex items-center gap-1 shrink-0 text-text-muted group-hover:text-text">
-          {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
         </div>
       </button>
 
-      {/* Nested Tasks Inside Folder */}
+      {/* Step Tasks */}
       {isOpen && (
-        <div className="p-2.5 space-y-2.5 bg-slate-950/40">
+        <div className="p-2 space-y-2 bg-slate-950/40">
           {tasks.map(task => (
             <TaskCard
               key={task.id}
