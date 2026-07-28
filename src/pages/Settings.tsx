@@ -288,9 +288,6 @@ export default function Settings() {
                   </button>
                 )}
               </div>
-              <p className="text-xs text-text-muted mt-2 flex items-center gap-1.5">
-                <span className="text-cyan-400 font-mono">ℹ</span> Enter any model ID string (e.g. OpenRouter, HuggingFace, or Ollama local models) to override preset selections above.
-              </p>
             </div>
           </div>
 
