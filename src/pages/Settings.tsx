@@ -4,12 +4,61 @@ import { useStore } from '@/store';
 import { Key, Cpu, Sliders, Check, Eye, EyeOff, RotateCcw, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
-const MODEL_PRESETS = [
-  { id: 'openrouter/free', name: 'OpenRouter Free', provider: 'OpenRouter', description: 'Auto-selects best available free model' },
-  { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', description: 'Exceptional reasoning and coding capability' },
-  { id: 'openai/gpt-4o', name: 'GPT-4o', provider: 'OpenAI', description: 'Flagship multimodal model from OpenAI' },
-  { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', description: 'High-performance open reasoning model' },
-  { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash', provider: 'Google', description: 'Fast, lightweight next-gen model' },
+export interface ModelPreset {
+  id: string;
+  name: string;
+  provider: string;
+  description: string;
+  contextWindow?: string;
+  hasVision?: boolean;
+}
+
+export const MODEL_PRESETS: ModelPreset[] = [
+  // Anthropic / Claude
+  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'Anthropic', description: '国产聚合模型 1M 上下文，适合 Agent、工作流、图片理解和高并发', contextWindow: '1M', hasVision: true },
+  { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', provider: 'Anthropic', description: 'Claude 新一代高能力主力模型，适合复杂推理、代码、多轮 Agent', contextWindow: '1M', hasVision: true },
+  { id: 'claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', description: 'Claude 顶级高成本模型，适合最高价值复杂推理、深度研究、长周期 Agent', contextWindow: '1M', hasVision: true },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', provider: 'Anthropic', description: '轻量快速 Claude 模型，适合摘要、分类、快速问答', contextWindow: '256K', hasVision: true },
+  { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', provider: 'Anthropic', description: '1M 上下文多模态能力，适合复杂推理、长文档分析和代码方案', contextWindow: '1M', hasVision: true },
+  { id: 'claude-opus-4-7', name: 'Claude Opus 4.7', provider: 'Anthropic', description: '适合深度代码审查、复杂规划和多轮推敲', contextWindow: '1M', hasVision: true },
+  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8', provider: 'Anthropic', description: '适合高价值复杂任务、长期 Agent 和严谨报告', contextWindow: '1M', hasVision: true },
+  { id: 'claude-opus-5', name: 'Claude Opus 5', provider: 'Anthropic', description: '适合复杂 Agent 编程、企业级任务、深度推理和高质量工程交付', contextWindow: '1M', hasVision: true },
+
+  // OpenAI
+  { id: 'gpt-5.6-sol', name: 'GPT 5.6 Sol', provider: 'OpenAI', description: 'GPT 5.6 系列高能力模型，适合复杂问答、代码、长文档理解和图片理解', contextWindow: '258K', hasVision: true },
+  { id: 'gpt-5.6-terra', name: 'GPT 5.6 Terra', provider: 'OpenAI', description: 'GPT 5.6 系列平衡模型，适合日常问答、代码辅助、文档处理', contextWindow: '258K', hasVision: true },
+  { id: 'gpt-5.6-luna', name: 'GPT 5.6 Luna', provider: 'OpenAI', description: '适合高频调用、基础问答、文档处理和图片理解任务', contextWindow: '258K', hasVision: true },
+  { id: 'gpt-5.4', name: 'GPT 5.4', provider: 'OpenAI', description: 'OpenAI 通用主力模型，适合日常问答、代码、长文档和 Agent 任务', contextWindow: '1M', hasVision: true },
+  { id: 'gpt-5.5', name: 'GPT 5.5', provider: 'OpenAI', description: 'OpenAI 高能力模型，适合复杂推理、代码规划、高质量写作', contextWindow: '258K', hasVision: true },
+  { id: 'gpt-5.3-codex-spark', name: 'GPT 5.3 Codex Spark', provider: 'OpenAI', description: 'Codex 实时编码模型，适合边写边改、快速补丁、UI 微调', contextWindow: '128K', hasVision: false },
+
+  // Qwen 通义千问
+  { id: 'qwen3.6-plus', name: 'Qwen 3.6 Plus', provider: '通义千问', description: '高性价比长上下文模型，适合长文档、代码仓库、Agent 工具调用', contextWindow: '1M', hasVision: true },
+  { id: 'qwen3.7-plus', name: 'Qwen 3.7 Plus', provider: '通义千问', description: '新一代平衡型 Agent 模型，适合 OpenClaw、Claude Code、Hermes', contextWindow: '1M', hasVision: true },
+  { id: 'qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', description: '旗舰推理模型，适合复杂推理、代码规划、深度分析和长周期 Agent', contextWindow: '1M', hasVision: false },
+  { id: 'qwen3.8-max', name: 'Qwen 3.8 Max', provider: '通义千问', description: 'Qwen 路由支持 1M 上下文、图片理解与多模态输入', contextWindow: '1M', hasVision: true },
+
+  // DeepSeek 深度求索
+  { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', description: '高能力推理模型，适合代码、数学、复杂规划、深度分析', contextWindow: '1M', hasVision: false },
+  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', description: '轻快版 DeepSeek，适合高频问答、摘要和快速推理', contextWindow: '1M', hasVision: false },
+
+  // ByteDance 字节跳动 / Doubao
+  { id: 'doubao-seed-2.0-code', name: 'Doubao Seed 2.0 Code', provider: '字节跳动', description: '字节代码模型，适合代码生成、改写、调试和工程辅助', contextWindow: '200K', hasVision: true },
+  { id: 'doubao-seed-2.0-pro', name: 'Doubao Seed 2.0 Pro', provider: '字节跳动', description: '字节通用增强模型，适合复杂问答、写作、分析和多模态任务', contextWindow: '128K', hasVision: true },
+
+  // Zhipu 智谱
+  { id: 'glm-5.1', name: 'GLM 5.1', provider: '智谱 GLM', description: '智谱旗舰通用模型，适合写作、分析、代码、Agent 工程', contextWindow: '256K', hasVision: true },
+  { id: 'glm-5.2', name: 'GLM 5.2', provider: '智谱 GLM', description: '智谱新一代多模态强模型，适合复杂写作、分析、代码和图片理解', contextWindow: '1M', hasVision: true },
+
+  // Kimi / xAI / Xiaomi / MiniMax / Meituan / Tencent / Stepfun
+  { id: 'kimi-k3', name: 'Kimi K3', provider: 'Moonshot Kimi', description: '新一代长上下文多模态模型，适合超长文档分析与图片理解', contextWindow: '1M', hasVision: true },
+  { id: 'grok-4.5', name: 'Grok 4.5', provider: 'xAI Grok', description: 'xAI Grok 通用强模型，适合复杂问答、代码、长文档和图片理解', contextWindow: '500K', hasVision: true },
+  { id: 'mimo-v2.5-pro', name: 'MiMo v2.5 Pro', provider: '小米 MiMo', description: '小米专业模型，适合长文本、复杂分析、代码规划', contextWindow: '1M', hasVision: false },
+  { id: 'mimo-v2.5', name: 'MiMo v2.5', provider: '小米 MiMo', description: '低成本通用模型，适合日常对话、改写、摘要', contextWindow: '1M', hasVision: true },
+  { id: 'MiniMax-M3', name: 'MiniMax M3', provider: 'MiniMax', description: '1M 上下文多模态模型，适合长文档、Agent、多轮任务和图片理解', contextWindow: '1M', hasVision: true },
+  { id: 'LongCat-2.0', name: 'LongCat 2.0', provider: '美团 LongCat', description: '美团长上下文 Agentic Coding 模型，适合代码仓理解、长文档推理', contextWindow: '1M', hasVision: false },
+  { id: 'hy3', name: 'Hunyuan 3 (hy3)', provider: '腾讯混元', description: '腾讯混元 3 推理 / Agent 模型，适合中文推理、代码、长文档理解', contextWindow: '256K', hasVision: false },
+  { id: 'step-3.7-flash', name: 'Step 3.7 Flash', provider: '阶跃星辰', description: '快速通用模型，适合代码、对话、图片理解和轻量 Agent', contextWindow: '256K', hasVision: true },
 ];
 
 export default function Settings() {
@@ -217,7 +266,7 @@ export default function Settings() {
               <h2 className="text-xl font-semibold text-text">AI Model Selection</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
               {MODEL_PRESETS.map((preset) => {
                 const isSelected = selectedModel === preset.id && !customModelInput;
                 return (
@@ -227,20 +276,37 @@ export default function Settings() {
                       setSelectedModel(preset.id);
                       setCustomModelInput('');
                     }}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
                       isSelected
-                        ? 'bg-primary/10 border-primary shadow-glow-cyan scale-[1.01]'
-                        : 'bg-slate-950/40 border-white/10 hover:border-primary/40'
+                        ? 'bg-primary/15 border-primary shadow-glow-cyan scale-[1.01]'
+                        : 'bg-slate-950/40 border-white/10 hover:border-primary/40 hover:bg-white/5'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-text">{preset.name}</span>
-                      <span className="text-xs px-2 py-0.5 rounded bg-white/5 border border-white/10 text-text-muted font-mono">
-                        {preset.provider}
-                      </span>
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="font-semibold text-xs text-text truncate">{preset.name}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-text-muted font-mono shrink-0">
+                          {preset.provider}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-muted/80 mb-2 line-clamp-2 leading-relaxed">{preset.description}</p>
                     </div>
-                    <p className="text-xs text-text-muted mb-2">{preset.description}</p>
-                    <p className="text-[11px] font-mono text-primary/80 truncate">{preset.id}</p>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] font-mono">
+                      <span className="text-primary/90 font-mono truncate">{preset.id}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {preset.contextWindow && (
+                          <span className="px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            {preset.contextWindow}
+                          </span>
+                        )}
+                        {preset.hasVision && (
+                          <span className="px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20" title="Supports Multimodal Image Input">
+                            👁️ Vision
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
