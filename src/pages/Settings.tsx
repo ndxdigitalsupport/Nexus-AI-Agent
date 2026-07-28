@@ -55,9 +55,9 @@ export default function Settings() {
   };
 
   const handleReset = () => {
-    const defaultKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
-    const defaultModel = 'openrouter/free';
-    const defaultEndpoint = 'https://openrouter.ai/api/v1/chat/completions';
+    const defaultKey = 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8';
+    const defaultModel = 'claude-fable-5';
+    const defaultEndpoint = 'https://gpt-agent.cc/v1/chat/completions';
     const defaultTemp = 0.7;
 
     setApiKey(defaultKey);

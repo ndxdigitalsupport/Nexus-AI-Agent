@@ -163,9 +163,9 @@ export const useStore = create<AppState>()(
         activePersonaId: 'nexus-personal-assistant',
         knowledgeArticles: [],
         settings: {
-          apiKey: '',
-          selectedModel: 'openrouter/free',
-          customEndpoint: 'https://openrouter.ai/api/v1/chat/completions',
+          apiKey: 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8',
+          selectedModel: 'claude-fable-5',
+          customEndpoint: 'https://gpt-agent.cc/v1/chat/completions',
           temperature: 0.7,
         },
         isProcessing: false,
@@ -542,9 +542,9 @@ ${chatText}`;
           setProcessing(true);
           
           const { settings } = get();
-          const apiKey = settings?.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || '';
-          const endpoint = settings?.customEndpoint || 'https://openrouter.ai/api/v1/chat/completions';
-          const model = settings?.selectedModel || 'openrouter/free';
+          const apiKey = settings?.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8';
+          const endpoint = settings?.customEndpoint || 'https://gpt-agent.cc/v1/chat/completions';
+          const model = settings?.selectedModel || 'claude-fable-5';
           const temperature = settings?.temperature ?? 0.7;
           
           const isLocal = endpoint.includes('localhost') || endpoint.includes('127.0.0.1');
