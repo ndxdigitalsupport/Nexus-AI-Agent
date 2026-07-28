@@ -90,9 +90,8 @@ export default function Settings() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSave = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const finalModel = customModelInput.trim() || selectedModel;
+  const handleSaveModel = (newModel: string, customInput: string = '') => {
+    const finalModel = customInput.trim() || newModel;
     updateSettings({
       apiKey: apiKey.trim(),
       selectedModel: finalModel,
@@ -100,7 +99,12 @@ export default function Settings() {
       temperature,
     });
     setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3500);
+    setTimeout(() => setSaveSuccess(false), 2500);
+  };
+
+  const handleManualSave = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    handleSaveModel(selectedModel, customModelInput);
   };
 
   const handleReset = () => {
@@ -223,7 +227,7 @@ export default function Settings() {
           </div>
         )}
 
-        <form onSubmit={handleSave} className="space-y-8">
+        <form onSubmit={handleManualSave} className="space-y-8">
           {/* API Key Section */}
           <div className="glass-panel p-6 rounded-2xl border border-white/10">
             <div className="flex items-center gap-3 mb-4">
@@ -281,6 +285,7 @@ export default function Settings() {
                       onClick={() => {
                         setSelectedModel(preset.id);
                         setCustomModelInput('');
+                        handleSaveModel(preset.id, '');
                       }}
                       className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                         isSelected
