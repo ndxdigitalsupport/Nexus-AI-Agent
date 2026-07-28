@@ -385,15 +385,15 @@ function TaskCard({ task, isExecuting, onToggle, onDelete, onEdit, onExecute }: 
                 <button
                   onClick={onExecute}
                   disabled={isExecuting}
-                  className={`flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg transition-all mt-2.5 w-fit shadow-glow-violet active:scale-95 group/btn ${
+                  className={`flex items-center justify-center gap-1.5 text-[11px] font-mono px-3 py-1.5 rounded-lg transition-all mt-2.5 max-w-full whitespace-nowrap shadow-glow-violet active:scale-95 group/btn ${
                     isExecuting
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 cursor-wait'
                       : 'text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30'
                   }`}
                   title="Ask AI Agent to execute and solve this task"
                 >
-                  <Zap className={`w-3 h-3 text-amber-400 ${isExecuting ? 'animate-spin' : 'group-hover/btn:rotate-12 transition-transform'}`} />
-                  <span className="font-semibold">{isExecuting ? 'AI Executing...' : 'Execute with AI'}</span>
+                  <Zap className={`w-3 h-3 text-amber-400 shrink-0 ${isExecuting ? 'animate-spin' : 'group-hover/btn:rotate-12 transition-transform'}`} />
+                  <span className="font-semibold whitespace-nowrap truncate">{isExecuting ? 'AI Executing...' : 'Execute with AI'}</span>
                 </button>
               )}
             </div>
