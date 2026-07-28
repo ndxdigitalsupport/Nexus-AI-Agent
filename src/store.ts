@@ -1,0 +1,902 @@
+import { create } from 'zustand';
+import { persist, devtools, createJSONStorage } from 'zustand/middleware';
+
+export interface Message {
+  id: string;
+  role: 'user' | 'agent';
+  content: string;
+  timestamp: number;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: number;
+  dueDate?: number; // Unix timestamp
+  priority?: 'low' | 'medium' | 'high';
+}
+
+export interface Persona {
+  id: string;
+  name: string;
+  instructions: string;
+}
+
+export interface KnowledgeArticle {
+  id: string;
+  title: string;
+  content: string;
+  tags: string[]; // For categorization and search
+  pinned?: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AppSettings {
+  apiKey: string;
+  selectedModel: string;
+  customEndpoint: string;
+  temperature: number;
+}
+
+// New Conversation Interface
+export interface Conversation {
+  id: string;
+  title: string;
+  messages: Message[];
+  pinned?: boolean;
+  category?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface AppState {
+  conversations: Conversation[]; // Now an array of conversations
+  activeConversationId: string | null; // ID of the currently active conversation
+  folders: string[]; // Custom project folders
+  tasks: Task[];
+  personas: Persona[];
+  activePersonaId: string | null;
+  knowledgeArticles: KnowledgeArticle[];
+  settings: AppSettings;
+  isProcessing: boolean;
+  isActionBoardOpen: boolean;
+
+  // Conversation Actions
+  startNewConversation: () => void;
+  loadConversation: (id: string) => void;
+  deleteConversation: (id: string) => void;
+  updateConversationTitle: (id: string, title: string) => void;
+  togglePinConversation: (id: string) => void;
+  setConversationCategory: (id: string, category: string) => void;
+  addFolder: (folderName: string) => void;
+  deleteFolder: (folderName: string) => void;
+  
+  // Action Board Toggle & Execution
+  toggleActionBoard: () => void;
+  executeTaskWithAI: (taskId: string) => Promise<void>;
+  extractTasksFromChat: () => number;
+  clearCompletedTasks: () => void;
+  
+  // Message Actions (now operate on active conversation)
+  addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  
+  // Other existing actions
+  addTask: (title: string, dueDate?: number, priority?: 'low' | 'medium' | 'high') => void;
+  toggleTask: (id: string) => void;
+  deleteTask: (id: string) => void;
+  editTask: (id: string, newTitle?: string, newDueDate?: number, newPriority?: 'low' | 'medium' | 'high') => void;
+  setProcessing: (status: boolean) => void;
+  addPersona: (name: string, instructions: string) => void;
+  updatePersona: (id: string, name: string, instructions: string) => void;
+  deletePersona: (id: string) => void;
+  setActivePersona: (id: string) => void;
+  addArticle: (title: string, content: string, tags: string[]) => void;
+  updateArticle: (id: string, title: string, content: string, tags: string[]) => void;
+  deleteArticle: (id: string) => void;
+  togglePinArticle: (id: string) => void;
+  updateSettings: (newSettings: Partial<AppSettings>) => void;
+  exportState: () => string;
+  importState: (jsonString: string) => { success: boolean; error?: string };
+  resetAllData: () => void;
+  processAgentResponse: (userContent: string) => Promise<void>;
+  summarizeAndSaveChatToMemory: (conversationId?: string) => Promise<void>;
+}
+
+const createNewConversation = (): Conversation => ({
+  id: Math.random().toString(36).substr(2, 9),
+  title: 'New Chat',
+  messages: [
+    {
+      id: 'welcome-msg',
+      role: 'agent',
+      content: 'System initialized. I am NEXUS, your AI agent. How can I assist you today?',
+      timestamp: Date.now(),
+    }
+  ],
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+});
+
+const DEFAULT_PERSONAS: Persona[] = [
+  {
+    id: 'nexus-personal-assistant',
+    name: '🤖 NEXUS Executive Assistant',
+    instructions: 'You are NEXUS, a highly proactive, intelligent Executive Personal Assistant and Daily Co-Pilot. Help the user manage daily tasks, organize schedules, brainstorm ideas, answer any general question across all topics (science, life, business, coding, arts), draft messages, and boost daily productivity with warm, clear, and proactive support.'
+  },
+  {
+    id: 'nexus-growth-advisor',
+    name: '🚀 NEXUS Digital Growth Advisor',
+    instructions: 'You are the official NEXUS Digital Growth Advisor. Answer inquiries about web development, e-commerce, enterprise automation, SEO, and digital consulting. Provide strategic guidance tailored for Phnom Penh, Cambodia, and the Asian digital ecosystem.'
+  },
+  {
+    id: 'tech-architect',
+    name: '🛠️ Senior Tech Architect',
+    instructions: 'You are a Senior Full-Stack Software Architect. Focus on robust system architecture, clean TypeScript code, security, performance, and scalability. Provide production-ready code with detailed architectural rationale.'
+  },
+  {
+    id: 'product-strategist',
+    name: '📝 Product & Task Strategist',
+    instructions: 'You are an agile Product Strategist and Engineering Lead. Help break down ambitious user goals into clear, prioritized action items, MVP features, data requirements, and execution roadmaps.'
+  },
+  {
+    id: 'seo-content-specialist',
+    name: '✍️ SEO & Marketing Specialist',
+    instructions: 'You are a Data-Driven SEO & Digital Marketing Specialist. Provide high-converting marketing copy, keyword strategies, technical SEO audit checklists, and content recommendations.'
+  }
+];
+
+export const useStore = create<AppState>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        conversations: [createNewConversation()], // Start with one default conversation
+        activeConversationId: '' as string, // Will be set in onRehydrateStorage or by startNewConversation
+        folders: [],
+        tasks: [],
+        personas: DEFAULT_PERSONAS,
+        activePersonaId: 'nexus-personal-assistant',
+        knowledgeArticles: [],
+        settings: {
+          apiKey: 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8',
+          selectedModel: 'claude-fable-5',
+          customEndpoint: 'https://gpt-agent.cc/v1/chat/completions',
+          temperature: 0.7,
+        },
+        isProcessing: false,
+        isActionBoardOpen: false,
+
+        toggleActionBoard: () => set((state) => ({ isActionBoardOpen: !state.isActionBoardOpen })),
+
+        executeTaskWithAI: async (taskId: string) => {
+          const task = get().tasks.find(t => t.id === taskId);
+          if (!task) return;
+
+          // Construct authoritative execution directive prompt
+          const cleanTitle = task.title.replace(/\*\*/g, '').trim();
+          const prompt = `[TASK EXECUTION DIRECTIVE]\nPlease execute and fulfill Task: "${cleanTitle}".\nProvide a comprehensive, expert solution, detailed analysis, step-by-step recommendations, and actionable deliverables for this specific task. Do not list tasks or summarize; focus 100% on solving and outputting the result for this task.`;
+
+          // Trigger AI agent response FIRST while task remains active
+          await get().processAgentResponse(prompt);
+
+          // Mark task completed AFTER AI finishes execution
+          const currentTask = get().tasks.find(t => t.id === taskId);
+          if (currentTask && !currentTask.completed) {
+            get().toggleTask(taskId);
+          }
+        },
+
+        summarizeAndSaveChatToMemory: async (conversationId?: string) => {
+          const targetId = conversationId || get().activeConversationId;
+          const conversation = get().conversations.find(c => c.id === targetId);
+          if (!conversation || conversation.messages.length <= 1) return;
+
+          get().setProcessing(true);
+
+          try {
+            const chatText = conversation.messages
+              .filter(m => m.id !== 'welcome-msg')
+              .map(m => `[${m.role.toUpperCase()}]: ${m.content}`)
+              .join('\n\n');
+
+            const prompt = `Please summarize the key takeaways, decisions, technical architectural specs, and important context from this conversation into a clean, structured Knowledge Base memory document.
+
+Conversation Log:
+${chatText}`;
+
+            const endpoint = get().settings?.customEndpoint || 'https://openrouter.ai/api/v1/chat/completions';
+            const apiKey = get().settings?.apiKey || '';
+            const model = get().settings?.selectedModel || 'openrouter/free';
+
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                model,
+                messages: [
+                  { role: 'system', content: 'You are NEXUS Memory Engine. Output concise, structured, high-density markdown summaries of user conversations for long-term memory retrieval.' },
+                  { role: 'user', content: prompt }
+                ],
+                temperature: 0.3
+              })
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              const summaryContent = data.choices?.[0]?.message?.content || 'No summary generated.';
+
+              const articleTitle = `Memory Summary: ${conversation.title}`;
+              get().addArticle(articleTitle, summaryContent, ['chat-summary', 'memory', 'auto-saved']);
+
+              const newArticles = get().knowledgeArticles;
+              const createdArticle = newArticles.find(a => a.title === articleTitle);
+              if (createdArticle && !createdArticle.pinned) {
+                get().togglePinArticle(createdArticle.id);
+              }
+            }
+          } catch (err) {
+            console.error('Error saving chat summary to memory:', err);
+          } finally {
+            get().setProcessing(false);
+          }
+        },
+
+        // Set initial active conversation after rehydration or if none exists
+        // This is handled in onRehydrateStorage for persistence, or on initial load below
+        // For initial load before rehydration kicks in, we can ensure one exists.
+        // A better pattern for initial state is often handled by the persist middleware itself
+
+        startNewConversation: () => {
+          set((state) => {
+            const newConv = createNewConversation();
+            return {
+              conversations: [...state.conversations, newConv],
+              activeConversationId: newConv.id,
+            };
+          });
+        },
+
+        loadConversation: (id) => set({ activeConversationId: id }),
+
+        deleteConversation: (id) => set((state) => {
+          const filteredConversations = state.conversations.filter(conv => conv.id !== id);
+          let newActiveConversationId = state.activeConversationId;
+          
+          // If the active conversation was deleted, switch to another or start a new one
+          if (newActiveConversationId === id) {
+            newActiveConversationId = filteredConversations.length > 0 
+              ? filteredConversations[0].id 
+              : createNewConversation().id; // Create new if none left
+            
+            if (filteredConversations.length === 0) {
+                // If no conversations left, add the new one to the list
+                return {
+                    conversations: [createNewConversation()],
+                    activeConversationId: newActiveConversationId,
+                };
+            }
+          }
+
+          return {
+            conversations: filteredConversations,
+            activeConversationId: newActiveConversationId,
+          };
+        }),
+
+        updateConversationTitle: (id, title) => set((state) => ({
+          conversations: state.conversations.map(conv => 
+            conv.id === id ? { ...conv, title, updatedAt: Date.now() } : conv
+          ),
+        })),
+
+        togglePinConversation: (id) => set((state) => ({
+          conversations: state.conversations.map(conv =>
+            conv.id === id ? { ...conv, pinned: !conv.pinned } : conv
+          ),
+        })),
+
+        setConversationCategory: (id, category) => set((state) => ({
+          conversations: state.conversations.map(conv =>
+            conv.id === id ? { ...conv, category } : conv
+          ),
+        })),
+
+        addFolder: (folderName) => set((state) => {
+          const trimmed = folderName.trim();
+          if (!trimmed || (state.folders || []).includes(trimmed)) return state;
+          return { folders: [...(state.folders || []), trimmed] };
+        }),
+
+        deleteFolder: (folderName) => set((state) => ({
+          folders: (state.folders || []).filter(f => f !== folderName),
+          conversations: state.conversations.map(conv =>
+            conv.category === folderName ? { ...conv, category: undefined } : conv
+          )
+        })),
+
+        addMessage: (msg) => set((state) => {
+          const updatedConversations = state.conversations.map(conv => {
+            if (conv.id === state.activeConversationId) {
+              return {
+                ...conv,
+                messages: [...conv.messages, { ...msg, id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() }],
+                updatedAt: Date.now(),
+              };
+            }
+            return conv;
+          });
+          return { conversations: updatedConversations };
+        }),
+        
+        addTask: (title, dueDate, priority) => set((state) => ({
+          tasks: [...state.tasks, { id: Math.random().toString(36).substr(2, 9), title, completed: false, createdAt: Date.now(), dueDate, priority }]
+        })),
+        
+        toggleTask: (id) => set((state) => ({
+          tasks: state.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
+        })),
+      
+        deleteTask: (id) => set((state) => ({
+          tasks: state.tasks.filter(t => t.id !== id)
+        })),
+
+        editTask: (id, newTitle, newDueDate, newPriority) => set((state) => ({
+          tasks: state.tasks.map(t => t.id === id ? { 
+            ...t, 
+            ...(newTitle !== undefined && { title: newTitle }), 
+            ...(newDueDate !== undefined && { dueDate: newDueDate }),
+            ...(newPriority !== undefined && { priority: newPriority }),
+          } : t)
+        })),
+        
+        clearCompletedTasks: () => set((state) => ({
+          tasks: state.tasks.filter(t => !t.completed)
+        })),
+
+        extractTasksFromChat: () => {
+          const { conversations, activeConversationId, tasks, addTask } = get();
+          const activeConv = conversations.find(c => c.id === activeConversationId);
+          if (!activeConv) return 0;
+
+          let addedCount = 0;
+          const chatText = activeConv.messages.map(m => m.content).join('\n');
+          
+          const lines = chatText.split('\n');
+          lines.forEach(line => {
+            const cleanLine = line.replace(/^[-*•\d.]+\s*/, '').trim();
+            if (
+              cleanLine.length > 5 &&
+              cleanLine.length < 120 &&
+              !cleanLine.startsWith('#') &&
+              !cleanLine.startsWith('http') &&
+              !tasks.some(t => t.title.toLowerCase() === cleanLine.toLowerCase())
+            ) {
+              if (
+                line.match(/^[-*•\d.]+\s+(?:[A-Z]|\[|Task|Refine|Create|Build|Design|Implement|Audit|Setup|Write|Analyze|Fix|Update)/i)
+              ) {
+                addTask(cleanLine, undefined, 'medium');
+                addedCount++;
+              }
+            }
+          });
+
+          return addedCount;
+        },
+
+        setProcessing: (status) => set({ isProcessing: status }),
+
+        addPersona: (name, instructions) => set((state) => {
+          const newPersona = { id: Math.random().toString(36).substr(2, 9), name, instructions };
+          return { 
+            personas: [...state.personas, newPersona],
+            activePersonaId: state.personas.length === 0 ? newPersona.id : state.activePersonaId,
+          };
+        }),
+        
+        updatePersona: (id, name, instructions) => set((state) => ({
+          personas: state.personas.map(p => p.id === id ? { ...p, name, instructions } : p)
+        })),
+
+        deletePersona: (id) => set((state) => ({
+          personas: state.personas.filter(p => p.id !== id),
+          activePersonaId: state.activePersonaId === id ? null : state.activePersonaId,
+        })),
+
+        setActivePersona: (id) => set({ activePersonaId: id }),
+
+        addArticle: (title, content, tags) => set((state) => {
+          const now = Date.now();
+          const newArticle = { 
+            id: Math.random().toString(36).substr(2, 9), 
+            title, 
+            content, 
+            tags,
+            createdAt: now, 
+            updatedAt: now 
+          };
+          return { knowledgeArticles: [...state.knowledgeArticles, newArticle] };
+        }),
+
+        updateArticle: (id, title, content, tags) => set((state) => ({
+          knowledgeArticles: state.knowledgeArticles.map(article => 
+            article.id === id ? { ...article, title, content, tags, updatedAt: Date.now() } : article
+          )
+        })),
+
+        deleteArticle: (id) => set((state) => ({
+          knowledgeArticles: state.knowledgeArticles.filter(article => article.id !== id)
+        })),
+
+        togglePinArticle: (id) => set((state) => ({
+          knowledgeArticles: state.knowledgeArticles.map(article =>
+            article.id === id ? { ...article, pinned: !article.pinned, updatedAt: Date.now() } : article
+          )
+        })),
+
+        updateSettings: (newSettings) => set((state) => ({
+          settings: { ...state.settings, ...newSettings }
+        })),
+
+        exportState: () => {
+          const { conversations, activeConversationId, tasks, personas, activePersonaId, knowledgeArticles, settings } = get();
+          return JSON.stringify({
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            conversations,
+            activeConversationId,
+            tasks,
+            personas,
+            activePersonaId,
+            knowledgeArticles,
+            settings,
+          }, null, 2);
+        },
+
+        importState: (jsonString: string) => {
+          try {
+            const parsed = JSON.parse(jsonString) as Record<string, unknown>;
+            if (!parsed || typeof parsed !== 'object') {
+              return { success: false, error: 'Invalid JSON format.' };
+            }
+
+            set((state) => ({
+              conversations: Array.isArray(parsed.conversations) && parsed.conversations.length > 0 ? (parsed.conversations as Conversation[]) : state.conversations,
+              activeConversationId: typeof parsed.activeConversationId === 'string' ? parsed.activeConversationId : state.activeConversationId,
+              tasks: Array.isArray(parsed.tasks) ? (parsed.tasks as Task[]) : state.tasks,
+              personas: Array.isArray(parsed.personas) ? (parsed.personas as Persona[]) : state.personas,
+              activePersonaId: typeof parsed.activePersonaId === 'string' ? parsed.activePersonaId : state.activePersonaId,
+              knowledgeArticles: Array.isArray(parsed.knowledgeArticles) ? (parsed.knowledgeArticles as KnowledgeArticle[]) : state.knowledgeArticles,
+              settings: parsed.settings && typeof parsed.settings === 'object' ? { ...state.settings, ...(parsed.settings as Partial<AppSettings>) } : state.settings,
+            }));
+            return { success: true };
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return { success: false, error: msg };
+          }
+        },
+
+        resetAllData: () => {
+          const defaultConv = createNewConversation();
+          set({
+            conversations: [defaultConv],
+            activeConversationId: defaultConv.id,
+            tasks: [],
+            personas: [],
+            activePersonaId: null,
+            knowledgeArticles: [],
+            settings: {
+              apiKey: 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8',
+              selectedModel: 'claude-fable-5',
+              customEndpoint: 'https://gpt-agent.cc/v1/chat/completions',
+              temperature: 0.7,
+            },
+          });
+        },
+
+        processAgentResponse: async (userContent: string) => {
+          const { addTask, setProcessing, personas, activePersonaId, knowledgeArticles, conversations, activeConversationId, updateConversationTitle } = get();
+          
+          const currentConversation = conversations.find(conv => conv.id === activeConversationId);
+          if (!currentConversation) {
+            console.error("NEXUS: No active conversation found! Cannot process agent response.");
+            setProcessing(false);
+            return;
+          }
+
+          // Find the active persona's instructions
+          const activePersona = activePersonaId 
+            ? personas.find(p => p.id === activePersonaId) 
+            : undefined;
+          
+          const customInstructions = activePersona ? activePersona.instructions : '';
+
+          // Add user message to active conversation
+          const userMessageId = Math.random().toString(36).substr(2, 9);
+          set((state) => ({
+            conversations: state.conversations.map(conv => 
+              conv.id === activeConversationId 
+                ? { ...conv, messages: [...conv.messages, { id: userMessageId, role: 'user', content: userContent, timestamp: Date.now() }], updatedAt: Date.now() }
+                : conv
+            )
+          }));
+
+          // If it's the first user message in a new chat, set conversation title
+          if (currentConversation.messages.length === 1 && currentConversation.messages[0].id === 'welcome-msg') {
+            updateConversationTitle(activeConversationId, userContent.substring(0, 50) + (userContent.length > 50 ? '...' : ''));
+          }
+          
+          setProcessing(true);
+          
+          const { settings } = get();
+          const apiKey = settings?.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || '';
+          const endpoint = settings?.customEndpoint || 'https://openrouter.ai/api/v1/chat/completions';
+          const model = settings?.selectedModel || 'openrouter/free';
+          const temperature = settings?.temperature ?? 0.7;
+          
+          const isLocal = endpoint.includes('localhost') || endpoint.includes('127.0.0.1');
+
+          if (!apiKey && !isLocal) {
+            setProcessing(false);
+            get().addMessage({ 
+              role: 'agent', 
+              content: '⚠️ **API Key Required**\n\nPlease add your API key in the **Settings** page or configure it in `.env.local`.' 
+            });
+            return;
+          }
+
+          try {
+            // Fetch updated active conversation to ensure latest user content is included in chatHistory
+            const updatedConversation = get().conversations.find(conv => conv.id === activeConversationId);
+            const chatHistory = (updatedConversation?.messages || [])
+              .filter(m => m.id !== 'welcome-msg')
+              .slice(-10) // Limit to last 10 messages
+              .map(m => ({
+                role: m.role,
+                content: m.content
+              }));
+
+            console.log("NEXUS Debug: Chat History sent to AI:", chatHistory);
+
+            // --- Start Ultra-Fast Multi-Turn RAG Search Engine ---
+            const pinnedArticles = knowledgeArticles.filter(a => a.pinned);
+            const unpinnedArticles = knowledgeArticles.filter(a => !a.pinned);
+
+            // Include current prompt + last 2 user messages so follow-up questions retain knowledge context
+            const recentUserMessages = (updatedConversation?.messages || [])
+              .filter(m => m.role === 'user')
+              .slice(-3)
+              .map(m => m.content)
+              .join(' ');
+
+            const searchContext = `${userContent} ${recentUserMessages}`.toLowerCase();
+            const terms = Array.from(new Set(searchContext.match(/[a-z0-9]+/g) || [])).filter(t => t.length >= 3);
+
+            const scoredArticles = unpinnedArticles.map(article => {
+              const titleText = article.title.toLowerCase();
+              const bodyText = article.content.toLowerCase();
+              const tagText = article.tags.join(' ').toLowerCase();
+
+              let score = 0;
+              terms.forEach(term => {
+                if (titleText.includes(term)) score += 5;
+                if (tagText.includes(term)) score += 3;
+                if (bodyText.includes(term)) score += 1;
+              });
+
+              return { article, score };
+            });
+
+            const topUnpinned = scoredArticles
+              .filter(item => item.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 3)
+              .map(item => item.article);
+
+            const relevantKnowledgeArticles = Array.from(new Set([...pinnedArticles, ...topUnpinned]));
+
+            const knowledgeBaseContent = relevantKnowledgeArticles.length > 0
+              ? `\n\n***Relevant Knowledge Base & Context Memory:***\n${relevantKnowledgeArticles.map(article => `Title: ${article.title}${article.pinned ? ' [PINNED]' : ''}\nContent: ${article.content.substring(0, 2000)}\nTags: ${article.tags.join(', ')}\n---`).join('\n')}\n`
+              : '';
+            // --- End Ultra-Fast Multi-Turn RAG Search Engine ---
+
+            const systemContent = `You are NEXUS, a world-class, highly intelligent AI personal consultant and project partner.
+${customInstructions ? `***IMPORTANT PERSONA INSTRUCTIONS:\n${customInstructions}\n***\n` : ''}
+CORE BEHAVIOR RULES:
+1. Speak naturally, fluently, warmly, and engagingly (like ChatGPT or Claude). Always maintain seamless conversational context from previous turns.
+2. Directly answer the user's immediate question or response. If the user answers "yes" or "ok", continue naturally from the previous assistant message.
+3. Refer to Knowledge Base articles and current Action Board tasks when relevant to provide rich, grounded answers.
+
+Current System Time: ${new Date().toLocaleString()}
+
+${get().tasks.length > 0 ? `Current Action Board Tasks:\n${get().tasks.map(t => `- [${t.completed ? 'x' : ' '}] ${t.title}`).join('\n')}` : ''}
+${knowledgeBaseContent}
+
+TASK & PROJECT PLAN INSTRUCTION:
+Whenever the user asks for a plan, roadmap, project breakdown, strategy, feature list, or actionable guidance (or clicks "Plan Project & Auto-Populate Board"):
+1. Provide a concise, high-level summary response in the main conversation.
+2. ALWAYS list 3-6 clear, high-impact, actionable tasks at the VERY END of your message under the exact header:
+### Action Items
+- [High] Task 1 title (due: tomorrow)
+- [Medium] Task 2 title
+- [High] Task 3 title
+
+These action items will be automatically injected directly onto the user's Action Board in real-time!
+Do NOT generate "### Action Items" for casual conversational turns (like "yes", "hello", or simple factual questions).`;
+
+            console.log("NEXUS Debug: System Content sent to AI:", systemContent);
+
+            const headers: Record<string, string> = {
+              'Content-Type': 'application/json'
+            };
+            if (apiKey) {
+              headers['Authorization'] = `Bearer ${apiKey}`;
+            }
+            if (endpoint.includes('openrouter.ai')) {
+              headers['HTTP-Referer'] = window.location.href;
+              headers['X-Title'] = 'NEXUS-Agent Dashboard';
+            }
+
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                model: model, 
+                temperature: temperature,
+                stream: true,
+                messages: [
+                  {
+                    role: 'system',
+                    content: systemContent
+                  },
+                  ...chatHistory,
+                  { role: 'user', content: userContent }
+                ]
+              })
+            });
+
+            console.log(`NEXUS Debug: API Response Status: ${response.status} ${response.statusText}`);
+            if (!response.ok) {
+              const errorBody = await response.text();
+              console.error("NEXUS Debug: API Error Body:", errorBody);
+              throw new Error(`API error: ${response.status} - ${errorBody}`);
+            }
+
+            setProcessing(false); // Stop the bouncing dots
+            
+            // Add empty agent message for streaming
+            const agentMessageId = Math.random().toString(36).substr(2, 9);
+            set((state) => ({
+              conversations: state.conversations.map(conv => 
+                conv.id === activeConversationId
+                  ? { ...conv, messages: [...conv.messages, { id: agentMessageId, role: 'agent', content: '', timestamp: Date.now() }], updatedAt: Date.now() }
+                  : conv
+              )
+            }));
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let fullContent = '';
+
+            if (reader) {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value, { stream: true });
+                
+                // Log raw chunk for debugging
+                console.log("NEXUS Debug: Received API chunk:", chunk);
+
+                const lines = chunk.split('\n');
+                
+                for (const line of lines) {
+                  if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                    try {
+                      const data = JSON.parse(line.slice(6));
+                      if (data.choices[0].delta.content) {
+                        fullContent += data.choices[0].delta.content;
+                        const cleanedContent = fullContent
+                          .replace(/^(?:User Safety:\s*safe\s*Response Safety:\s*safe\s*)+/gi, '')
+                          .trimStart();
+
+                        set((state) => ({
+                          conversations: state.conversations.map(conv => 
+                            conv.id === activeConversationId
+                              ? { ...conv, messages: conv.messages.map(m => m.id === agentMessageId ? { ...m, content: cleanedContent } : m), updatedAt: Date.now() }
+                              : conv
+                          )
+                        }));
+                      }
+                    } catch (e) {
+                      console.error("NEXUS Debug: JSON parse error on API chunk:", e, "Chunk:", line);
+                    }
+                  }
+                }
+              }
+            }
+
+            // After streaming finishes, check if cleanedContent is empty
+            const finalCleanedContent = fullContent
+              .replace(/^(?:User Safety:\s*safe\s*Response Safety:\s*safe\s*)+/gi, '')
+              .trim();
+
+            if (!finalCleanedContent) {
+              const fallbackMsg = '⚠️ *The free OpenRouter model endpoint returned a blank response (likely due to temporary free-tier rate limits). Please try re-sending your message or select a specific model preset (like Gemini 2.0 Flash or Llama 3.3) in Settings.*';
+              set((state) => ({
+                conversations: state.conversations.map(conv => 
+                  conv.id === activeConversationId
+                    ? { ...conv, messages: conv.messages.map(m => m.id === agentMessageId ? { ...m, content: fallbackMsg } : m), updatedAt: Date.now() }
+                    : conv
+                )
+              }));
+            }
+
+            // After streaming is complete, parse for Action Items
+            const match = fullContent.match(/#+\s*Action Items?/i);
+            
+            if (match && match.index !== undefined) {
+              const tasksPart = fullContent.slice(match.index + match[0].length);
+              if (tasksPart) {
+                const rawTaskLines = tasksPart
+                  .split('\n')
+                  .map(t => t.replace(/^[-*•\d.]+\s*/, '').trim())
+                  .filter(t => t.length > 0 && !t.startsWith('#'));
+                  
+                if (rawTaskLines.length > 0) {
+                  rawTaskLines.forEach(rawTask => {
+                    let title = rawTask;
+                    let priority: 'low' | 'medium' | 'high' | undefined = undefined;
+                    let dueDate: number | undefined = undefined;
+
+                    // Priority parsing e.g. [High] Task Title
+                    const prioMatch = title.match(/\[(high|medium|low)\]/i);
+                    if (prioMatch) {
+                      priority = prioMatch[1].toLowerCase() as 'low' | 'medium' | 'high';
+                      title = title.replace(prioMatch[0], '').trim();
+                    }
+
+                    // Due date parsing e.g. (due: 2026-08-01) or (due: tomorrow)
+                    const dueMatch = title.match(/\((?:due:\s*)([^)]+)\)/i);
+                    if (dueMatch) {
+                      const dueStr = dueMatch[1].trim().toLowerCase();
+                      title = title.replace(dueMatch[0], '').trim();
+
+                      if (dueStr === 'today') {
+                        dueDate = Date.now();
+                      } else if (dueStr === 'tomorrow') {
+                        dueDate = Date.now() + 86400000;
+                      } else {
+                        const parsedTs = Date.parse(dueStr);
+                        if (!isNaN(parsedTs)) {
+                          dueDate = parsedTs;
+                        }
+                      }
+                    }
+
+                    if (title) {
+                      addTask(title, dueDate, priority);
+                    }
+                  });
+                  
+                  // Auto-open Action Board drawer so user sees project plan populate live!
+                  set({ isActionBoardOpen: true });
+                }
+              }
+            }
+
+          } catch (error: unknown) {
+            setProcessing(false);
+            const errMessage = error instanceof Error ? error.message : String(error);
+            // Add error message to active conversation
+            set((state) => ({
+              conversations: state.conversations.map(conv => 
+                conv.id === activeConversationId
+                  ? { 
+                      ...conv, 
+                      messages: [...conv.messages, { 
+                        id: Math.random().toString(36).substr(2, 9), 
+                        role: 'agent', 
+                        content: `❌ **Error connecting to AI:**\n\n${errMessage}`, 
+                        timestamp: Date.now() 
+                      }],
+                      updatedAt: Date.now(),
+                    }
+                  : conv
+              )
+            }));
+          }
+        }
+      }),
+      {
+        name: 'nexus-agent-storage',
+        storage: createJSONStorage(() => localStorage),
+        partialize: (state) => ({
+          conversations: state.conversations,
+          activeConversationId: state.activeConversationId,
+          tasks: state.tasks,
+          personas: state.personas,
+          knowledgeArticles: state.knowledgeArticles,
+          settings: state.settings,
+        }),
+        onRehydrateStorage: () => (state) => {
+          const savedState = state as AppState;
+          if (!savedState) return;
+
+          if (!savedState.personas || savedState.personas.length === 0 || !savedState.personas.some(p => p.id === 'nexus-personal-assistant')) {
+            savedState.personas = DEFAULT_PERSONAS;
+            savedState.activePersonaId = 'nexus-personal-assistant';
+          }
+
+          if (!savedState.folders) {
+            savedState.folders = [];
+          }
+
+          if (!savedState.settings) {
+            savedState.settings = {
+              apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
+              selectedModel: 'deepseek-chat',
+              customEndpoint: 'https://api.deepseek.com/chat/completions',
+              temperature: 0.7,
+            };
+          }
+          if (!savedState.conversations || savedState.conversations.length === 0) {
+            savedState.conversations = [createNewConversation()];
+            savedState.activeConversationId = savedState.conversations[0].id;
+          } else if (!savedState.activeConversationId) {
+            savedState.activeConversationId = savedState.conversations[0].id; // Set first as active if none set
+          }
+
+          // Migration from old single messages array to conversation format
+          // This is a complex migration. If 'messages' (old format) exists, create a new conversation for it.
+          const rawState = savedState as unknown as Record<string, unknown>;
+          if ('messages' in rawState && rawState.messages !== undefined && Array.isArray(rawState.messages) && rawState.messages.length > 0) {
+            const oldMessages = rawState.messages as Message[];
+            const migratedConversation: Conversation = {
+              id: Math.random().toString(36).substr(2, 9),
+              title: oldMessages[1]?.content.substring(0, 50) || 'Migrated Chat', // Use first user message or default
+              messages: oldMessages,
+              createdAt: oldMessages[0]?.timestamp || Date.now(),
+              updatedAt: oldMessages[oldMessages.length - 1]?.timestamp || Date.now(),
+            };
+            savedState.conversations.push(migratedConversation);
+            savedState.activeConversationId = migratedConversation.id;
+            delete rawState.messages; // Clean up old state
+          }
+
+          // Ensure active conversation always exists and is valid
+          if (savedState.activeConversationId) {
+            const found = savedState.conversations.find(conv => conv.id === savedState.activeConversationId);
+            if (!found && savedState.conversations.length > 0) {
+              savedState.activeConversationId = savedState.conversations[0].id;
+            } else if (!found) {
+              const newConv = createNewConversation();
+              savedState.conversations = [newConv];
+              savedState.activeConversationId = newConv.id;
+            }
+          }
+
+          // Migration for customInstructions to personas (existing logic)
+          if ('customInstructions' in rawState && rawState.customInstructions !== undefined && savedState.personas.length === 0) {
+            const oldInstructions = String(rawState.customInstructions);
+            if (oldInstructions.trim() !== '') {
+              const defaultPersona: Persona = { 
+                id: 'default-persona', 
+                name: 'Default Persona', 
+                instructions: oldInstructions 
+              };
+              savedState.personas = [defaultPersona];
+              // No need to set activePersonaId here, as it's handled by global state or persona management
+            }
+            delete rawState.customInstructions; // Clean up old state
+          }
+
+        },
+      }
+    )
+  )
+);

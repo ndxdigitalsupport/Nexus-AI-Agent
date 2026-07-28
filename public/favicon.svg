@@ -1,0 +1,52 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+
+    <!-- Main Vibrant Brand Gradient -->
+    <linearGradient id="nexusBrandGrad" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00F2FE"/>
+      <stop offset="45%" stop-color="#4FACFE"/>
+      <stop offset="85%" stop-color="#6B11FF"/>
+      <stop offset="100%" stop-color="#D946EF"/>
+    </linearGradient>
+
+    <!-- Inner Core Glow Gradient -->
+    <linearGradient id="coreGlowGrad" x1="20" y1="20" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00F2FE"/>
+      <stop offset="100%" stop-color="#9333EA"/>
+    </linearGradient>
+
+    <!-- Soft Glow Filter -->
+    <filter id="glowEffect" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Container Box with Glass Border -->
+  <rect width="64" height="64" rx="18" fill="url(#bgGrad)"/>
+  <rect x="1" y="1" width="62" height="62" rx="17" stroke="url(#nexusBrandGrad)" stroke-width="1.5" stroke-opacity="0.3" fill="none"/>
+
+  <!-- Outer Hexagonal Nexus Orbit Grid (Translucent) -->
+  <polygon points="32,7 53,19 53,45 32,57 11,45 11,19" stroke="url(#nexusBrandGrad)" stroke-width="1.8" stroke-opacity="0.25" stroke-dasharray="4 2" fill="none"/>
+
+  <!-- Interconnected Diagonal Neural Network Connections -->
+  <path d="M19 43L32 32L45 21" stroke="url(#nexusBrandGrad)" stroke-width="1.2" stroke-opacity="0.5"/>
+  <path d="M19 21L32 32L45 43" stroke="url(#nexusBrandGrad)" stroke-width="1.2" stroke-opacity="0.5"/>
+
+  <!-- Dynamic Futuristic 3D "N" Ribbons -->
+  <!-- Left Pillar -->
+  <path d="M19 45V19C19 17.8954 19.8954 17 21 17H22.5C23.2104 17 23.8643 17.3758 24.218 17.9904L42.5 49.7" stroke="url(#nexusBrandGrad)" stroke-width="4.5" stroke-linecap="round" filter="url(#glowEffect)"/>
+
+  <!-- Right Pillar -->
+  <path d="M45 19V45C45 46.1046 44.1046 47 43 47H41.5C40.7896 47 40.1357 46.6242 39.782 46.0096L21.5 14.3" stroke="url(#nexusBrandGrad)" stroke-width="4.5" stroke-linecap="round" filter="url(#glowEffect)"/>
+
+  <!-- Glowing AI Core Orb at Center Intersection -->
+  <circle cx="32" cy="32" r="4.5" fill="url(#coreGlowGrad)" filter="url(#glowEffect)"/>
+  <circle cx="32" cy="32" r="7" stroke="#00F2FE" stroke-width="1" stroke-opacity="0.8" fill="none"/>
+  <circle cx="32" cy="32" r="2" fill="#FFFFFF"/>
+</svg>
