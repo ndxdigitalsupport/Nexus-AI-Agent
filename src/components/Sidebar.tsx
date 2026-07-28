@@ -186,22 +186,22 @@ export default function Sidebar() {
         {/* New Chat Button */}
         <button
           onClick={handleNewChat}
-          className="w-full flex items-center justify-center md:justify-start gap-3 p-3 rounded-xl bg-gradient-to-r from-primary via-cyan-400 to-cyan-500 text-slate-950 font-bold mb-4 hover:brightness-110 transition-all duration-300 shadow-glow-cyan active:scale-95 group"
+          className="w-full flex items-center justify-start gap-3 p-3 rounded-xl bg-gradient-to-r from-primary via-cyan-400 to-cyan-500 text-slate-950 font-bold mb-4 hover:brightness-110 transition-all duration-300 shadow-glow-cyan active:scale-95 group"
         >
-          <MessageSquarePlus className="w-5 h-5 text-slate-950 group-hover:rotate-12 transition-transform" />
-          <span className="hidden md:block text-sm tracking-wide">New Chat</span>
+          <MessageSquarePlus className="w-5 h-5 text-slate-950 group-hover:rotate-12 transition-transform shrink-0" />
+          <span className="text-sm tracking-wide">New Chat</span>
         </button>
 
         {/* Main Navigation */}
         <nav className="flex flex-col gap-1.5 mb-5">
-          <NavItem icon={<Terminal className="w-5 h-5" />} label="Terminal" to="/" active={location.pathname === '/'} />
-          <NavItem icon={<History className="w-5 h-5" />} label="History" to="/history" active={location.pathname === '/history'} />
-          <NavItem icon={<Cpu className="w-5 h-5" />} label="Personas" to="/agents" active={location.pathname === '/agents'} />
-          <NavItem icon={<Book className="w-5 h-5" />} label="Knowledge Base" to="/knowledge-base" active={location.pathname === '/knowledge-base'} />
+          <NavItem icon={<Terminal className="w-5 h-5" />} label="Terminal" to="/" active={location.pathname === '/'} onClick={() => toggleMobileSidebar(false)} />
+          <NavItem icon={<History className="w-5 h-5" />} label="History" to="/history" active={location.pathname === '/history'} onClick={() => toggleMobileSidebar(false)} />
+          <NavItem icon={<Cpu className="w-5 h-5" />} label="Personas" to="/agents" active={location.pathname === '/agents'} onClick={() => toggleMobileSidebar(false)} />
+          <NavItem icon={<Book className="w-5 h-5" />} label="Knowledge Base" to="/knowledge-base" active={location.pathname === '/knowledge-base'} onClick={() => toggleMobileSidebar(false)} />
         </nav>
 
         {/* Search Bar */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-slate-950/60 border border-white/10 text-xs text-text-muted">
+        <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-slate-950/60 border border-white/10 text-xs text-text-muted">
           <Search className="w-3.5 h-3.5 text-primary shrink-0" />
           <input
             type="text"
@@ -220,7 +220,7 @@ export default function Sidebar() {
           {/* Pinned Chats Section */}
           {pinnedConversations.length > 0 && (
             <div>
-              <div className="hidden md:flex items-center justify-between px-2 mb-1.5">
+              <div className="flex items-center justify-between px-2 mb-1.5">
                 <span className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
                   <Star className="w-3 h-3 fill-amber-400" /> Pinned Chats
                 </span>
@@ -248,7 +248,7 @@ export default function Sidebar() {
           )}
 
           {/* Vertical Folders Accordion Tree */}
-          <div className="hidden md:block">
+          <div>
             <div className="flex items-center justify-between px-2 mb-2">
               <span className="text-[10px] font-mono font-bold text-text-muted uppercase tracking-wider flex items-center gap-1">
                 <Folder className="w-3 h-3 text-cyan-400" /> Project Folders
@@ -380,7 +380,7 @@ export default function Sidebar() {
               onDragOver={(e) => handleDragOverFolder(e, 'Uncategorized')}
               onDragLeave={() => setDragOverFolder(null)}
               onDrop={(e) => handleDropOnFolder(e, undefined)}
-              className={`hidden md:flex items-center justify-between px-2 mb-1.5 rounded-lg transition-all ${
+              className={`flex items-center justify-between px-2 mb-1.5 rounded-lg transition-all ${
                 dragOverFolder === 'Uncategorized' ? 'bg-primary/20 border border-primary p-1.5' : ''
               }`}
             >
@@ -543,10 +543,11 @@ function ConversationItem({
   );
 }
 
-function NavItem({ icon, label, active = false, to }: { icon: React.ReactNode; label: string; active?: boolean; to: string }) {
+function NavItem({ icon, label, active = false, to, onClick }: { icon: React.ReactNode; label: string; active?: boolean; to: string; onClick?: () => void }) {
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={`flex items-center gap-3 p-2.5 md:p-3 rounded-xl transition-all duration-200 ${
         active
           ? 'bg-gradient-to-r from-primary/20 to-violet-500/10 border border-primary/40 text-primary shadow-glow-cyan'
@@ -556,7 +557,7 @@ function NavItem({ icon, label, active = false, to }: { icon: React.ReactNode; l
       <span className={`${active ? 'drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]' : ''}`}>
         {icon}
       </span>
-      <span className="hidden md:block font-medium text-sm truncate">{label}</span>
+      <span className="font-medium text-sm truncate">{label}</span>
     </Link>
   );
 }
