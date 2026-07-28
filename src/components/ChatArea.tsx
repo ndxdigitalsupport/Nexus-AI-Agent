@@ -222,17 +222,20 @@ export default function ChatArea() {
 
           <button
             onClick={toggleActionBoard}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition-all duration-200 ${
+            className={`flex items-center gap-1 sm:gap-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-xl border transition-all duration-200 shrink-0 ${
               isActionBoardOpen
                 ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 shadow-glow-violet'
                 : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
             }`}
             title="Toggle Agentic Action Board"
           >
-            <Zap className={`w-3.5 h-3.5 ${isActionBoardOpen ? 'text-amber-400' : 'text-text-muted'}`} />
-            <span className="font-mono font-semibold">Action Board</span>
+            <Zap className={`w-3.5 h-3.5 shrink-0 ${isActionBoardOpen ? 'text-amber-400' : 'text-text-muted'}`} />
+            <span className="font-mono font-semibold whitespace-nowrap">
+              <span className="inline sm:hidden">Board</span>
+              <span className="hidden sm:inline">Action Board</span>
+            </span>
             {pendingTasksCount > 0 && (
-              <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40">
+              <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">
                 {pendingTasksCount}
               </span>
             )}
@@ -378,8 +381,8 @@ export default function ChatArea() {
                   handleSubmit(e);
                 }
               }}
-              placeholder="Ask NEXUS anything or outline a project goal..."
-              className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-36 min-h-[40px] p-2 text-text placeholder:text-text-muted/50 focus:outline-none text-sm font-sans"
+              placeholder="Ask NEXUS anything..."
+              className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-36 min-h-[40px] p-2 text-text placeholder:text-text-muted/50 focus:outline-none text-sm font-sans truncate"
               rows={1}
             />
             <button 
