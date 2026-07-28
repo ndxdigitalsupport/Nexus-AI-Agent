@@ -15,50 +15,50 @@ export interface ModelPreset {
 
 export const MODEL_PRESETS: ModelPreset[] = [
   // Anthropic / Claude
-  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'Anthropic', description: '国产聚合模型 1M 上下文，适合 Agent、工作流、图片理解和高并发', contextWindow: '1M', hasVision: true },
-  { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', provider: 'Anthropic', description: 'Claude 新一代高能力主力模型，适合复杂推理、代码、多轮 Agent', contextWindow: '1M', hasVision: true },
-  { id: 'claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', description: 'Claude 顶级高成本模型，适合最高价值复杂推理、深度研究、长周期 Agent', contextWindow: '1M', hasVision: true },
-  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', provider: 'Anthropic', description: '轻量快速 Claude 模型，适合摘要、分类、快速问答', contextWindow: '256K', hasVision: true },
-  { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', provider: 'Anthropic', description: '1M 上下文多模态能力，适合复杂推理、长文档分析和代码方案', contextWindow: '1M', hasVision: true },
-  { id: 'claude-opus-4-7', name: 'Claude Opus 4.7', provider: 'Anthropic', description: '适合深度代码审查、复杂规划和多轮推敲', contextWindow: '1M', hasVision: true },
-  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8', provider: 'Anthropic', description: '适合高价值复杂任务、长期 Agent 和严谨报告', contextWindow: '1M', hasVision: true },
-  { id: 'claude-opus-5', name: 'Claude Opus 5', provider: 'Anthropic', description: '适合复杂 Agent 编程、企业级任务、深度推理和高质量工程交付', contextWindow: '1M', hasVision: true },
+  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'Anthropic', description: 'High-concurrency aggregated model with 1M context. Ideal for agents, workflows, vision, and high throughput.', contextWindow: '1M', hasVision: true },
+  { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', provider: 'Anthropic', description: 'Next-gen flagship model for complex reasoning, full-stack coding, and multi-turn agent workflows.', contextWindow: '1M', hasVision: true },
+  { id: 'claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', description: 'Top-tier frontier reasoning model for deep research, complex system engineering, and multi-day agent tasks.', contextWindow: '1M', hasVision: true },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', provider: 'Anthropic', description: 'Lightweight & ultra-fast Claude model optimized for quick Q&A, text classification, and low-latency API calls.', contextWindow: '256K', hasVision: true },
+  { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', provider: 'Anthropic', description: 'Multimodal model with 1M context, suited for complex architectural design, deep reasoning, and code refactoring.', contextWindow: '1M', hasVision: true },
+  { id: 'claude-opus-4-7', name: 'Claude Opus 4.7', provider: 'Anthropic', description: 'Advanced model for deep code reviews, technical planning, and multi-stage logic validation.', contextWindow: '1M', hasVision: true },
+  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8', provider: 'Anthropic', description: 'High-value enterprise model for long-horizon agent execution and rigorous technical reporting.', contextWindow: '1M', hasVision: true },
+  { id: 'claude-opus-5', name: 'Claude Opus 5', provider: 'Anthropic', description: 'Premier Opus 5 engine built for enterprise agent programming, deep reasoning, and software delivery.', contextWindow: '1M', hasVision: true },
 
   // OpenAI
-  { id: 'gpt-5.6-sol', name: 'GPT 5.6 Sol', provider: 'OpenAI', description: 'GPT 5.6 系列高能力模型，适合复杂问答、代码、长文档理解和图片理解', contextWindow: '258K', hasVision: true },
-  { id: 'gpt-5.6-terra', name: 'GPT 5.6 Terra', provider: 'OpenAI', description: 'GPT 5.6 系列平衡模型，适合日常问答、代码辅助、文档处理', contextWindow: '258K', hasVision: true },
-  { id: 'gpt-5.6-luna', name: 'GPT 5.6 Luna', provider: 'OpenAI', description: '适合高频调用、基础问答、文档处理和图片理解任务', contextWindow: '258K', hasVision: true },
-  { id: 'gpt-5.4', name: 'GPT 5.4', provider: 'OpenAI', description: 'OpenAI 通用主力模型，适合日常问答、代码、长文档和 Agent 任务', contextWindow: '1M', hasVision: true },
-  { id: 'gpt-5.5', name: 'GPT 5.5', provider: 'OpenAI', description: 'OpenAI 高能力模型，适合复杂推理、代码规划、高质量写作', contextWindow: '258K', hasVision: true },
-  { id: 'gpt-5.3-codex-spark', name: 'GPT 5.3 Codex Spark', provider: 'OpenAI', description: 'Codex 实时编码模型，适合边写边改、快速补丁、UI 微调', contextWindow: '128K', hasVision: false },
+  { id: 'gpt-5.6-sol', name: 'GPT 5.6 Sol', provider: 'OpenAI', description: 'High-capacity flagship model for complex Q&A, advanced code generation, long document context, and vision.', contextWindow: '258K', hasVision: true },
+  { id: 'gpt-5.6-terra', name: 'GPT 5.6 Terra', provider: 'OpenAI', description: 'Balanced performance model for daily engineering tasks, document processing, and multimodal interaction.', contextWindow: '258K', hasVision: true },
+  { id: 'gpt-5.6-luna', name: 'GPT 5.6 Luna', provider: 'OpenAI', description: 'High-speed entry model tailored for frequent API calls, general Q&A, and document parsing.', contextWindow: '258K', hasVision: true },
+  { id: 'gpt-5.4', name: 'GPT 5.4', provider: 'OpenAI', description: 'General workhorse model for daily Q&A, software engineering, long-form writing, and agent automation.', contextWindow: '1M', hasVision: true },
+  { id: 'gpt-5.5', name: 'GPT 5.5', provider: 'OpenAI', description: 'High-capability model tailored for complex reasoning, code architecture planning, and critical production tasks.', contextWindow: '258K', hasVision: true },
+  { id: 'gpt-5.3-codex-spark', name: 'GPT 5.3 Codex Spark', provider: 'OpenAI', description: 'Real-time Codex coding engine for rapid code completion, live debugging, and UI tweaking.', contextWindow: '128K', hasVision: false },
 
-  // Qwen 通义千问
-  { id: 'qwen3.6-plus', name: 'Qwen 3.6 Plus', provider: '通义千问', description: '高性价比长上下文模型，适合长文档、代码仓库、Agent 工具调用', contextWindow: '1M', hasVision: true },
-  { id: 'qwen3.7-plus', name: 'Qwen 3.7 Plus', provider: '通义千问', description: '新一代平衡型 Agent 模型，适合 OpenClaw、Claude Code、Hermes', contextWindow: '1M', hasVision: true },
-  { id: 'qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', description: '旗舰推理模型，适合复杂推理、代码规划、深度分析和长周期 Agent', contextWindow: '1M', hasVision: false },
-  { id: 'qwen3.8-max', name: 'Qwen 3.8 Max', provider: '通义千问', description: 'Qwen 路由支持 1M 上下文、图片理解与多模态输入', contextWindow: '1M', hasVision: true },
+  // Qwen
+  { id: 'qwen3.6-plus', name: 'Qwen 3.6 Plus', provider: 'Qwen', description: 'High-value 1M context model for large codebases, technical documentation, and tool-use agent workflows.', contextWindow: '1M', hasVision: true },
+  { id: 'qwen3.7-plus', name: 'Qwen 3.7 Plus', provider: 'Qwen', description: 'Next-gen agent model tuned for OpenClaw, Claude Code, Hermes, and codebase navigation.', contextWindow: '1M', hasVision: true },
+  { id: 'qwen3.7-max', name: 'Qwen 3.7 Max', provider: 'Qwen', description: 'Flagship reasoning engine for complex logic, system architecture design, and long-cycle agent tasks.', contextWindow: '1M', hasVision: false },
+  { id: 'qwen3.8-max', name: 'Qwen 3.8 Max', provider: 'Qwen', description: 'Multimodal 1M context model supporting high-value analysis, complex reasoning, and multimodal inputs.', contextWindow: '1M', hasVision: true },
 
-  // DeepSeek 深度求索
-  { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', description: '高能力推理模型，适合代码、数学、复杂规划、深度分析', contextWindow: '1M', hasVision: false },
-  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', description: '轻快版 DeepSeek，适合高频问答、摘要和快速推理', contextWindow: '1M', hasVision: false },
+  // DeepSeek
+  { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', description: 'High-performance reasoning model tailored for math, complex algorithmic planning, and deep code analysis.', contextWindow: '1M', hasVision: false },
+  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', description: 'Fast, cost-effective DeepSeek variant for rapid Q&A, summarization, and lightweight reasoning.', contextWindow: '1M', hasVision: false },
 
-  // ByteDance 字节跳动 / Doubao
-  { id: 'doubao-seed-2.0-code', name: 'Doubao Seed 2.0 Code', provider: '字节跳动', description: '字节代码模型，适合代码生成、改写、调试和工程辅助', contextWindow: '200K', hasVision: true },
-  { id: 'doubao-seed-2.0-pro', name: 'Doubao Seed 2.0 Pro', provider: '字节跳动', description: '字节通用增强模型，适合复杂问答、写作、分析和多模态任务', contextWindow: '128K', hasVision: true },
+  // ByteDance / Doubao
+  { id: 'doubao-seed-2.0-code', name: 'Doubao Seed 2.0 Code', provider: 'ByteDance', description: 'Specialized coding model for code synthesis, refactoring, debugging, and engineering assistance.', contextWindow: '200K', hasVision: true },
+  { id: 'doubao-seed-2.0-pro', name: 'Doubao Seed 2.0 Pro', provider: 'ByteDance', description: 'Enhanced general model for complex Q&A, creative writing, multimodal vision, and analytical tasks.', contextWindow: '128K', hasVision: true },
 
-  // Zhipu 智谱
-  { id: 'glm-5.1', name: 'GLM 5.1', provider: '智谱 GLM', description: '智谱旗舰通用模型，适合写作、分析、代码、Agent 工程', contextWindow: '256K', hasVision: true },
-  { id: 'glm-5.2', name: 'GLM 5.2', provider: '智谱 GLM', description: '智谱新一代多模态强模型，适合复杂写作、分析、代码和图片理解', contextWindow: '1M', hasVision: true },
+  // Zhipu GLM
+  { id: 'glm-5.1', name: 'GLM 5.1', provider: 'Zhipu GLM', description: 'Flagship general model for writing, data analysis, coding, and agent engineering workflows.', contextWindow: '256K', hasVision: true },
+  { id: 'glm-5.2', name: 'GLM 5.2', provider: 'Zhipu GLM', description: 'Next-gen multimodal model for complex technical writing, multimodal vision, and code generation.', contextWindow: '1M', hasVision: true },
 
   // Kimi / xAI / Xiaomi / MiniMax / Meituan / Tencent / Stepfun
-  { id: 'kimi-k3', name: 'Kimi K3', provider: 'Moonshot Kimi', description: '新一代长上下文多模态模型，适合超长文档分析与图片理解', contextWindow: '1M', hasVision: true },
-  { id: 'grok-4.5', name: 'Grok 4.5', provider: 'xAI Grok', description: 'xAI Grok 通用强模型，适合复杂问答、代码、长文档和图片理解', contextWindow: '500K', hasVision: true },
-  { id: 'mimo-v2.5-pro', name: 'MiMo v2.5 Pro', provider: '小米 MiMo', description: '小米专业模型，适合长文本、复杂分析、代码规划', contextWindow: '1M', hasVision: false },
-  { id: 'mimo-v2.5', name: 'MiMo v2.5', provider: '小米 MiMo', description: '低成本通用模型，适合日常对话、改写、摘要', contextWindow: '1M', hasVision: true },
-  { id: 'MiniMax-M3', name: 'MiniMax M3', provider: 'MiniMax', description: '1M 上下文多模态模型，适合长文档、Agent、多轮任务和图片理解', contextWindow: '1M', hasVision: true },
-  { id: 'LongCat-2.0', name: 'LongCat 2.0', provider: '美团 LongCat', description: '美团长上下文 Agentic Coding 模型，适合代码仓理解、长文档推理', contextWindow: '1M', hasVision: false },
-  { id: 'hy3', name: 'Hunyuan 3 (hy3)', provider: '腾讯混元', description: '腾讯混元 3 推理 / Agent 模型，适合中文推理、代码、长文档理解', contextWindow: '256K', hasVision: false },
-  { id: 'step-3.7-flash', name: 'Step 3.7 Flash', provider: '阶跃星辰', description: '快速通用模型，适合代码、对话、图片理解和轻量 Agent', contextWindow: '256K', hasVision: true },
+  { id: 'kimi-k3', name: 'Kimi K3', provider: 'Moonshot Kimi', description: 'Next-gen 1M context multimodal model for massive document analysis, codebase Q&A, and vision.', contextWindow: '1M', hasVision: true },
+  { id: 'grok-4.5', name: 'Grok 4.5', provider: 'xAI Grok', description: 'Powerful general intelligence model for technical Q&A, programming, and long document reasoning.', contextWindow: '500K', hasVision: true },
+  { id: 'mimo-v2.5-pro', name: 'MiMo v2.5 Pro', provider: 'Xiaomi MiMo', description: 'Professional enterprise model for long text analysis, strategic planning, and automated workflows.', contextWindow: '1M', hasVision: false },
+  { id: 'mimo-v2.5', name: 'MiMo v2.5', provider: 'Xiaomi MiMo', description: 'Cost-effective model for daily conversational tasks, rewriting, summarization, and batch processing.', contextWindow: '1M', hasVision: true },
+  { id: 'MiniMax-M3', name: 'MiniMax M3', provider: 'MiniMax', description: '1M context multimodal model built for long documents, agent tasks, multi-turn reasoning, and vision.', contextWindow: '1M', hasVision: true },
+  { id: 'LongCat-2.0', name: 'LongCat 2.0', provider: 'Meituan', description: 'Long-context agentic coding model for codebase understanding, complex planning, and long-form reasoning.', contextWindow: '1M', hasVision: false },
+  { id: 'hy3', name: 'Hunyuan 3 (hy3)', provider: 'Tencent', description: 'Hunyuan 3 reasoning & agent model for code execution, document analysis, and task automation.', contextWindow: '256K', hasVision: false },
+  { id: 'step-3.7-flash', name: 'Step 3.7 Flash', provider: 'Stepfun', description: 'High-speed model for code assistant workflows, conversational Q&A, vision, and lightweight agents.', contextWindow: '256K', hasVision: true },
 ];
 
 export default function Settings() {
