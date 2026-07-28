@@ -615,16 +615,18 @@ ${get().tasks.length > 0 ? `Current Action Board Tasks:\n${get().tasks.map(t => 
 ${knowledgeBaseContent}
 
 TASK & PROJECT PLAN INSTRUCTION:
-Whenever the user asks for a plan, roadmap, project breakdown, strategy, feature list, or actionable guidance (or clicks "Plan Project & Auto-Populate Board"):
-1. Provide a concise, high-level summary response in the main conversation.
-2. ALWAYS list 3-6 clear, high-impact, actionable tasks at the VERY END of your message under the exact header:
+Whenever the user asks to create a plan, roadmap, breakdown, or strategy (or clicks "Plan Project & Auto-Populate Board"):
+1. In your main response, present a clear, beautifully structured plan divided into logical phases (e.g. Phase 1: Setup & Architecture, Phase 2: Core Components, Phase 3: Testing & Deployment).
+2. At the VERY END of your message, create 3 to 5 milestone action items representing the key step-by-step execution phases under the exact header:
 ### Action Items
-- [High] Task 1 title (due: tomorrow)
-- [Medium] Task 2 title
-- [High] Task 3 title
+- [High] Phase 1: Architecture & Tech Stack Setup
+- [High] Phase 2: Build Core Reasoning & Tool Engine
+- [Medium] Phase 3: Integration, UI & Testing
 
-These action items will be automatically injected directly onto the user's Action Board in real-time!
-Do NOT generate "### Action Items" for casual conversational turns (like "yes", "hello", or simple factual questions).`;
+Rules for Action Items:
+- Keep the title clear, concise, and structured (e.g., "Step 1: ...", "Phase 1: ...").
+- Do NOT output dozens of tiny sub-bullets as individual tasks; consolidate into 3-5 high-level actionable steps.
+- Do NOT generate "### Action Items" for casual conversational turns (like "hello", "yes", or simple factual questions).`;
 
             // Clean up and format chat messages for OpenAI compatibility:
             // Ensure strictly non-empty content and avoid duplicate adjacent role payloads
