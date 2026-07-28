@@ -261,55 +261,62 @@ export default function Settings() {
 
           {/* Model Selector Section */}
           <div className="glass-panel p-6 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <Cpu className="w-5 h-5 text-accent" />
-              <h2 className="text-xl font-semibold text-text">AI Model Selection</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Cpu className="w-5 h-5 text-accent" />
+                <h2 className="text-xl font-semibold text-text">AI Model Selection</h2>
+              </div>
+              <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-text-muted">
+                {MODEL_PRESETS.length} Models Available • Scroll for more ↓
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
-              {MODEL_PRESETS.map((preset) => {
-                const isSelected = selectedModel === preset.id && !customModelInput;
-                return (
-                  <div
-                    key={preset.id}
-                    onClick={() => {
-                      setSelectedModel(preset.id);
-                      setCustomModelInput('');
-                    }}
-                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-primary/15 border-primary shadow-glow-cyan scale-[1.01]'
-                        : 'bg-slate-950/40 border-white/10 hover:border-primary/40 hover:bg-white/5'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="font-semibold text-xs text-text truncate">{preset.name}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-text-muted font-mono shrink-0">
-                          {preset.provider}
-                        </span>
+            <div className="relative mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-[460px] overflow-y-auto custom-scrollbar pr-2 p-1">
+                {MODEL_PRESETS.map((preset) => {
+                  const isSelected = selectedModel === preset.id && !customModelInput;
+                  return (
+                    <div
+                      key={preset.id}
+                      onClick={() => {
+                        setSelectedModel(preset.id);
+                        setCustomModelInput('');
+                      }}
+                      className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-gradient-to-br from-primary/20 via-cyan-500/10 to-violet-500/10 border-primary shadow-glow-cyan scale-[1.01]'
+                          : 'bg-slate-950/60 border-white/10 hover:border-primary/50 hover:bg-slate-900/80 hover:shadow-lg'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <span className="font-semibold text-xs text-text truncate">{preset.name}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-text-muted font-mono shrink-0">
+                            {preset.provider}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-text-muted/80 mb-3 leading-relaxed">{preset.description}</p>
                       </div>
-                      <p className="text-[11px] text-text-muted/80 mb-2 line-clamp-2 leading-relaxed">{preset.description}</p>
-                    </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] font-mono">
-                      <span className="text-primary/90 font-mono truncate">{preset.id}</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {preset.contextWindow && (
-                          <span className="px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                            {preset.contextWindow}
-                          </span>
-                        )}
-                        {preset.hasVision && (
-                          <span className="px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20" title="Supports Multimodal Image Input">
-                            👁️ Vision
-                          </span>
-                        )}
+                      <div className="flex items-center justify-between pt-2.5 border-t border-white/10 text-[10px] font-mono">
+                        <span className="text-cyan-400/90 font-mono truncate max-w-[130px]" title={preset.id}>{preset.id}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {preset.contextWindow && (
+                            <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold">
+                              {preset.contextWindow}
+                            </span>
+                          )}
+                          {preset.hasVision && (
+                            <span className="px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 font-bold" title="Supports Multimodal Image Input">
+                              👁️ Vision
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Custom Model ID Card */}
