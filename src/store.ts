@@ -827,6 +827,7 @@ Do NOT generate "### Action Items" for casual conversational turns (like "yes", 
         partialize: (state) => ({
           conversations: state.conversations,
           activeConversationId: state.activeConversationId,
+          folders: state.folders,
           tasks: state.tasks,
           personas: state.personas,
           knowledgeArticles: state.knowledgeArticles,
