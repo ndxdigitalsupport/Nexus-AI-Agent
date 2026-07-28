@@ -46,9 +46,10 @@ export default function History() {
           <button
             onClick={() => navigate('/')}
             className="self-start flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text text-xs font-mono transition-all group"
+            title="Go Back"
           >
             <ArrowLeft className="w-4 h-4 text-cyan-400 group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Terminal</span>
+            <span>Back</span>
           </button>
 
           <div className="flex items-center justify-between">
