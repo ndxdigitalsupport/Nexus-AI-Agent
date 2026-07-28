@@ -515,18 +515,6 @@ export default function Settings() {
               </button>
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-4">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-text-muted hover:text-text hover:bg-white/5 transition-colors text-sm font-medium"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Reset Settings Defaults</span>
-            </button>
-          </div>
         </form>
       </div>
 
