@@ -16,9 +16,10 @@ export default function Settings() {
   const navigate = useNavigate();
   const { settings, updateSettings, exportState, importState, resetAllData } = useStore();
 
+  const isPresetModel = MODEL_PRESETS.some(p => p.id === (settings?.selectedModel || 'openrouter/free'));
   const [apiKey, setApiKey] = useState(settings?.apiKey || '');
-  const [selectedModel, setSelectedModel] = useState(settings?.selectedModel || 'openrouter/free');
-  const [customModelInput, setCustomModelInput] = useState('');
+  const [selectedModel, setSelectedModel] = useState(isPresetModel ? (settings?.selectedModel || 'openrouter/free') : 'custom');
+  const [customModelInput, setCustomModelInput] = useState(!isPresetModel ? (settings?.selectedModel || '') : '');
   const [customEndpoint, setCustomEndpoint] = useState(settings?.customEndpoint || 'https://openrouter.ai/api/v1/chat/completions');
   const [temperature, setTemperature] = useState(settings?.temperature ?? 0.7);
 
@@ -50,7 +51,7 @@ export default function Settings() {
       temperature,
     });
     setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setTimeout(() => setSaveSuccess(false), 3500);
   };
 
   const handleReset = () => {
@@ -154,9 +155,9 @@ export default function Settings() {
             </div>
 
             {saveSuccess && (
-              <div className="flex items-center gap-2 bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-sm font-medium animate-in fade-in">
-                <Check className="w-4 h-4" />
-                <span>Settings Saved!</span>
+              <div className="flex items-center gap-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-4 py-2 rounded-xl text-sm font-semibold shadow-glow-cyan animate-in fade-in zoom-in-95 duration-200 font-mono">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>Settings Updated & Saved Successfully!</span>
               </div>
             )}
           </div>
@@ -245,20 +246,50 @@ export default function Settings() {
               })}
             </div>
 
-            {/* Custom Model String */}
-            <div>
-              <label className="block text-sm font-medium text-text-muted mb-2">
-                Custom Model ID (Optional)
-              </label>
-              <input
-                type="text"
-                value={customModelInput}
-                onChange={(e) => setCustomModelInput(e.target.value)}
-                placeholder="e.g. meta-llama/llama-3.3-70b-instruct"
-                className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-text placeholder:text-text-muted/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"
-              />
-              <p className="text-xs text-text-muted mt-1">
-                Enter any supported model string to override preset selection.
+            {/* Custom Model ID Card */}
+            <div className={`p-4 rounded-2xl border transition-all duration-300 ${
+              customModelInput.trim()
+                ? 'bg-gradient-to-r from-cyan-500/10 via-violet-500/10 to-primary/10 border-primary shadow-glow-cyan'
+                : 'bg-slate-950/50 border-white/10 hover:border-white/20'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-text flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <span>Custom Model ID</span>
+                </label>
+                {customModelInput.trim() ? (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase tracking-wider flex items-center gap-1">
+                    <Check className="w-3 h-3 text-cyan-400" /> Active Override
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-text-muted">
+                    Optional
+                  </span>
+                )}
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  value={customModelInput}
+                  onChange={(e) => {
+                    setCustomModelInput(e.target.value);
+                  }}
+                  placeholder="e.g. meta-llama/llama-3.3-70b-instruct or deepseek/deepseek-r1"
+                  className="w-full bg-slate-900/90 border border-white/15 focus:border-cyan-400 rounded-xl px-4 py-3 text-cyan-300 placeholder:text-text-muted/40 focus:outline-none transition-all font-mono text-sm shadow-inner"
+                />
+                {customModelInput && (
+                  <button
+                    type="button"
+                    onClick={() => setCustomModelInput('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-text-muted hover:text-rose-400 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-lg transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-text-muted mt-2 flex items-center gap-1.5">
+                <span className="text-cyan-400 font-mono">ℹ</span> Enter any model ID string (e.g. OpenRouter, HuggingFace, or Ollama local models) to override preset selections above.
               </p>
             </div>
           </div>
