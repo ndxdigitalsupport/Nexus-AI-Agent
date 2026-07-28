@@ -343,22 +343,22 @@ export default function Settings() {
               Export your entire NEXUS workspace (conversations, tasks, personas, knowledge base, settings) to a JSON file or restore a previous backup.
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3">
               <button
                 type="button"
                 onClick={handleDownloadBackup}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 hover:border-primary/50 text-text rounded-xl font-medium transition-all hover:bg-white/10"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 hover:border-primary/50 text-text rounded-xl font-medium transition-all hover:bg-white/10 text-xs sm:text-sm"
               >
-                <Download className="w-4 h-4 text-primary" />
+                <Download className="w-4 h-4 text-primary shrink-0" />
                 <span>Export Backup (.json)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 hover:border-accent/50 text-text rounded-xl font-medium transition-all hover:bg-white/10"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 hover:border-accent/50 text-text rounded-xl font-medium transition-all hover:bg-white/10 text-xs sm:text-sm"
               >
-                <Upload className="w-4 h-4 text-accent" />
+                <Upload className="w-4 h-4 text-accent shrink-0" />
                 <span>Import Backup</span>
               </button>
               <input
@@ -372,20 +372,20 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={handleFactoryResetClick}
-                className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 rounded-xl font-medium transition-all ml-auto"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 rounded-xl font-medium transition-all text-xs sm:text-sm sm:ml-auto"
               >
-                <AlertTriangle className="w-4 h-4" />
+                <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>Reset All Workspace Data</span>
               </button>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4">
             <button
               type="button"
               onClick={handleReset}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-text-muted hover:text-text hover:bg-white/5 transition-colors text-sm font-medium"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-text-muted hover:text-text hover:bg-white/5 transition-colors text-sm font-medium"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Reset Settings Defaults</span>
@@ -393,7 +393,7 @@ export default function Settings() {
 
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-cyan-400 text-slate-950 font-bold hover:brightness-110 transition-all shadow-glow-cyan"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-cyan-400 text-slate-950 font-bold hover:brightness-110 transition-all shadow-glow-cyan"
             >
               <Sparkles className="w-4 h-4" />
               <span>Save Settings</span>

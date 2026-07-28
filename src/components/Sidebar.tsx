@@ -463,7 +463,7 @@ function ConversationItem({
     >
       <GripVertical className="w-3.5 h-3.5 text-text-muted/40 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 cursor-grab" />
       <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-primary' : 'text-text-muted group-hover:text-primary'}`} />
-      <div className="hidden md:flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0">
         <span className="text-xs font-medium truncate">{conv.title}</span>
       </div>
 
