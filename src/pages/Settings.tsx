@@ -90,21 +90,22 @@ export default function Settings() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSaveModel = (newModel: string, customInput: string = '') => {
-    const finalModel = customInput.trim() || newModel;
+  const saveSettingsToStore = (
+    newApiKey: string,
+    newModel: string,
+    newCustomInput: string,
+    newEndpoint: string,
+    newTemp: number
+  ) => {
+    const finalModel = newCustomInput.trim() || newModel;
     updateSettings({
-      apiKey: apiKey.trim(),
+      apiKey: newApiKey.trim(),
       selectedModel: finalModel,
-      customEndpoint: customEndpoint.trim(),
-      temperature,
+      customEndpoint: newEndpoint.trim(),
+      temperature: newTemp,
     });
     setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2500);
-  };
-
-  const handleManualSave = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    handleSaveModel(selectedModel, customModelInput);
+    setTimeout(() => setSaveSuccess(false), 2000);
   };
 
   const handleReset = () => {
@@ -227,7 +228,7 @@ export default function Settings() {
           </div>
         )}
 
-        <form onSubmit={handleManualSave} className="space-y-8">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
           {/* API Key Section */}
           <div className="glass-panel p-6 rounded-2xl border border-white/10">
             <div className="flex items-center gap-3 mb-4">
@@ -244,7 +245,11 @@ export default function Settings() {
                   <input
                     type={showApiKey ? 'text' : 'password'}
                     value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setApiKey(val);
+                      saveSettingsToStore(val, selectedModel, customModelInput, customEndpoint, temperature);
+                    }}
                     placeholder="sk-or-v1-..."
                     className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-text placeholder:text-text-muted/50 focus:outline-none focus:border-primary pr-12 transition-colors font-mono text-sm"
                   />
@@ -285,7 +290,7 @@ export default function Settings() {
                       onClick={() => {
                         setSelectedModel(preset.id);
                         setCustomModelInput('');
-                        handleSaveModel(preset.id, '');
+                        saveSettingsToStore(apiKey, preset.id, '', customEndpoint, temperature);
                       }}
                       className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                         isSelected
@@ -351,7 +356,9 @@ export default function Settings() {
                   type="text"
                   value={customModelInput}
                   onChange={(e) => {
-                    setCustomModelInput(e.target.value);
+                    const val = e.target.value;
+                    setCustomModelInput(val);
+                    saveSettingsToStore(apiKey, selectedModel, val, customEndpoint, temperature);
                   }}
                   placeholder="e.g. meta-llama/llama-3.3-70b-instruct or deepseek/deepseek-r1"
                   className="w-full bg-slate-900/90 border border-white/15 focus:border-cyan-400 rounded-xl px-4 py-3 text-cyan-300 placeholder:text-text-muted/40 focus:outline-none transition-all font-mono text-sm shadow-inner"
@@ -359,7 +366,10 @@ export default function Settings() {
                 {customModelInput && (
                   <button
                     type="button"
-                    onClick={() => setCustomModelInput('')}
+                    onClick={() => {
+                      setCustomModelInput('');
+                      saveSettingsToStore(apiKey, selectedModel, '', customEndpoint, temperature);
+                    }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-text-muted hover:text-rose-400 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-lg transition-colors"
                   >
                     Clear
@@ -384,28 +394,44 @@ export default function Settings() {
                 <input
                   type="text"
                   value={customEndpoint}
-                  onChange={(e) => setCustomEndpoint(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCustomEndpoint(val);
+                    saveSettingsToStore(apiKey, selectedModel, customModelInput, val, temperature);
+                  }}
                   placeholder="https://openrouter.ai/api/v1/chat/completions"
                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-text placeholder:text-text-muted/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"
                 />
                 <div className="flex gap-2 mt-2">
                   <button
                     type="button"
-                    onClick={() => setCustomEndpoint('https://openrouter.ai/api/v1/chat/completions')}
+                    onClick={() => {
+                      const ep = 'https://openrouter.ai/api/v1/chat/completions';
+                      setCustomEndpoint(ep);
+                      saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
+                    }}
                     className="text-xs px-2.5 py-1 rounded bg-white/5 border border-white/10 text-text-muted hover:text-text transition-colors"
                   >
                     OpenRouter
                   </button>
                   <button
                     type="button"
-                    onClick={() => setCustomEndpoint('https://api.openai.com/v1/chat/completions')}
+                    onClick={() => {
+                      const ep = 'https://api.openai.com/v1/chat/completions';
+                      setCustomEndpoint(ep);
+                      saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
+                    }}
                     className="text-xs px-2.5 py-1 rounded bg-white/5 border border-white/10 text-text-muted hover:text-text transition-colors"
                   >
                     OpenAI Direct
                   </button>
                   <button
                     type="button"
-                    onClick={() => setCustomEndpoint('http://localhost:11434/v1/chat/completions')}
+                    onClick={() => {
+                      const ep = 'http://localhost:11434/v1/chat/completions';
+                      setCustomEndpoint(ep);
+                      saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
+                    }}
                     className="text-xs px-2.5 py-1 rounded bg-white/5 border border-white/10 text-text-muted hover:text-text transition-colors"
                   >
                     Ollama (Local)
@@ -427,7 +453,11 @@ export default function Settings() {
                   max="1.0"
                   step="0.05"
                   value={temperature}
-                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setTemperature(val);
+                    saveSettingsToStore(apiKey, selectedModel, customModelInput, customEndpoint, val);
+                  }}
                   className="w-full accent-primary cursor-pointer"
                 />
                 <div className="flex justify-between text-xs text-text-muted mt-1">
@@ -487,7 +517,7 @@ export default function Settings() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-4">
             <button
               type="button"
               onClick={handleReset}
@@ -495,14 +525,6 @@ export default function Settings() {
             >
               <RotateCcw className="w-4 h-4" />
               <span>Reset Settings Defaults</span>
-            </button>
-
-            <button
-              type="submit"
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-cyan-400 text-slate-950 font-bold hover:brightness-110 transition-all shadow-glow-cyan"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Save Settings</span>
             </button>
           </div>
         </form>
