@@ -616,16 +616,20 @@ ${knowledgeBaseContent}
 
 TASK & PROJECT PLAN INSTRUCTION:
 Whenever the user asks to create a plan, roadmap, breakdown, or strategy (or clicks "Plan Project & Auto-Populate Board"):
-1. In your main response, present a clear, beautifully structured plan divided into logical phases (e.g. Phase 1: Setup & Architecture, Phase 2: Core Components, Phase 3: Testing & Deployment).
-2. At the VERY END of your message, create 3 to 5 milestone action items representing the key step-by-step execution phases under the exact header:
+1. In your main response, present a clear, beautifully structured plan divided into logical phases (e.g. Phase 1: Setup & Architecture, Phase 2: Core Implementation, Phase 3: Testing & Deployment).
+2. At the VERY END of your message, output the organized plan tasks under the exact header:
 ### Action Items
-- [High] Phase 1: Architecture & Tech Stack Setup
-- [High] Phase 2: Build Core Reasoning & Tool Engine
-- [Medium] Phase 3: Integration, UI & Testing
+[Phase 1: Architecture & Tech Stack Setup]
+- [High] Choose frontend & backend framework (due: tomorrow)
+- [Medium] Setup database & authentication system
+
+[Phase 2: Core Components & Logic]
+- [High] Build REST / GraphQL API endpoints
+- [Medium] Implement core agent reasoning loop
 
 Rules for Action Items:
-- Keep the title clear, concise, and structured (e.g., "Step 1: ...", "Phase 1: ...").
-- Do NOT output dozens of tiny sub-bullets as individual tasks; consolidate into 3-5 high-level actionable steps.
+- Group tasks under clear phase headers in square brackets like [Phase 1: Phase Name].
+- List 2-3 specific, actionable step tasks under each phase header.
 - Do NOT generate "### Action Items" for casual conversational turns (like "hello", "yes", or simple factual questions).`;
 
             // Clean up and format chat messages for OpenAI compatibility:
@@ -769,13 +773,19 @@ Rules for Action Items:
             if (match && match.index !== undefined) {
               const tasksPart = fullContent.slice(match.index + match[0].length);
               if (tasksPart) {
-                const rawTaskLines = tasksPart
-                  .split('\n')
-                  .map(t => t.replace(/^[-*•\d.]+\s*/, '').trim())
-                  .filter(t => t.length > 0 && !t.startsWith('#'));
-                  
-                if (rawTaskLines.length > 0) {
-                  rawTaskLines.forEach(rawTask => {
+                const lines = tasksPart.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                let currentPhasePrefix = '';
+
+                lines.forEach(line => {
+                  // Phase header detection e.g. [Phase 1: Foundation & Setup]
+                  const phaseMatch = line.match(/^\[(Phase\s*\d+[^\]]*)\]/i);
+                  if (phaseMatch) {
+                    currentPhasePrefix = phaseMatch[1].trim();
+                    return;
+                  }
+
+                  const rawTask = line.replace(/^[-*•\d.]+\s*/, '').trim();
+                  if (rawTask && !rawTask.startsWith('#')) {
                     let title = rawTask;
                     let priority: 'low' | 'medium' | 'high' | undefined = undefined;
                     let dueDate: number | undefined = undefined;
@@ -806,13 +816,14 @@ Rules for Action Items:
                     }
 
                     if (title) {
-                      addTask(title, dueDate, priority);
+                      const finalTitle = currentPhasePrefix ? `${currentPhasePrefix} ➔ ${title}` : title;
+                      addTask(finalTitle, dueDate, priority);
                     }
-                  });
-                  
-                  // Auto-open Action Board drawer so user sees project plan populate live!
-                  set({ isActionBoardOpen: true });
-                }
+                  }
+                });
+
+                // Auto-open Action Board drawer so user sees project plan populate live!
+                set({ isActionBoardOpen: true });
               }
             }
 

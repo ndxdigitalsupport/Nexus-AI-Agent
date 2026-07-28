@@ -365,12 +365,26 @@ function TaskCard({ task, isExecuting, onToggle, onDelete, onEdit, onExecute }: 
             </div>
           ) : (
             <div className="flex flex-col">
-              <p
-                className={`text-xs font-medium leading-snug break-words ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}
-                onDoubleClick={() => setIsEditing(true)}
-              >
-                {task.title.replace(/\*\*/g, '')}
-              </p>
+              {task.title.includes(' ➔ ') ? (
+                <div>
+                  <span className="inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 mb-1">
+                    {task.title.split(' ➔ ')[0]}
+                  </span>
+                  <p
+                    className={`text-xs font-medium leading-snug break-words ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}
+                    onDoubleClick={() => setIsEditing(true)}
+                  >
+                    {task.title.split(' ➔ ').slice(1).join(' ➔ ').replace(/\*\*/g, '')}
+                  </p>
+                </div>
+              ) : (
+                <p
+                  className={`text-xs font-medium leading-snug break-words ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}
+                  onDoubleClick={() => setIsEditing(true)}
+                >
+                  {task.title.replace(/\*\*/g, '')}
+                </p>
+              )}
               <div className="flex items-center gap-2 mt-2">
                 {getPriorityBadge(task.priority)}
                 {task.dueDate && (
