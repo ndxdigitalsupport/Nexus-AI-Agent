@@ -382,7 +382,7 @@ export default function ChatArea() {
                 }
               }}
               placeholder="Ask NEXUS anything..."
-              className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-36 min-h-[40px] p-2 text-text placeholder:text-text-muted/50 focus:outline-none text-sm font-sans truncate"
+              className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-36 min-h-[40px] p-2 text-text placeholder:text-text-muted/50 focus:outline-none text-base sm:text-sm font-sans truncate"
               rows={1}
             />
             <button 
