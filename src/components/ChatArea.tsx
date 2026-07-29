@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router-dom';
 
 export default function ChatArea() {
@@ -312,7 +313,40 @@ export default function ChatArea() {
                   <img src={msg.imageUrl} alt="Attached upload" className="max-w-full max-h-64 object-cover rounded-xl mb-2 border border-slate-900/30 shadow-md" />
                 )}
                 {msg.role === 'agent' ? (
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      table: ({ children }) => (
+                        <div className="my-4 overflow-x-auto rounded-xl border border-white/10 shadow-lg">
+                          <table className="w-full text-left border-collapse text-xs font-sans">
+                            {children}
+                          </table>
+                        </div>
+                      ),
+                      thead: ({ children }) => (
+                        <thead className="bg-slate-900/90 text-cyan-300 font-mono border-b border-white/10 uppercase tracking-wider text-[11px]">
+                          {children}
+                        </thead>
+                      ),
+                      th: ({ children }) => (
+                        <th className="px-3.5 py-2.5 font-bold border-r border-white/5 last:border-r-0">
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="px-3.5 py-2 border-t border-white/5 border-r border-white/5 last:border-r-0 text-text/90">
+                          {children}
+                        </td>
+                      ),
+                      tr: ({ children }) => (
+                        <tr className="hover:bg-white/5 transition-colors odd:bg-slate-950/30 even:bg-slate-900/30">
+                          {children}
+                        </tr>
+                      )
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
                 ) : (
                   <p className="whitespace-pre-wrap m-0 leading-relaxed font-sans">{msg.content}</p>
                 )}
