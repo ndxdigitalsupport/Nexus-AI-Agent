@@ -5,6 +5,7 @@ import Settings from "@/pages/Settings";
 import History from "@/pages/History";
 import Agents from "@/pages/Agents";
 import KnowledgeBase from "@/pages/KnowledgeBase";
+import ActionBoardPage from "@/pages/ActionBoardPage";
 
 function AppLayout() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/history" element={<History />} />
+          <Route path="/action-board" element={<ActionBoardPage />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/knowledge-base" element={<KnowledgeBase />} />
         </Route>
