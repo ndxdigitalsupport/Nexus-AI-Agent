@@ -50,8 +50,8 @@ export default function ArtifactStudio() {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
-                📄 Document Studio
+              <span className="text-[11px] font-bold tracking-wider text-cyan-400 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
+                Document Studio
               </span>
               <span className="text-[10px] text-text-muted uppercase font-mono">{activeArtifact.type}</span>
             </div>
@@ -68,8 +68,8 @@ export default function ArtifactStudio() {
                 : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
             }`}
           >
-            <Edit2 className="w-3.5 h-3.5" />
-            <span>{isEditing ? '✓ Done Editing' : '✏️ Edit Text'}</span>
+            {isEditing ? <Check className="w-3.5 h-3.5 text-amber-300" /> : <Edit2 className="w-3.5 h-3.5" />}
+            <span>{isEditing ? 'Done Editing' : 'Edit Text'}</span>
           </button>
 
           <button
@@ -89,7 +89,7 @@ export default function ArtifactStudio() {
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text font-medium transition-colors"
         >
           {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-          <span>{copied ? 'Copied to Clipboard!' : '📋 Copy Document Text'}</span>
+          <span>{copied ? 'Copied to Clipboard!' : 'Copy Document Text'}</span>
         </button>
 
         <div className="flex items-center gap-2">
