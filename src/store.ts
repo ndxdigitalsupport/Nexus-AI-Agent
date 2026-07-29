@@ -617,9 +617,9 @@ ${knowledgeBaseContent}
 TASK & PROJECT PLAN INSTRUCTION:
 Whenever the user asks to create a plan, roadmap, breakdown, or strategy (or clicks "Plan Project & Auto-Populate Board"):
 1. In your main response, present a clear, beautifully structured plan divided into logical phases.
-2. At the VERY END of your message, output the project name and phase tasks under the exact header:
+2. At the VERY END of your message, output the exact project name extracted from the user request under the exact header:
 ### Action Items
-Project: [Plan Name e.g., Finance App Development Plan]
+Project: [Exact Name requested by user e.g. "Techlaw Web App Plan" or "Finance Tracker Plan"]
 
 [Phase 1: Foundation & Strategy]
 - [High] Define core features & MVP scope (due: 2 days)
@@ -630,7 +630,8 @@ Project: [Plan Name e.g., Finance App Development Plan]
 - [Medium] Implement authentication & security
 
 Rules for Action Items:
-- Start with Project: [Plan Title] so tasks are neatly grouped under the specific Project Plan folder.
+- Start with Project: [Specific App/Project Name] matching the user's prompt (e.g. Project: Techlaw Web App Plan).
+- NEVER use generic titles like "Web App Development Plan" if the user mentioned a specific app name like Techlaw!
 - Group tasks under clear phase headers in square brackets like [Phase 1: Phase Name].
 - List 2-3 specific, actionable step tasks under each phase header.
 - Do NOT generate "### Action Items" for casual conversational turns (like "hello", "yes", or simple factual questions).`;

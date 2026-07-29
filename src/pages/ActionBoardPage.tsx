@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, Task } from '@/store';
-import { Zap, CheckCircle2, Circle, Trash2, Plus, CalendarDays, ArrowLeft, Folder, Sparkles, Filter, Check } from 'lucide-react';
+import { Zap, CheckCircle2, Circle, Trash2, Plus, CalendarDays, ArrowLeft, Folder, Sparkles, Filter, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
@@ -234,117 +234,21 @@ export default function ActionBoardPage() {
             <div className="text-center py-16 glass-panel rounded-2xl border border-white/10">
               <Sparkles className="w-12 h-12 text-text-muted/40 mx-auto mb-3" />
               <p className="text-text-muted font-mono text-base mb-1">No action items or project plans found.</p>
-              <p className="text-text-muted/60 text-xs">Ask NEXUS to "create a plan for an app" in the Terminal to auto-populate project plans!</p>
+              <p className="text-text-muted/60 text-xs">Ask NEXUS to "create a plan for Techlaw App" in the Terminal to auto-populate project plans!</p>
             </div>
           ) : (
-            Object.entries(projectTree).map(([projectName, phases]) => {
-              const allTasksInProject = Object.values(phases).flat();
-              const completedInProject = allTasksInProject.filter(t => t.completed).length;
-              const isGeneral = projectName === 'General Tasks & Action Items';
-
-              return (
-                <div key={projectName} className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-xl">
-                  {/* Project Folder Title Header */}
-                  <div className="p-5 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl ${isGeneral ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-primary/10 text-primary border border-primary/30'}`}>
-                        <Folder className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold font-mono text-text tracking-wide">{projectName}</h2>
-                        <p className="text-xs font-mono text-text-muted mt-0.5">{Object.keys(phases).length} Phases • {allTasksInProject.length} Tasks</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-xs font-bold text-cyan-300 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30">
-                        {completedInProject} / {allTasksInProject.length} Completed
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Phases Container */}
-                  <div className="p-6 space-y-6 bg-slate-950/40">
-                    {Object.entries(phases).map(([phaseName, phaseTasks]) => (
-                      <div key={phaseName} className="space-y-3">
-                        <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                          <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                          <h3 className="font-mono font-bold text-sm text-text-muted uppercase tracking-wider">{phaseName}</h3>
-                          <span className="text-xs font-mono text-text-muted/60">({phaseTasks.filter(t => t.completed).length}/{phaseTasks.length})</span>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {phaseTasks.map(task => (
-                            <div
-                              key={task.id}
-                              className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
-                                task.completed
-                                  ? 'bg-slate-950/40 border-white/5 opacity-60'
-                                  : executingTaskId === task.id || (isProcessing && executingTaskId === task.id)
-                                  ? 'bg-amber-500/10 border-amber-500/50 shadow-glow-violet animate-pulse'
-                                  : 'bg-slate-900/80 border-white/10 hover:border-primary/40 shadow-md'
-                              }`}
-                            >
-                              <div>
-                                <div className="flex items-start justify-between gap-3 mb-2">
-                                  <button onClick={() => toggleTask(task.id)} className="mt-0.5 shrink-0">
-                                    {task.completed ? (
-                                      <CheckCircle2 className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
-                                    ) : (
-                                      <Circle className="w-5 h-5 text-text-muted hover:text-primary transition-colors" />
-                                    )}
-                                  </button>
-                                  <div className="flex items-center gap-1.5 shrink-0">
-                                    {task.priority && (
-                                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${
-                                        task.priority === 'high' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
-                                        task.priority === 'medium' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
-                                        'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                      }`}>
-                                        {task.priority}
-                                      </span>
-                                    )}
-                                    <button onClick={() => deleteTask(task.id)} className="p-1 text-text-muted hover:text-rose-400 transition-colors">
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                <p className={`text-sm font-medium leading-relaxed ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}>
-                                  {(task.title.includes(' ➔ ') ? task.title.split(' ➔ ').slice(-1)[0] : task.title).replace(/\*\*/g, '')}
-                                </p>
-                              </div>
-
-                              <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between gap-2">
-                                {task.dueDate ? (
-                                  <span className="flex items-center gap-1 text-[11px] font-mono text-text-muted">
-                                    <CalendarDays className="w-3.5 h-3.5 text-primary" />
-                                    {new Date(task.dueDate).toLocaleDateString()}
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] font-mono text-text-muted/60">No due date</span>
-                                )}
-
-                                {!task.completed && (
-                                  <button
-                                    onClick={() => handleExecuteTask(task.id)}
-                                    disabled={executingTaskId === task.id}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-primary text-white text-xs font-mono font-bold hover:brightness-110 transition-all shadow-glow-cyan"
-                                  >
-                                    <Zap className="w-3.5 h-3.5 text-amber-300" />
-                                    <span>Execute with AI</span>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })
+            Object.entries(projectTree).map(([projectName, phases]) => (
+              <ProjectPlanBlock
+                key={projectName}
+                projectName={projectName}
+                phases={phases}
+                executingTaskId={executingTaskId}
+                isProcessing={isProcessing}
+                toggleTask={toggleTask}
+                deleteTask={deleteTask}
+                handleExecuteTask={handleExecuteTask}
+              />
+            ))
           )}
         </div>
       </div>
@@ -356,6 +260,140 @@ export default function ActionBoardPage() {
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
       />
+    </div>
+  );
+}
+
+function ProjectPlanBlock({
+  projectName,
+  phases,
+  executingTaskId,
+  isProcessing,
+  toggleTask,
+  deleteTask,
+  handleExecuteTask
+}: {
+  projectName: string;
+  phases: Record<string, Task[]>;
+  executingTaskId: string | null;
+  isProcessing: boolean;
+  toggleTask: (id: string) => void;
+  deleteTask: (id: string) => void;
+  handleExecuteTask: (id: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+  const allTasksInProject = Object.values(phases).flat();
+  const completedInProject = allTasksInProject.filter(t => t.completed).length;
+  const isGeneral = projectName === 'General Tasks & Action Items';
+
+  return (
+    <div className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-xl">
+      {/* Project Folder Title Header (Clickable Collapsible Accordion) */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-5 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 hover:bg-slate-800/80 transition-all border-b border-white/10 flex flex-wrap items-center justify-between gap-3 text-left group cursor-pointer"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${isGeneral ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-primary/10 text-primary border border-primary/30'}`}>
+            <Folder className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold font-mono text-text tracking-wide group-hover:text-primary transition-colors">{projectName}</h2>
+            <p className="text-xs font-mono text-text-muted mt-0.5">{Object.keys(phases).length} Phases • {allTasksInProject.length} Tasks</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="font-mono text-xs font-bold text-cyan-300 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
+            {completedInProject} / {allTasksInProject.length} Completed
+          </span>
+          <div className="p-1.5 rounded-xl bg-white/5 text-text-muted group-hover:text-text transition-colors">
+            {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+          </div>
+        </div>
+      </button>
+
+      {/* Phases Container */}
+      {isOpen && (
+        <div className="p-6 space-y-6 bg-slate-950/40">
+          {Object.entries(phases).map(([phaseName, phaseTasks]) => (
+            <div key={phaseName} className="space-y-3">
+              <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <h3 className="font-mono font-bold text-sm text-text-muted uppercase tracking-wider">{phaseName}</h3>
+                <span className="text-xs font-mono text-text-muted/60">({phaseTasks.filter(t => t.completed).length}/{phaseTasks.length})</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {phaseTasks.map(task => (
+                  <div
+                    key={task.id}
+                    className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                      task.completed
+                        ? 'bg-slate-950/40 border-white/5 opacity-60'
+                        : executingTaskId === task.id || (isProcessing && executingTaskId === task.id)
+                        ? 'bg-amber-500/10 border-amber-500/50 shadow-glow-violet animate-pulse'
+                        : 'bg-slate-900/80 border-white/10 hover:border-primary/40 shadow-md'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <button onClick={() => toggleTask(task.id)} className="mt-0.5 shrink-0">
+                          {task.completed ? (
+                            <CheckCircle2 className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
+                          ) : (
+                            <Circle className="w-5 h-5 text-text-muted hover:text-primary transition-colors" />
+                          )}
+                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {task.priority && (
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${
+                              task.priority === 'high' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
+                              task.priority === 'medium' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                              'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                            }`}>
+                              {task.priority}
+                            </span>
+                          )}
+                          <button onClick={() => deleteTask(task.id)} className="p-1 text-text-muted hover:text-rose-400 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className={`text-sm font-medium leading-relaxed ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}>
+                        {(task.title.includes(' ➔ ') ? task.title.split(' ➔ ').slice(-1)[0] : task.title).replace(/\*\*/g, '')}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between gap-2">
+                      {task.dueDate ? (
+                        <span className="flex items-center gap-1 text-[11px] font-mono text-text-muted">
+                          <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                          {new Date(task.dueDate).toLocaleDateString()}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono text-text-muted/60">No due date</span>
+                      )}
+
+                      {!task.completed && (
+                        <button
+                          onClick={() => handleExecuteTask(task.id)}
+                          disabled={executingTaskId === task.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-primary text-white text-xs font-mono font-bold hover:brightness-110 transition-all shadow-glow-cyan"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Execute with AI</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
