@@ -414,118 +414,121 @@ export default function Settings() {
                     </div>
                   );
                 })}
-              </div>
-            </div>
+            {/* Custom Model ID Card (ADMIN ONLY - HIDDEN BY DEFAULT) */}
+            {isAdminAuthenticated && (
+              <div className={`p-4 rounded-2xl border transition-all duration-300 mt-6 ${
+                customModelInput.trim()
+                  ? 'bg-gradient-to-r from-cyan-500/10 via-violet-500/10 to-primary/10 border-primary shadow-glow-cyan'
+                  : 'bg-slate-950/50 border-white/10 hover:border-white/20'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-text flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-cyan-400" />
+                    <span>Custom Model ID Override</span>
+                  </label>
+                  {customModelInput.trim() ? (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Check className="w-3 h-3 text-cyan-400" /> Active Override
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-text-muted">
+                      Admin Optional
+                    </span>
+                  )}
+                </div>
 
-            {/* Custom Model ID Card */}
-            <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-              customModelInput.trim()
-                ? 'bg-gradient-to-r from-cyan-500/10 via-violet-500/10 to-primary/10 border-primary shadow-glow-cyan'
-                : 'bg-slate-950/50 border-white/10 hover:border-white/20'
-            }`}>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-text flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
-                  <span>Custom Model ID</span>
-                </label>
-                {customModelInput.trim() ? (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase tracking-wider flex items-center gap-1">
-                    <Check className="w-3 h-3 text-cyan-400" /> Active Override
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-text-muted">
-                    Optional
-                  </span>
-                )}
-              </div>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  value={customModelInput}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setCustomModelInput(val);
-                    saveSettingsToStore(apiKey, selectedModel, val, customEndpoint, temperature);
-                  }}
-                  placeholder="e.g. meta-llama/llama-3.3-70b-instruct or deepseek/deepseek-r1"
-                  className="w-full bg-slate-900/90 border border-white/15 focus:border-cyan-400 rounded-xl px-4 py-3 text-cyan-300 placeholder:text-text-muted/40 focus:outline-none transition-all font-mono text-sm shadow-inner"
-                />
-                {customModelInput && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCustomModelInput('');
-                      saveSettingsToStore(apiKey, selectedModel, '', customEndpoint, temperature);
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={customModelInput}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomModelInput(val);
+                      saveSettingsToStore(apiKey, selectedModel, val, customEndpoint, temperature);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-text-muted hover:text-rose-400 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-lg transition-colors"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Custom Endpoint & Parameters */}
-          <div className="glass-panel p-6 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <Server className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-text">Endpoint & Parameters</h2>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-text-muted mb-2">
-                  API Endpoint URL
-                </label>
-                <input
-                  type="text"
-                  value={customEndpoint}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setCustomEndpoint(val);
-                    saveSettingsToStore(apiKey, selectedModel, customModelInput, val, temperature);
-                  }}
-                  placeholder="https://openrouter.ai/api/v1/chat/completions"
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-text placeholder:text-text-muted/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ep = 'https://openrouter.ai/api/v1/chat/completions';
-                      setCustomEndpoint(ep);
-                      saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
-                    }}
-                    className="text-xs px-2.5 py-1 rounded bg-white/5 border border-white/10 text-text-muted hover:text-text transition-colors"
-                  >
-                    OpenRouter
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ep = 'https://api.openai.com/v1/chat/completions';
-                      setCustomEndpoint(ep);
-                      saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
-                    }}
-                    className="text-xs px-2.5 py-1 rounded bg-white/5 border border-white/10 text-text-muted hover:text-text transition-colors"
-                  >
-                    OpenAI Direct
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ep = 'http://localhost:11434/v1/chat/completions';
-                      setCustomEndpoint(ep);
-                      saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
-                    }}
-                    className="text-xs px-2.5 py-1 rounded bg-white/5 border border-white/10 text-text-muted hover:text-text transition-colors"
-                  >
-                    Ollama (Local)
-                  </button>
+                    placeholder="e.g. meta-llama/llama-3.3-70b-instruct or deepseek/deepseek-r1"
+                    className="w-full bg-slate-900/90 border border-white/15 focus:border-cyan-400 rounded-xl px-4 py-3 text-cyan-300 placeholder:text-text-muted/40 focus:outline-none transition-all font-mono text-sm shadow-inner"
+                  />
+                  {customModelInput && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomModelInput('');
+                        saveSettingsToStore(apiKey, selectedModel, '', customEndpoint, temperature);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-text-muted hover:text-rose-400 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-lg transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* Custom Endpoint & Parameters (ADMIN ONLY - HIDDEN BY DEFAULT) */}
+          {isAdminAuthenticated && (
+            <div className="glass-panel p-6 rounded-2xl border border-white/10 animate-fadeIn">
+              <div className="flex items-center gap-3 mb-4">
+                <Server className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold text-text">Endpoint & Parameters</h2>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-text-muted mb-2">
+                    API Endpoint URL
+                  </label>
+                  <input
+                    type="text"
+                    value={customEndpoint}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomEndpoint(val);
+                      saveSettingsToStore(apiKey, selectedModel, customModelInput, val, temperature);
+                    }}
+                    placeholder="https://openrouter.ai/api/v1/chat/completions"
+                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-text placeholder:text-text-muted/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ep = 'https://openrouter.ai/api/v1/chat/completions';
+                        setCustomEndpoint(ep);
+                        saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
+                      }}
+                      className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-text-muted border border-white/10 transition-colors"
+                    >
+                      Use OpenRouter API
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ep = 'https://api.deepseek.com/chat/completions';
+                        setCustomEndpoint(ep);
+                        saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
+                      }}
+                      className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-text-muted border border-white/10 transition-colors"
+                    >
+                      Use DeepSeek Official API
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ep = 'https://gpt-agent.cc/v1/chat/completions';
+                        setCustomEndpoint(ep);
+                        saveSettingsToStore(apiKey, selectedModel, customModelInput, ep, temperature);
+                      }}
+                      className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition-colors"
+                    >
+                      Use GPT Agent Relay
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
               <div>
                 <div className="flex items-center justify-between mb-2">
