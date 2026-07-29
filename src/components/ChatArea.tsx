@@ -1,15 +1,70 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X, FileText } from 'lucide-react';
+import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X, FileText, Volume2, VolumeX, Lightbulb, Compass, FileCheck, HelpCircle } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router-dom';
+
+const PROMPT_POOL = [
+  {
+    icon: Lightbulb,
+    category: '💡 Small Business Advice',
+    title: 'How to increase sales for my local retail shop?',
+    prompt: 'Give me 5 practical, low-cost ideas to increase monthly sales for my local retail business.',
+    gradient: 'from-amber-500/20 via-orange-500/10 to-amber-500/5 border-amber-500/30 text-amber-300'
+  },
+  {
+    icon: FileCheck,
+    category: '📝 Legal & Agreements',
+    title: 'Draft a simple Employment Contract',
+    prompt: 'Draft a standard, easy-to-read Employment Agreement contract for a full-time staff member.',
+    gradient: 'from-cyan-500/20 via-blue-500/10 to-cyan-500/5 border-cyan-500/30 text-cyan-300'
+  },
+  {
+    icon: Compass,
+    category: '🎯 Step-by-Step Plans',
+    title: 'Create a plan to open a Coffee Shop',
+    prompt: 'Create a complete step-by-step roadmap to open a coffee shop in Phnom Penh from budget to grand opening.',
+    gradient: 'from-emerald-500/20 via-teal-500/10 to-emerald-500/5 border-emerald-500/30 text-emerald-300'
+  },
+  {
+    icon: HelpCircle,
+    category: '❓ Everyday Advice',
+    title: 'How to reduce monthly personal & business expenses?',
+    prompt: 'What are the top 7 smartest ways to audit and cut unnecessary monthly expenses?',
+    gradient: 'from-purple-500/20 via-violet-500/10 to-purple-500/5 border-purple-500/30 text-purple-300'
+  },
+  {
+    icon: Sparkles,
+    category: '📣 Marketing & Ads',
+    title: 'Write 3 Facebook ad captions for my product',
+    prompt: 'Write 3 high-converting, friendly Facebook social media captions for a new product launch.',
+    gradient: 'from-rose-500/20 via-pink-500/10 to-rose-500/5 border-rose-500/30 text-rose-300'
+  },
+  {
+    icon: Target,
+    category: '📈 Finance & Growth',
+    title: 'How to calculate profit margins & pricing?',
+    prompt: 'Explain in simple non-technical terms how to calculate product profit margins and markup pricing.',
+    gradient: 'from-cyan-500/20 via-teal-500/10 to-cyan-500/5 border-cyan-500/30 text-cyan-300'
+  }
+];
 
 export default function ChatArea() {
   const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar, openArtifact } = useStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [promptOffset, setPromptOffset] = useState(0);
+
+  // Auto-rotate starter cards every 8 seconds with smooth animation
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPromptOffset(prev => (prev + 2) % PROMPT_POOL.length);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, []);
   const [isMemorySaved, setIsMemorySaved] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPersonaMenu, setShowPersonaMenu] = useState(false);
@@ -28,6 +83,28 @@ export default function ChatArea() {
     navigator.clipboard.writeText(content);
     setCopiedMessageId(msgId);
     setTimeout(() => setCopiedMessageId(null), 2500);
+  };
+
+  const handleSpeakMessage = (content: string, msgId: string) => {
+    if (!('speechSynthesis' in window)) return;
+
+    if (speakingMessageId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const cleanText = content.replace(/[#*`_~|]/g, '').trim();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => setSpeakingMessageId(null);
+    utterance.onerror = () => setSpeakingMessageId(null);
+
+    setSpeakingMessageId(msgId);
+    window.speechSynthesis.speak(utterance);
   };
 
   const handleConvertToTask = (content: string, msgId: string) => {
@@ -342,6 +419,57 @@ export default function ChatArea() {
 
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar">
+        {/* Welcome Animated Prompt Cards (Shown when starting a chat) */}
+        {activeMessages.length <= 1 && (
+          <div className="max-w-4xl mx-auto my-6 p-6 rounded-3xl glass-panel border border-white/10 bg-slate-900/60 shadow-2xl animate-fadeIn">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 shadow-glow-cyan">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-text font-sans">What would you like assistance with today?</h3>
+                  <p className="text-xs text-text-muted">Click any recommendation below or type your own question.</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono text-cyan-400/80 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 animate-pulse hidden sm:inline-block">
+                ✨ Auto-suggesting...
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 transition-all duration-700">
+              {PROMPT_POOL.slice(promptOffset, promptOffset + 2).concat(
+                PROMPT_POOL.slice(0, Math.max(0, (promptOffset + 2) - PROMPT_POOL.length))
+              ).map((item, idx) => {
+                const ItemIcon = item.icon;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setInput(item.prompt);
+                    }}
+                    className={`p-4 rounded-2xl border text-left transition-all duration-300 bg-gradient-to-br ${item.gradient} hover:scale-[1.02] hover:shadow-lg active:scale-95 group flex flex-col justify-between`}
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold font-mono tracking-wider uppercase opacity-80 block mb-1">
+                        {item.category}
+                      </span>
+                      <h4 className="font-bold text-xs text-text group-hover:text-cyan-300 transition-colors line-clamp-2">
+                        {item.title}
+                      </h4>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-[11px] font-mono opacity-60 group-hover:opacity-100 transition-opacity">
+                      <span>Click to use prompt</span>
+                      <span>→</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {activeMessages.map((msg) => (
           <div key={msg.id} className={`flex gap-3 max-w-7xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             {/* Avatar */}
@@ -438,6 +566,28 @@ export default function ChatArea() {
                       <>
                         <PlusCircle className="w-3 h-3" />
                         <span>+ Add Task</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleSpeakMessage(msg.content, msg.id)}
+                    className={`flex items-center gap-1 text-[11px] font-mono transition-colors px-2 py-0.5 rounded-lg border ${
+                      speakingMessageId === msg.id 
+                        ? 'bg-violet-500/20 text-violet-300 border-violet-500/50 animate-pulse' 
+                        : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
+                    }`}
+                    title="Listen to response out loud"
+                  >
+                    {speakingMessageId === msg.id ? (
+                      <>
+                        <VolumeX className="w-3 h-3 text-violet-400" />
+                        <span className="text-violet-300 font-semibold">Stop Speaking</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3 h-3" />
+                        <span>🔊 Listen</span>
                       </>
                     )}
                   </button>

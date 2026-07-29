@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
-import { MessageSquare, Trash2, Clock, CalendarDays, ArrowRight, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Trash2, Clock, CalendarDays, ArrowRight, CheckCircle2 } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
 export default function History() {
@@ -41,22 +41,11 @@ export default function History() {
   return (
     <div className="flex-1 h-full overflow-y-auto custom-scrollbar p-6 md:p-8 pb-12">
       <div className="max-w-5xl mx-auto w-full space-y-8">
-        {/* Navigation Back Button & Header */}
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={() => navigate('/')}
-            className="self-start flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text text-xs font-mono transition-all group"
-            title="Go Back"
-          >
-            <ArrowLeft className="w-4 h-4 text-cyan-400 group-hover:-translate-x-1 transition-transform" />
-            <span>Back</span>
-          </button>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold font-mono neon-text">Conversation History</h1>
-              <p className="text-text-muted mt-1">Review, load, or manage past AI chat sessions.</p>
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold font-mono neon-text">Conversation History</h1>
+            <p className="text-text-muted mt-1">Review, load, or manage past AI chat sessions.</p>
           </div>
         </div>
 

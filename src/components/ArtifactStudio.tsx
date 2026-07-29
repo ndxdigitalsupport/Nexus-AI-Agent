@@ -43,80 +43,76 @@ export default function ArtifactStudio() {
   return (
     <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[560px] md:w-[680px] bg-slate-950/95 backdrop-blur-2xl border-l border-white/15 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
       {/* Header Bar */}
-      <div className="p-4 md:p-5 border-b border-white/10 bg-slate-900/80 flex items-center justify-between gap-3 shrink-0">
+      <div className="p-4 md:p-5 border-b border-white/10 bg-slate-900/90 flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 shrink-0">
+          <div className="p-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 shrink-0 shadow-glow-cyan">
             {getIcon()}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30">
-                NEXUS Live Artifact
+              <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
+                📄 Document Studio
               </span>
-              <span className="text-[10px] font-mono text-text-muted/60 uppercase">{activeArtifact.type}</span>
+              <span className="text-[10px] text-text-muted uppercase font-mono">{activeArtifact.type}</span>
             </div>
-            <h2 className="text-base font-bold text-text truncate font-mono mt-0.5">{activeArtifact.title}</h2>
+            <h2 className="text-base font-bold text-text truncate mt-0.5">{activeArtifact.title}</h2>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-semibold transition-all flex items-center gap-1.5 ${
-              isEditing ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
+            className={`px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 shadow-md ${
+              isEditing 
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-glow-violet' 
+                : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
             }`}
           >
             <Edit2 className="w-3.5 h-3.5" />
-            <span>{isEditing ? 'Preview' : 'Edit'}</span>
+            <span>{isEditing ? '✓ Done Editing' : '✏️ Edit Text'}</span>
           </button>
 
           <button
             onClick={closeArtifactStudio}
-            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border border-white/10 transition-colors"
-            title="Close Canvas Studio"
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border border-white/10 transition-colors"
+            title="Close Studio"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Content Toolbar */}
-      <div className="px-5 py-2.5 bg-slate-900/40 border-b border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono shrink-0">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text transition-colors"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied!' : 'Copy Code/Text'}</span>
-          </button>
-        </div>
+      {/* User-Friendly Action Toolbar */}
+      <div className="px-5 py-3 bg-slate-900/60 border-b border-white/5 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text font-medium transition-colors"
+        >
+          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          <span>{copied ? 'Copied to Clipboard!' : '📋 Copy Document Text'}</span>
+        </button>
 
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] text-text-muted/60">Export:</span>
-          <button
-            onClick={() => handleExportFile('md')}
-            className="px-2 py-1 rounded bg-white/5 hover:bg-cyan-500/20 text-cyan-300 border border-white/10 hover:border-cyan-500/40 transition-colors"
-          >
-            .MD
-          </button>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-text-muted font-medium">Download As:</span>
           <button
             onClick={() => handleExportFile('txt')}
-            className="px-2 py-1 rounded bg-white/5 hover:bg-cyan-500/20 text-cyan-300 border border-white/10 hover:border-cyan-500/40 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-bold transition-all shadow-glow-cyan"
           >
-            .TXT
+            <Download className="w-3.5 h-3.5" />
+            <span>Word / Text (.txt)</span>
           </button>
           <button
-            onClick={() => handleExportFile('json')}
-            className="px-2 py-1 rounded bg-white/5 hover:bg-cyan-500/20 text-cyan-300 border border-white/10 hover:border-cyan-500/40 transition-colors"
+            onClick={() => handleExportFile('html')}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-bold transition-all"
           >
-            .JSON
+            <Download className="w-3.5 h-3.5" />
+            <span>Web Page (.html)</span>
           </button>
         </div>
       </div>
 
       {downloadNotice && (
-        <div className="px-4 py-2 bg-emerald-500/10 border-b border-emerald-500/30 text-emerald-400 text-xs font-mono text-center animate-fadeIn">
+        <div className="px-4 py-2 bg-emerald-500/10 border-b border-emerald-500/30 text-emerald-400 text-xs font-semibold text-center animate-fadeIn">
           ✓ {downloadNotice}
         </div>
       )}
