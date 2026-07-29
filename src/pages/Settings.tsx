@@ -315,44 +315,46 @@ export default function Settings() {
         </div>
 
         <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
-          {/* API Key Section */}
-          <div className="glass-panel p-6 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <Key className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-text">API Authorization</h2>
-            </div>
+          {/* API Key Section (ADMIN ONLY - HIDDEN BY DEFAULT) */}
+          {isAdminAuthenticated && (
+            <div className="glass-panel p-6 rounded-2xl border border-white/10 animate-fadeIn">
+              <div className="flex items-center gap-3 mb-4">
+                <Key className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold text-text">API Authorization</h2>
+              </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-text-muted mb-2">
-                  OpenRouter / Provider API Key
-                </label>
-                <div className="relative">
-                  <input
-                    type={showApiKey ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setApiKey(val);
-                      saveSettingsToStore(val, selectedModel, customModelInput, customEndpoint, temperature);
-                    }}
-                    placeholder="sk-or-v1-..."
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-text placeholder:text-text-muted/50 focus:outline-none focus:border-primary pr-12 transition-colors font-mono text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text p-1 transition-colors"
-                  >
-                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-muted mb-2">
+                    OpenRouter / Provider API Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      value={apiKey}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setApiKey(val);
+                        saveSettingsToStore(val, selectedModel, customModelInput, customEndpoint, temperature);
+                      }}
+                      placeholder="sk-or-v1-..."
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-text placeholder:text-text-muted/50 focus:outline-none focus:border-primary pr-12 transition-colors font-mono text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text p-1 transition-colors"
+                    >
+                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-text-muted mt-2">
+                    Your key is stored locally in your browser. Leaving this empty will check for <code className="bg-white/5 px-1.5 py-0.5 rounded text-primary">.env.local</code> keys.
+                  </p>
                 </div>
-                <p className="text-xs text-text-muted mt-2">
-                  Your key is stored locally in your browser. Leaving this empty will check for <code className="bg-white/5 px-1.5 py-0.5 rounded text-primary">.env.local</code> keys.
-                </p>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Model Selector Section */}
           <div className="glass-panel p-6 rounded-2xl border border-white/10">

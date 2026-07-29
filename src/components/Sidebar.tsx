@@ -19,7 +19,8 @@ export default function Sidebar() {
     addFolder,
     deleteFolder,
     isMobileSidebarOpen,
-    toggleMobileSidebar
+    toggleMobileSidebar,
+    isAdminAuthenticated
   } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -197,8 +198,12 @@ export default function Sidebar() {
           <NavItem icon={<Terminal className="w-5 h-5" />} label="Terminal" to="/" active={location.pathname === '/'} onClick={() => toggleMobileSidebar(false)} />
           <NavItem icon={<Zap className="w-5 h-5 text-amber-400" />} label="Action Board" to="/action-board" active={location.pathname === '/action-board'} onClick={() => toggleMobileSidebar(false)} />
           <NavItem icon={<History className="w-5 h-5" />} label="History" to="/history" active={location.pathname === '/history'} onClick={() => toggleMobileSidebar(false)} />
-          <NavItem icon={<Cpu className="w-5 h-5" />} label="Personas" to="/agents" active={location.pathname === '/agents'} onClick={() => toggleMobileSidebar(false)} />
-          <NavItem icon={<Book className="w-5 h-5" />} label="Knowledge Base" to="/knowledge-base" active={location.pathname === '/knowledge-base'} onClick={() => toggleMobileSidebar(false)} />
+          {isAdminAuthenticated && (
+            <>
+              <NavItem icon={<Cpu className="w-5 h-5" />} label="Personas" to="/agents" active={location.pathname === '/agents'} onClick={() => toggleMobileSidebar(false)} />
+              <NavItem icon={<Book className="w-5 h-5" />} label="Knowledge Base" to="/knowledge-base" active={location.pathname === '/knowledge-base'} onClick={() => toggleMobileSidebar(false)} />
+            </>
+          )}
         </nav>
 
         {/* Search Bar */}
