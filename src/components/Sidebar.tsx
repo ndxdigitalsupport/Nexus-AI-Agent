@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target } from 'lucide-react';
+import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target, LogOut } from 'lucide-react';
 import { useStore } from '../store';
 import ConfirmModal from './ConfirmModal';
 
@@ -20,7 +20,9 @@ export default function Sidebar() {
     deleteFolder,
     isMobileSidebarOpen,
     toggleMobileSidebar,
-    isAdminAuthenticated
+    isAdminAuthenticated,
+    currentUser,
+    logoutUser
   } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -417,9 +419,32 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Footer Navigation */}
-      <div className="px-3 md:px-4 pt-4 border-t border-white/10">
-        <NavItem icon={<Settings className="w-5 h-5" />} label="Settings" to="/settings" active={location.pathname === '/settings'} />
+      {/* Footer Navigation & Profile Badge */}
+      <div className="px-3 md:px-4 pt-3 border-t border-white/10 space-y-2">
+        <NavItem icon={<Settings className="w-5 h-5" />} label="Settings" to="/settings" active={location.pathname === '/settings'} onClick={() => toggleMobileSidebar(false)} />
+
+        {/* Logged in User Profile Card */}
+        {currentUser && (
+          <div className="p-2.5 rounded-xl bg-slate-950/80 border border-white/10 flex items-center justify-between gap-2 mt-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-base shrink-0">{currentUser.avatar || '👤'}</span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-text truncate leading-none">{currentUser.name}</p>
+                <span className="text-[10px] font-mono text-cyan-400 capitalize">{currentUser.role} mode</span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                logoutUser();
+                navigate('/login');
+              }}
+              className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
+              title="Log out of Team Portal"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Sleek Custom Confirm Modal */}

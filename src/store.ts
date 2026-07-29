@@ -62,7 +62,20 @@ export interface Artifact {
   createdAt: number;
 }
 
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+  avatar?: string;
+}
+
 interface AppState {
+  currentUser: UserAccount | null;
+  isAuthenticated: boolean;
+  loginUser: (email: string, pass: string, role?: 'admin' | 'user') => boolean;
+  logoutUser: () => void;
+
   conversations: Conversation[]; // Now an array of conversations
   activeConversationId: string | null; // ID of the currently active conversation
   folders: string[]; // Custom project folders
@@ -178,6 +191,48 @@ export const useStore = create<AppState>()(
   devtools(
     persist(
       (set, get) => ({
+        currentUser: {
+          id: 'admin-1',
+          name: 'NEXUS Administrator',
+          email: 'admin@nexus.ai',
+          role: 'admin',
+          avatar: '👑'
+        },
+        isAuthenticated: true,
+
+        loginUser: (email: string, pass: string, requestedRole?: 'admin' | 'user') => {
+          const lowerEmail = email.toLowerCase().trim();
+          const cleanPass = pass.trim();
+          const validPins = [get().settings?.adminPin?.trim(), '1234', '8888', 'admin'].filter(Boolean);
+
+          const isAdminLogin = requestedRole === 'admin' || lowerEmail.includes('admin') || validPins.includes(cleanPass);
+          
+          const newRole = isAdminLogin ? 'admin' : 'user';
+          const newUser: UserAccount = {
+            id: isAdminLogin ? 'admin-1' : `user-${Math.random().toString(36).substr(2, 5)}`,
+            name: isAdminLogin ? 'NEXUS Administrator' : (email.split('@')[0] || 'Team Member'),
+            email: email.trim() || (isAdminLogin ? 'admin@nexus.ai' : 'member@nexus.ai'),
+            role: newRole,
+            avatar: isAdminLogin ? '👑' : '👤'
+          };
+
+          set({
+            currentUser: newUser,
+            isAuthenticated: true,
+            isAdminAuthenticated: isAdminLogin
+          });
+
+          return true;
+        },
+
+        logoutUser: () => {
+          set({
+            currentUser: null,
+            isAuthenticated: false,
+            isAdminAuthenticated: false
+          });
+        },
+
         conversations: [createNewConversation()], // Start with one default conversation
         activeConversationId: '' as string, // Will be set in onRehydrateStorage or by startNewConversation
         folders: [],

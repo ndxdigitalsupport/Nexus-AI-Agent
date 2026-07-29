@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import ArtifactStudio from "@/components/ArtifactStudio";
 import Home from "@/pages/Home";
@@ -7,8 +7,16 @@ import History from "@/pages/History";
 import Agents from "@/pages/Agents";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import ActionBoardPage from "@/pages/ActionBoardPage";
+import LoginPage from "@/pages/LoginPage";
+import { useStore } from "@/store";
 
-function AppLayout() {
+function ProtectedLayout() {
+  const { isAuthenticated } = useStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className="flex h-full w-full inset-0 fixed bg-[#070913] overflow-hidden selection:bg-primary selection:text-background font-sans text-text">
       {/* Background Subtle Ambient Glows */}
@@ -33,7 +41,8 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route element={<AppLayout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/history" element={<History />} />
