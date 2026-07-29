@@ -301,9 +301,28 @@ function ProjectPlanBlock({
   const [isOpen, setIsOpen] = useState(true);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [isEditingProject, setIsEditingProject] = useState(false);
+  const [editProjectTitle, setEditProjectTitle] = useState(projectName);
+
   const allTasksInProject = Object.values(phases).flat();
   const completedInProject = allTasksInProject.filter(t => t.completed).length;
   const isGeneral = projectName === 'General Tasks & Action Items';
+
+  const handleSaveProjectTitle = () => {
+    const trimmed = editProjectTitle.trim();
+    if (trimmed && trimmed !== projectName) {
+      allTasksInProject.forEach(t => {
+        const parts = t.title.split(' ➔ ');
+        if (parts.length >= 2) {
+          parts[0] = trimmed;
+          editTask(t.id, parts.join(' ➔ '));
+        }
+      });
+    } else {
+      setEditProjectTitle(projectName);
+    }
+    setIsEditingProject(false);
+  };
 
   const handleSaveTaskTitle = (taskId: string, originalTitle: string) => {
     if (editTaskTitle.trim() && editTaskTitle.trim() !== originalTitle) {
@@ -315,16 +334,63 @@ function ProjectPlanBlock({
   return (
     <div className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-xl">
       {/* Project Folder Title Header (Clickable Collapsible Accordion) */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-5 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 hover:bg-slate-800/80 transition-all border-b border-white/10 flex flex-wrap items-center justify-between gap-3 text-left group cursor-pointer"
+      <div
+        onClick={() => {
+          if (!isEditingProject) setIsOpen(!isOpen);
+        }}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          setIsEditingProject(true);
+          setEditProjectTitle(projectName);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'F2') {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsEditingProject(true);
+            setEditProjectTitle(projectName);
+          }
+        }}
+        tabIndex={0}
+        className="w-full p-5 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 hover:bg-slate-800/80 transition-all border-b border-white/10 flex flex-wrap items-center justify-between gap-3 text-left group cursor-pointer focus:outline-none focus:ring-1 focus:ring-cyan-400/50"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${isGeneral ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-primary/10 text-primary border border-primary/30'}`}>
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 shrink-0 ${isGeneral ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-primary/10 text-primary border border-primary/30'}`}>
             <Folder className="w-5 h-5" />
           </div>
-          <div>
-            <h2 className="text-xl font-bold font-mono text-text tracking-wide group-hover:text-primary transition-colors">{projectName}</h2>
+          <div className="min-w-0 flex-1">
+            {isEditingProject ? (
+              <input
+                type="text"
+                value={editProjectTitle}
+                onChange={(e) => setEditProjectTitle(e.target.value)}
+                onBlur={handleSaveProjectTitle}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveProjectTitle();
+                  if (e.key === 'Escape') setIsEditingProject(false);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+                className="bg-slate-950 border border-cyan-400 rounded px-2.5 py-1 text-lg font-bold font-mono text-text focus:outline-none w-full max-w-md"
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold font-mono text-text tracking-wide group-hover:text-primary transition-colors truncate" title="Double-click or press F2 to rename">
+                  {projectName}
+                </h2>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingProject(true);
+                    setEditProjectTitle(projectName);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-cyan-300 transition-opacity"
+                  title="Rename Project Folder (F2)"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
             <p className="text-xs font-mono text-text-muted mt-0.5">{Object.keys(phases).length} Phases • {allTasksInProject.length} Tasks</p>
           </div>
         </div>
@@ -337,7 +403,7 @@ function ProjectPlanBlock({
             {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
           </div>
         </div>
-      </button>
+      </div>
 
       {/* Project Phases Content */}
       {isOpen && (
