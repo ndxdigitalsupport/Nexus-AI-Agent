@@ -98,8 +98,11 @@ export default function ChatArea() {
       return;
     }
 
-    // Always reset active speech
+    // Stop previous speech & resume synth queue if paused by browser
     window.speechSynthesis.cancel();
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
 
     // Clean markdown formatting symbols (#, *, `, _, ~, etc.)
     const cleanText = content
@@ -110,49 +113,33 @@ export default function ChatArea() {
 
     if (!cleanText) return;
 
-    // Split text into chunk sentences to prevent Chrome 15-second speech truncation bug
-    const chunks = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
-    let chunkIndex = 0;
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    utterance.lang = 'en-US';
 
-    const speakChunk = () => {
-      if (chunkIndex >= chunks.length) {
-        setSpeakingMessageId(null);
-        return;
-      }
-
-      const utterance = new SpeechSynthesisUtterance(chunks[chunkIndex]);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.lang = 'en-US';
-
-      // Pick a natural English voice if available
-      const voices = window.speechSynthesis.getVoices();
-      const preferredVoice = voices.find(v => (v.lang.startsWith('en') || v.lang.includes('US')) && !v.name.includes('Compact')) || voices[0];
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      const preferredVoice = voices.find(v => v.lang.includes('en') || v.lang.includes('US')) || voices[0];
       if (preferredVoice) utterance.voice = preferredVoice;
+    }
 
-      utterance.onend = () => {
-        chunkIndex++;
-        speakChunk();
-      };
+    utterance.onstart = () => {
+      setSpeakingMessageId(msgId);
+    };
 
-      utterance.onerror = (e) => {
-        console.warn('SpeechSynthesis error:', e);
-        chunkIndex++;
-        speakChunk();
-      };
+    utterance.onend = () => {
+      setSpeakingMessageId(null);
+    };
 
-      window.speechSynthesis.speak(utterance);
+    utterance.onerror = (e) => {
+      console.warn('SpeechSynthesis error:', e);
+      setSpeakingMessageId(null);
     };
 
     setSpeakingMessageId(msgId);
-    
-    // Ensure voices are loaded (needed for Chrome/Brave/Edge)
-    if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        speakChunk();
-      };
-    }
-    speakChunk();
+    window.speechSynthesis.speak(utterance);
   };
 
   const handleConvertToTask = (content: string, msgId: string) => {
