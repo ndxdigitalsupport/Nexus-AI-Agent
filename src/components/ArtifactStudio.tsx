@@ -49,13 +49,7 @@ export default function ArtifactStudio() {
             {getIcon()}
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold tracking-wider text-cyan-400 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
-                Document Studio
-              </span>
-              <span className="text-[10px] text-text-muted uppercase font-mono">{activeArtifact.type}</span>
-            </div>
-            <h2 className="text-base font-bold text-text truncate mt-0.5">{activeArtifact.title}</h2>
+            <h2 className="text-base font-bold text-text truncate">{activeArtifact.title}</h2>
           </div>
         </div>
 

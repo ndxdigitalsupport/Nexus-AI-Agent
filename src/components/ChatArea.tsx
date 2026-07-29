@@ -553,24 +553,6 @@ export default function ChatArea() {
                   </button>
 
                   <button
-                    onClick={() => handleConvertToTask(msg.content, msg.id)}
-                    className="flex items-center gap-1 text-[11px] font-mono text-text-muted hover:text-amber-400 transition-colors bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-0.5 rounded-lg"
-                    title="Add message as an Action Board task"
-                  >
-                    {addedTaskMessageId === msg.id ? (
-                      <>
-                        <Check className="w-3 h-3 text-amber-400" />
-                        <span className="text-amber-400 font-semibold">Added</span>
-                      </>
-                    ) : (
-                      <>
-                        <PlusCircle className="w-3 h-3" />
-                        <span>+ Add Task</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
                     onClick={() => handleSpeakMessage(msg.content, msg.id)}
                     className={`flex items-center gap-1 text-[11px] font-mono transition-colors px-2 py-0.5 rounded-lg border ${
                       speakingMessageId === msg.id 
