@@ -32,8 +32,8 @@ function AppLayout() {
       {/* Live Artifact & Document Preview Canvas */}
       <ArtifactStudio />
 
-      {/* Pop-up Sign In Modal */}
-      <LoginModal isOpen={isLoginModalOpen || !isAuthenticated} onClose={() => setIsLoginModalOpen(false)} />
+      {/* Pop-up Sign In Modal (Triggers when user clicks Sign In) */}
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </div>
   );
 }

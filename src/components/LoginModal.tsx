@@ -36,15 +36,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-fadeIn">
       <div className="relative w-full max-w-md rounded-3xl glass-panel border border-cyan-500/20 bg-slate-950/90 shadow-2xl p-6 sm:p-8 backdrop-blur-2xl">
-        {/* Close Button (Only shown if already logged in) */}
-        {useStore.getState().isAuthenticated && (
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-text-muted hover:text-text transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-text-muted hover:text-text transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
         {/* Centered Glowing Icon Badge */}
         <div className="flex justify-center mb-4">
