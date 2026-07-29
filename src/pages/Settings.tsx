@@ -266,8 +266,8 @@ export default function Settings() {
                       👑 Unlocked
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[11px] font-mono font-semibold">
-                      🔒 Locked (User Mode)
+                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-text-muted border border-white/10 text-[11px] font-mono">
+                      🔒 PIN Required
                     </span>
                   )}
                 </div>
