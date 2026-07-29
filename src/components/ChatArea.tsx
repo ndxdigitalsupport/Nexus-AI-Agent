@@ -33,21 +33,40 @@ export default function ChatArea() {
   };
 
   const [activePrompts, setActivePrompts] = useState(getRandomPrompts);
-  const [isPromptAnimating, setIsPromptAnimating] = useState(false);
+  const [animatingStage, setAnimatingStage] = useState<'idle' | 'fading' | 'popping'>('idle');
+  const [fadingIndex, setFadingIndex] = useState<number>(-1);
+  const [poppingIndex, setPoppingIndex] = useState<number>(-1);
 
-  const triggerSmoothShuffle = () => {
-    setIsPromptAnimating(true);
+  const triggerStaggeredShuffle = () => {
+    setAnimatingStage('fading');
+    // Staggered Fade Out: 0ms (card 0), 120ms (card 1), 240ms (card 2)
+    setFadingIndex(0);
+    setTimeout(() => setFadingIndex(1), 120);
+    setTimeout(() => setFadingIndex(2), 240);
+
+    // Switch prompts at 400ms when all are faded
     setTimeout(() => {
       setActivePrompts(getRandomPrompts());
-      setIsPromptAnimating(false);
-    }, 250); // 250ms fade-out, then pop new prompts in
+      setAnimatingStage('popping');
+      // Staggered Pop In: 0ms (card 0), 120ms (card 1), 240ms (card 2)
+      setPoppingIndex(0);
+      setTimeout(() => setPoppingIndex(1), 120);
+      setTimeout(() => setPoppingIndex(2), 240);
+    }, 450);
+
+    // Finish animation cycle
+    setTimeout(() => {
+      setAnimatingStage('idle');
+      setFadingIndex(-1);
+      setPoppingIndex(-1);
+    }, 850);
   };
 
-  // Auto-randomize every 15 seconds with smooth fade/pop animation
+  // Auto-randomize every 12 seconds with staggered sequential wave animation
   useEffect(() => {
     const timer = setInterval(() => {
-      triggerSmoothShuffle();
-    }, 15000);
+      triggerStaggeredShuffle();
+    }, 12000);
     return () => clearInterval(timer);
   }, []);
   const [isMemorySaved, setIsMemorySaved] = useState(false);
@@ -518,29 +537,39 @@ export default function ChatArea() {
           <div className="max-w-7xl mx-auto mb-3 flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
             <button
               type="button"
-              onClick={triggerSmoothShuffle}
+              onClick={triggerStaggeredShuffle}
               className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400 hover:rotate-180 transition-all duration-500 shrink-0"
               title="Shuffle new prompt suggestions"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isPromptAnimating ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${animatingStage !== 'idle' ? 'animate-spin' : ''}`} />
             </button>
 
             <div className="flex flex-wrap items-center gap-2">
-              {activePrompts.map((item, idx) => (
-                <button
-                  key={`${item.title}-${idx}`}
-                  type="button"
-                  onClick={() => setInput(item.prompt)}
-                  className={`px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/15 border border-white/10 hover:border-cyan-500/40 text-xs text-text-muted hover:text-cyan-300 font-medium transition-all duration-300 active:scale-95 shadow-sm flex items-center gap-2 shrink-0 ${
-                    isPromptAnimating
-                      ? 'opacity-0 scale-95 translate-y-1'
-                      : 'opacity-100 scale-100 translate-y-0 animate-fadeIn'
-                  }`}
-                >
-                  <span className="text-sm">{item.category.split(' ')[0]}</span>
-                  <span>{item.title}</span>
-                </button>
-              ))}
+              {activePrompts.map((item, idx) => {
+                const isFadingThis = animatingStage === 'fading' && idx <= fadingIndex;
+                const isPoppingThis = animatingStage === 'popping' && idx <= poppingIndex;
+                const isHiddenBeforePop = animatingStage === 'popping' && idx > poppingIndex;
+
+                return (
+                  <button
+                    key={`${item.title}-${idx}`}
+                    type="button"
+                    onClick={() => setInput(item.prompt)}
+                    className={`px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/15 border border-white/10 hover:border-cyan-500/40 text-xs text-text-muted hover:text-cyan-300 font-medium transition-all duration-300 active:scale-95 shadow-sm flex items-center gap-2 shrink-0 ${
+                      isFadingThis
+                        ? 'opacity-0 scale-90 -translate-y-2'
+                        : isPoppingThis
+                        ? 'opacity-100 scale-100 translate-y-0 shadow-glow-cyan'
+                        : isHiddenBeforePop
+                        ? 'opacity-0 scale-90 translate-y-2'
+                        : 'opacity-100 scale-100 translate-y-0'
+                    }`}
+                  >
+                    <span className="text-sm">{item.category.split(' ')[0]}</span>
+                    <span>{item.title}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
