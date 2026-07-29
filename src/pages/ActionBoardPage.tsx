@@ -405,14 +405,20 @@ function ProjectPlanBlock({
         </div>
       </div>
 
-      {/* Project Phases Content */}
+      {/* Project Phases Content (Phase 1 at Top -> Descending Order) */}
       {isOpen && (
         <div className="p-6 space-y-8 bg-slate-950/40">
-          {Object.entries(phases).map(([phaseName, phaseTasks]) => {
-            const phaseCompleted = phaseTasks.filter(t => t.completed).length;
-            const phasePercent = phaseTasks.length > 0 ? Math.round((phaseCompleted / phaseTasks.length) * 100) : 0;
+          {Object.entries(phases)
+            .sort(([aPhase], [bPhase]) => {
+              const aNum = parseInt(aPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
+              const bNum = parseInt(bPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
+              return aNum - bNum;
+            })
+            .map(([phaseName, phaseTasks]) => {
+              const phaseCompleted = phaseTasks.filter(t => t.completed).length;
+              const phasePercent = phaseTasks.length > 0 ? Math.round((phaseCompleted / phaseTasks.length) * 100) : 0;
 
-            return (
+              return (
               <div key={phaseName} className="space-y-4">
                 {/* Phase Header */}
                 <div className="flex items-center justify-between border-b border-white/10 pb-2">
