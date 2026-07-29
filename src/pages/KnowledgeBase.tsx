@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Search, BookOpen, Tag, Pin, UploadCloud, FileText, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, BookOpen, Tag, Pin, UploadCloud, FileText, CheckCircle2, ArrowLeft, Globe, Loader2, Link as LinkIcon } from 'lucide-react';
 import { useStore, KnowledgeArticle } from '../store';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -14,6 +14,12 @@ export default function KnowledgeBase() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [importedFileCount, setImportedFileCount] = useState<number | null>(null);
+
+  // Web URL Scraper state
+  const [webUrlInput, setWebUrlInput] = useState('');
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [urlFetchError, setUrlFetchError] = useState<string | null>(null);
+  const [urlFetchSuccess, setUrlFetchSuccess] = useState<string | null>(null);
 
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [editedTitle, setEditedTitle] = useState('');
@@ -33,6 +39,69 @@ export default function KnowledgeBase() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFetchUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!webUrlInput.trim()) return;
+
+    let targetUrl = webUrlInput.trim();
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = `https://${targetUrl}`;
+    }
+
+    setIsFetchingUrl(true);
+    setUrlFetchError(null);
+    setUrlFetchSuccess(null);
+
+    try {
+      // Use AllOrigins CORS proxy to fetch website HTML directly in browser
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      const response = await fetch(proxyUrl);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const rawHtml = data.contents;
+
+      if (!rawHtml) {
+        throw new Error('No content returned from website.');
+      }
+
+      // Parse HTML title and clean text body
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(rawHtml, 'text/html');
+
+      // Remove script, style, nav, footer tags to clean readable content
+      doc.querySelectorAll('script, style, noscript, svg, iframe, nav, footer').forEach(el => el.remove());
+
+      const pageTitle = doc.querySelector('title')?.textContent?.trim() || new URL(targetUrl).hostname;
+      const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim();
+      
+      let bodyText = doc.body.innerText || doc.body.textContent || '';
+      bodyText = bodyText.replace(/\n\s*\n/g, '\n\n').trim();
+
+      if (bodyText.length < 50) {
+        throw new Error('Extracted website text is too short or empty.');
+      }
+
+      const articleTitle = `🌐 ${pageTitle}`;
+      const articleContent = `Source URL: ${targetUrl}\n${metaDescription ? `Description: ${metaDescription}\n` : ''}\n=== WEBSITE CONTENT ===\n${bodyText.substring(0, 15000)}`;
+      const domainTag = new URL(targetUrl).hostname.replace(/^www\./, '');
+      const tags = ['web-scrape', domainTag, 'url-import'];
+
+      addArticle(articleTitle, articleContent, tags);
+      setUrlFetchSuccess(`Successfully scraped and stored "${pageTitle}" in Knowledge Base!`);
+      setWebUrlInput('');
+      setTimeout(() => setUrlFetchSuccess(null), 4000);
+    } catch (err: any) {
+      console.error('NEXUS URL Fetch Error:', err);
+      setUrlFetchError(err.message || 'Failed to fetch website URL. Please check the URL and try again.');
+    } finally {
+      setIsFetchingUrl(false);
+    }
+  };
 
   const handleAddArticle = () => {
     if (newTitle.trim() && newContent.trim()) {
@@ -147,6 +216,62 @@ export default function KnowledgeBase() {
               <p className="text-text-muted mt-1">Index document files and persistent context to power AI RAG retrieval.</p>
             </div>
           </div>
+        </div>
+
+        {/* Web URL Scraper & Reader Box */}
+        <div className="glass-panel p-6 rounded-2xl border border-white/10 space-y-4 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-text">Index Website URL into Memory</h2>
+              <p className="text-xs text-text-muted">Paste any website URL to automatically scrape its content and store it as a Knowledge Base article.</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleFetchUrl} className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <LinkIcon className="w-4 h-4 text-text-muted absolute left-3.5 top-3.5 pointer-events-none" />
+              <input
+                type="text"
+                value={webUrlInput}
+                onChange={(e) => setWebUrlInput(e.target.value)}
+                placeholder="https://example.com/docs or github.com/readme..."
+                className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-cyan-400 font-sans"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!webUrlInput.trim() || isFetchingUrl}
+              className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-primary text-slate-950 font-bold rounded-xl hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-glow-cyan flex items-center justify-center gap-2 text-sm shrink-0 font-mono"
+            >
+              {isFetchingUrl ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Scraping Website...</span>
+                </>
+              ) : (
+                <>
+                  <Globe className="w-4 h-4" />
+                  <span>Fetch & Store URL</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {urlFetchError && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono">
+              ❌ {urlFetchError}
+            </div>
+          )}
+
+          {urlFetchSuccess && (
+            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>{urlFetchSuccess}</span>
+            </div>
+          )}
         </div>
 
         {/* Option A: Drag & Drop Document Memory Zone */}
