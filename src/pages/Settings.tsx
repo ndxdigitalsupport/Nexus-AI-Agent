@@ -246,35 +246,35 @@ export default function Settings() {
         )}
 
         {/* Admin Access Control Card */}
-        <div className={`p-6 rounded-2xl border transition-all duration-300 mb-8 ${
+        <div className={`p-4 md:p-5 rounded-2xl border transition-all duration-300 mb-6 ${
           isAdminAuthenticated 
             ? 'bg-emerald-500/10 border-emerald-500/40 shadow-glow-cyan' 
             : 'glass-panel border-amber-500/40 shadow-xl'
         }`}>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-xl border ${
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3 min-w-0">
+              <div className={`p-2.5 rounded-xl border shrink-0 ${
                 isAdminAuthenticated ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
               }`}>
-                {isAdminAuthenticated ? <ShieldCheck className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                {isAdminAuthenticated ? <ShieldCheck className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-text flex items-center gap-2">
-                  <span>Admin Control & Permission Mode</span>
+              <div className="min-w-0">
+                <div className="flex items-center flex-wrap gap-2">
+                  <h2 className="text-base font-bold text-text">Admin Mode</h2>
                   {isAdminAuthenticated ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-mono">
-                      👑 Admin Mode Unlocked
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[11px] font-mono font-semibold">
+                      👑 Unlocked
                     </span>
                   ) : (
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-mono">
-                      🔒 User Mode (Read-Only Editing)
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[11px] font-mono font-semibold">
+                      🔒 Locked (User Mode)
                     </span>
                   )}
-                </h2>
+                </div>
                 <p className="text-xs text-text-muted mt-0.5">
                   {isAdminAuthenticated 
-                    ? 'You have full administrative privileges to edit personas, API keys, system endpoints, and memory articles.' 
-                    : 'Enter the Admin PIN (default: 1234) once below to unlock editing rights across all settings and personas.'}
+                    ? 'Full administrative rights unlocked.' 
+                    : 'Enter PIN (default: 1234) to edit settings.'}
                 </p>
               </div>
             </div>
@@ -283,18 +283,18 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={lockAdminMode}
-                className="px-4 py-2 bg-slate-900 border border-white/15 hover:border-rose-500/50 text-text-muted hover:text-rose-400 rounded-xl text-xs font-mono transition-all flex items-center gap-2"
+                className="w-full md:w-auto px-4 py-2 bg-slate-900 border border-white/15 hover:border-rose-500/50 text-text-muted hover:text-rose-400 rounded-xl text-xs font-mono transition-all flex items-center justify-center gap-2"
               >
-                <Lock className="w-3.5 h-3.5" /> Lock Admin Mode
+                <Lock className="w-3.5 h-3.5" /> Lock Admin
               </button>
             ) : (
-              <form onSubmit={handlePinSubmit} className="flex items-center gap-2 w-full sm:w-auto">
+              <form onSubmit={handlePinSubmit} className="flex items-center gap-2 w-full md:w-auto">
                 <input
                   type="password"
-                  placeholder="Enter Admin PIN (1234)..."
+                  placeholder="PIN (1234)..."
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
-                  className="bg-slate-950 border border-white/15 rounded-xl px-3.5 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-cyan-400 font-mono w-full sm:w-48"
+                  className="bg-slate-950 border border-white/15 rounded-xl px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-cyan-400 font-mono flex-1 md:w-40"
                 />
                 <button
                   type="submit"
