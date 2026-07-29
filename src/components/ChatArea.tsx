@@ -6,48 +6,18 @@ import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router-dom';
 
 const PROMPT_POOL = [
-  {
-    icon: Lightbulb,
-    category: '💡 Small Business Advice',
-    title: 'How to increase sales for my local retail shop?',
-    prompt: 'Give me 5 practical, low-cost ideas to increase monthly sales for my local retail business.',
-    gradient: 'from-amber-500/20 via-orange-500/10 to-amber-500/5 border-amber-500/30 text-amber-300'
-  },
-  {
-    icon: FileCheck,
-    category: '📝 Legal & Agreements',
-    title: 'Draft a simple Employment Contract',
-    prompt: 'Draft a standard, easy-to-read Employment Agreement contract for a full-time staff member.',
-    gradient: 'from-cyan-500/20 via-blue-500/10 to-cyan-500/5 border-cyan-500/30 text-cyan-300'
-  },
-  {
-    icon: Compass,
-    category: '🎯 Step-by-Step Plans',
-    title: 'Create a plan to open a Coffee Shop',
-    prompt: 'Create a complete step-by-step roadmap to open a coffee shop in Phnom Penh from budget to grand opening.',
-    gradient: 'from-emerald-500/20 via-teal-500/10 to-emerald-500/5 border-emerald-500/30 text-emerald-300'
-  },
-  {
-    icon: HelpCircle,
-    category: '❓ Everyday Advice',
-    title: 'How to reduce monthly personal & business expenses?',
-    prompt: 'What are the top 7 smartest ways to audit and cut unnecessary monthly expenses?',
-    gradient: 'from-purple-500/20 via-violet-500/10 to-purple-500/5 border-purple-500/30 text-purple-300'
-  },
-  {
-    icon: Sparkles,
-    category: '📣 Marketing & Ads',
-    title: 'Write 3 Facebook ad captions for my product',
-    prompt: 'Write 3 high-converting, friendly Facebook social media captions for a new product launch.',
-    gradient: 'from-rose-500/20 via-pink-500/10 to-rose-500/5 border-rose-500/30 text-rose-300'
-  },
-  {
-    icon: Target,
-    category: '📈 Finance & Growth',
-    title: 'How to calculate profit margins & pricing?',
-    prompt: 'Explain in simple non-technical terms how to calculate product profit margins and markup pricing.',
-    gradient: 'from-cyan-500/20 via-teal-500/10 to-cyan-500/5 border-cyan-500/30 text-cyan-300'
-  }
+  { category: '💡 Business', title: 'How to increase sales for my local retail shop?', prompt: 'Give me 5 practical, low-cost ideas to increase monthly sales for my local retail business.' },
+  { category: '📝 Legal', title: 'Draft a simple Employment Contract', prompt: 'Draft a standard, easy-to-read Employment Agreement contract for a full-time staff member.' },
+  { category: '🎯 Roadmap', title: 'Create a plan to open a Coffee Shop', prompt: 'Create a complete step-by-step roadmap to open a coffee shop in Phnom Penh from budget to grand opening.' },
+  { category: '❓ Savings', title: 'How to reduce monthly personal & business expenses?', prompt: 'What are the top 7 smartest ways to audit and cut unnecessary monthly expenses?' },
+  { category: '📣 Marketing', title: 'Write 3 Facebook ad captions for my product', prompt: 'Write 3 high-converting, friendly Facebook social media captions for a new product launch.' },
+  { category: '📈 Finance', title: 'How to calculate profit margins & pricing?', prompt: 'Explain in simple non-technical terms how to calculate product profit margins and markup pricing.' },
+  { category: '📄 Contract', title: 'Draft a Non-Disclosure Agreement (NDA)', prompt: 'Write a clean, standard Non-Disclosure Agreement (NDA) to protect business secrets.' },
+  { category: '💼 Career', title: 'Write a professional Job Offer Letter', prompt: 'Draft a professional Job Offer Letter including salary, probation, and start date.' },
+  { category: '🚀 Strategy', title: 'How to market a new service on TikTok & Instagram?', prompt: 'Give me a 30-day social media marketing calendar for launching a new local service.' },
+  { category: '📊 Audit', title: 'Check my business plan for risks and flaws', prompt: 'Act as a business consultant and highlight the top 5 financial & operational risks for a new startup.' },
+  { category: '📝 Letter', title: 'Write a polite Payment Reminder email to client', prompt: 'Draft a polite but firm payment overdue reminder email for an unpaid invoice.' },
+  { category: '🛠️ Productivity', title: 'How to organize daily tasks & manage team work?', prompt: 'Give me a simple daily task management framework for leading a small 5-person team.' }
 ];
 
 export default function ChatArea() {
@@ -55,13 +25,20 @@ export default function ChatArea() {
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
-  const [promptOffset, setPromptOffset] = useState(0);
+  
+  // Truly randomize 3 prompts on load and shuffle
+  const getRandomPrompts = () => {
+    const shuffled = [...PROMPT_POOL].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 3);
+  };
 
-  // Smoothly rotate 3 minimal prompt chips every 7 seconds
+  const [activePrompts, setActivePrompts] = useState(getRandomPrompts);
+
+  // Auto-randomize every 6 seconds with fresh random selections
   useEffect(() => {
     const timer = setInterval(() => {
-      setPromptOffset(prev => (prev + 3) % PROMPT_POOL.length);
-    }, 7000);
+      setActivePrompts(getRandomPrompts());
+    }, 6000);
     return () => clearInterval(timer);
   }, []);
   const [isMemorySaved, setIsMemorySaved] = useState(false);
@@ -532,7 +509,7 @@ export default function ChatArea() {
           <div className="max-w-7xl mx-auto mb-3 flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
             <button
               type="button"
-              onClick={() => setPromptOffset(prev => (prev + 3) % PROMPT_POOL.length)}
+              onClick={() => setActivePrompts(getRandomPrompts())}
               className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400 hover:rotate-180 transition-all duration-500 shrink-0"
               title="Shuffle new prompt suggestions"
             >
@@ -540,9 +517,7 @@ export default function ChatArea() {
             </button>
 
             <div className="flex flex-wrap items-center gap-2">
-              {PROMPT_POOL.slice(promptOffset, promptOffset + 3).concat(
-                PROMPT_POOL.slice(0, Math.max(0, (promptOffset + 3) - PROMPT_POOL.length))
-              ).map((item, idx) => (
+              {activePrompts.map((item, idx) => (
                 <button
                   key={`${item.title}-${idx}`}
                   type="button"
