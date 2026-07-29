@@ -62,11 +62,11 @@ export default function ChatArea() {
     }, 850);
   };
 
-  // Auto-randomize every 12 seconds with staggered sequential wave animation
+  // Auto-randomize every 9 seconds with staggered sequential wave animation
   useEffect(() => {
     const timer = setInterval(() => {
       triggerStaggeredShuffle();
-    }, 12000);
+    }, 9000);
     return () => clearInterval(timer);
   }, []);
   const [isMemorySaved, setIsMemorySaved] = useState(false);
