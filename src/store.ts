@@ -191,21 +191,17 @@ export const useStore = create<AppState>()(
   devtools(
     persist(
       (set, get) => ({
-        currentUser: {
-          id: 'admin-1',
-          name: 'NEXUS Administrator',
-          email: 'admin@nexus.ai',
-          role: 'admin',
-          avatar: '👑'
-        },
-        isAuthenticated: true,
+        currentUser: null,
+        isAuthenticated: false,
 
         loginUser: (emailOrUser: string, pass: string) => {
           const cleanUser = emailOrUser.trim();
           const cleanPass = pass.trim();
-          const validPins = [get().settings?.adminPin?.trim(), '1234', '8888', 'admin'].filter(Boolean);
+          const customPin = get().settings?.adminPin?.trim();
 
-          const isAdmin = cleanUser.toLowerCase().includes('admin') || validPins.includes(cleanPass);
+          // Strict Admin Credentials Check:
+          // Admin mode requires typing 'admin' as username OR entering exact secret admin PIN ('1234', '8888', or custom PIN)
+          const isAdmin = cleanUser.toLowerCase() === 'admin' || cleanUser.toLowerCase() === 'admin@nexus.ai' || (customPin && cleanPass === customPin) || cleanPass === '8888';
           
           const newUser: UserAccount = {
             id: isAdmin ? 'admin-1' : `user-${Math.random().toString(36).substr(2, 5)}`,
