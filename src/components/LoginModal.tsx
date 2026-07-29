@@ -9,6 +9,7 @@ interface LoginModalProps {
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { loginUser } = useStore();
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -52,8 +53,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         {/* Header Title */}
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-text tracking-tight">Sign In</h2>
-          <p className="text-xs text-text-muted mt-1">Welcome back! Please sign in to continue.</p>
+          <h2 className="text-xl font-bold text-text tracking-tight">
+            {isSignUpMode ? 'Create Account' : 'Sign In'}
+          </h2>
+          <p className="text-xs text-text-muted mt-1">
+            {isSignUpMode ? 'Join your team workspace today.' : 'Welcome back! Please sign in to continue.'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -106,49 +111,49 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </div>
 
           {/* Remember Me & Forgot Password Row */}
-          <div className="flex items-center justify-between text-xs pt-0.5">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-text-muted hover:text-text transition-colors">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded bg-slate-900 border-white/20 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
-              />
-              <span>Remember me</span>
-            </label>
-            <button
-              type="button"
-              onClick={() => alert('Password reset link sent to your registered email.')}
-              className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
-            >
-              Forgot password?
-            </button>
-          </div>
+          {!isSignUpMode && (
+            <div className="flex items-center justify-between text-xs pt-0.5">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-text-muted hover:text-text transition-colors">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded bg-slate-900 border-white/20 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                />
+                <span>Remember me</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => alert('Password reset link sent to your email.')}
+                className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
 
-          {/* Primary Glow Sign In Button */}
+          {/* Primary Glow Sign In / Sign Up Button */}
           <button
             type="submit"
             className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-primary text-slate-950 font-bold text-sm shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2"
           >
             <LogIn className="w-4 h-4" />
-            <span>Sign In</span>
+            <span>{isSignUpMode ? 'Create Account' : 'Sign In'}</span>
           </button>
         </form>
 
-        {/* Signup Footer Link */}
+        {/* Signup / Signin Toggle Footer Link */}
         <div className="mt-6 text-center text-xs text-text-muted">
-          <span>Don't have an account? </span>
+          <span>{isSignUpMode ? 'Already have an account? ' : "Don't have an account? "}</span>
           <button
             type="button"
             onClick={() => {
-              setUsername('newuser@company.com');
-              setPassword('1234');
-              loginUser('newuser@company.com', '1234');
-              onClose();
+              setError('');
+              setIsSignUpMode(!isSignUpMode);
             }}
             className="text-cyan-400 font-semibold hover:underline"
           >
-            Sign up
+            {isSignUpMode ? 'Sign in' : 'Sign up'}
           </button>
         </div>
       </div>
