@@ -264,12 +264,12 @@ export default function ChatArea() {
                 ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 shadow-glow-violet'
                 : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
             }`}
-            title="Toggle Agentic Action Board"
+            title="Toggle Project Plans & Execution Board"
           >
-            <Zap className={`w-3.5 h-3.5 shrink-0 ${isActionBoardOpen ? 'text-amber-400' : 'text-text-muted'}`} />
+            <Target className={`w-3.5 h-3.5 shrink-0 ${isActionBoardOpen ? 'text-amber-400' : 'text-text-muted'}`} />
             <span className="font-mono font-semibold whitespace-nowrap">
-              <span className="inline sm:hidden">Board</span>
-              <span className="hidden sm:inline">Action Board</span>
+              <span className="inline sm:hidden">Plans</span>
+              <span className="hidden sm:inline">Project Plans</span>
             </span>
             {pendingTasksCount > 0 && (
               <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">

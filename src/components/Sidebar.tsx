@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap } from 'lucide-react';
+import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target } from 'lucide-react';
 import { useStore } from '../store';
 import ConfirmModal from './ConfirmModal';
 
@@ -196,7 +196,7 @@ export default function Sidebar() {
         {/* Main Navigation */}
         <nav className="flex flex-col gap-1.5 mb-5">
           <NavItem icon={<Terminal className="w-5 h-5" />} label="Terminal" to="/" active={location.pathname === '/'} onClick={() => toggleMobileSidebar(false)} />
-          <NavItem icon={<Zap className="w-5 h-5 text-amber-400" />} label="Action Board" to="/action-board" active={location.pathname === '/action-board'} onClick={() => toggleMobileSidebar(false)} />
+          <NavItem icon={<Target className="w-5 h-5 text-amber-400" />} label="Project Plans" to="/action-board" active={location.pathname === '/action-board'} onClick={() => toggleMobileSidebar(false)} />
           <NavItem icon={<History className="w-5 h-5" />} label="History" to="/history" active={location.pathname === '/history'} onClick={() => toggleMobileSidebar(false)} />
           {isAdminAuthenticated && (
             <>

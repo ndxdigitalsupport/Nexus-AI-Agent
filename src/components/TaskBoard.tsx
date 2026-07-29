@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle2, Circle, Trash2, Zap, Plus, Edit, CalendarDays, Sparkles, X, Folder, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, Trash2, Zap, Plus, Edit, CalendarDays, Sparkles, X, Folder, ChevronDown, ChevronRight, Target } from 'lucide-react';
 import { useStore, Task } from '@/store';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
@@ -106,10 +106,10 @@ export default function TaskBoard() {
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shadow-glow-violet">
-              <Zap className="w-5 h-5" />
+              <Target className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-mono font-bold text-base tracking-wide text-text">Action Board</h2>
+              <h2 className="font-mono font-bold text-base tracking-wide text-text">Project Plans</h2>
               <p className="text-[11px] font-mono text-text-muted">{completedTasksCount}/{totalTasks} Completed</p>
             </div>
           </div>

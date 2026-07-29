@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, Task } from '@/store';
-import { Zap, CheckCircle2, Circle, Trash2, Plus, CalendarDays, ArrowLeft, Folder, Sparkles, Filter, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { Zap, CheckCircle2, Circle, Trash2, Plus, CalendarDays, ArrowLeft, Folder, Sparkles, Filter, Check, ChevronDown, ChevronRight, Target } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
@@ -121,9 +121,9 @@ export default function ActionBoardPage() {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                  <Zap className="w-6 h-6" />
+                  <Target className="w-6 h-6" />
                 </div>
-                <h1 className="text-3xl font-bold font-mono neon-text">Action Board & Project Plans</h1>
+                <h1 className="text-3xl font-bold font-mono neon-text">Project Plans</h1>
               </div>
               <p className="text-text-muted">Manage your AI-generated project plans, execution phases, and step-by-step action items.</p>
             </div>
