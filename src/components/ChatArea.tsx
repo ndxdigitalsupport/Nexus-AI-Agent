@@ -387,51 +387,7 @@ export default function ChatArea() {
 
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar">
-        {/* Welcome Static Prompt Cards (Shown when starting a chat) */}
-        {activeMessages.length <= 1 && (
-          <div className="max-w-4xl mx-auto my-6 p-6 rounded-3xl glass-panel border border-white/10 bg-slate-900/60 shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between gap-2 mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 shadow-glow-cyan">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-text font-sans">What would you like assistance with today?</h3>
-                  <p className="text-xs text-text-muted">Click any prompt card below or type your own request.</p>
-                </div>
-              </div>
-              <span className="text-[10px] font-mono text-cyan-400 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 hidden sm:inline-block">
-                ⚡ Suggested Actions
-              </span>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {PROMPT_POOL.slice(0, 4).map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    setInput(item.prompt);
-                  }}
-                  className={`p-4 rounded-2xl border text-left transition-all duration-200 bg-gradient-to-br ${item.gradient} hover:scale-[1.01] hover:border-cyan-400/50 hover:shadow-lg active:scale-95 group flex flex-col justify-between`}
-                >
-                  <div>
-                    <span className="text-[10px] font-bold font-mono tracking-wider uppercase opacity-80 block mb-1">
-                      {item.category}
-                    </span>
-                    <h4 className="font-bold text-xs text-text group-hover:text-cyan-300 transition-colors line-clamp-2">
-                      {item.title}
-                    </h4>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-[11px] font-mono opacity-60 group-hover:opacity-100 transition-opacity">
-                    <span>Click to use prompt</span>
-                    <span>→</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {activeMessages.map((msg) => (
           <div key={msg.id} className={`flex gap-3 max-w-7xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
@@ -562,6 +518,26 @@ export default function ChatArea() {
 
       {/* Pinned Bottom Input Area */}
       <div className="shrink-0 p-2.5 sm:p-4 border-t border-white/10 bg-slate-900/90 backdrop-blur-xl">
+        {/* Sleek Minimal Starter Prompt Guide Chips */}
+        {activeMessages.length <= 1 && (
+          <div className="max-w-7xl mx-auto mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-mono text-text-muted/70 flex items-center gap-1 mr-1">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Guide:
+            </span>
+            {PROMPT_POOL.slice(0, 4).map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setInput(item.prompt)}
+                className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/15 border border-white/10 hover:border-cyan-500/40 text-xs text-text-muted hover:text-cyan-300 font-medium transition-all duration-200 active:scale-95 shadow-sm flex items-center gap-1.5"
+              >
+                <span>{item.category.split(' ')[0]}</span>
+                <span>{item.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Selected Image Thumbnail Preview */}
         {selectedImage && (
           <div className="max-w-7xl mx-auto mb-2 relative inline-block group">
