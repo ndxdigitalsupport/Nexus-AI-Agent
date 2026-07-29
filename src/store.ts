@@ -5,6 +5,7 @@ export interface Message {
   id: string;
   role: 'user' | 'agent';
   content: string;
+  imageUrl?: string; // Base64 data URL or image URL for multimodal vision support
   timestamp: number;
 }
 
@@ -104,7 +105,7 @@ interface AppState {
   exportState: () => string;
   importState: (jsonString: string) => { success: boolean; error?: string };
   resetAllData: () => void;
-  processAgentResponse: (userContent: string) => Promise<void>;
+  processAgentResponse: (userContent: string, imageUrl?: string) => Promise<void>;
   summarizeAndSaveChatToMemory: (conversationId?: string) => Promise<void>;
 }
 
@@ -507,7 +508,7 @@ ${chatText}`;
           });
         },
 
-        processAgentResponse: async (userContent: string) => {
+        processAgentResponse: async (userContent: string, imageUrl?: string) => {
           const { addTask, setProcessing, personas, activePersonaId, knowledgeArticles, conversations, activeConversationId, updateConversationTitle } = get();
           
           const currentConversation = conversations.find(conv => conv.id === activeConversationId);
@@ -529,7 +530,7 @@ ${chatText}`;
           set((state) => ({
             conversations: state.conversations.map(conv => 
               conv.id === activeConversationId 
-                ? { ...conv, messages: [...conv.messages, { id: userMessageId, role: 'user', content: userContent, timestamp: Date.now() }], updatedAt: Date.now() }
+                ? { ...conv, messages: [...conv.messages, { id: userMessageId, role: 'user', content: userContent, imageUrl, timestamp: Date.now() }], updatedAt: Date.now() }
                 : conv
             )
           }));
@@ -589,29 +590,27 @@ ${chatText}`;
               return { article, score };
             });
 
-            const topUnpinned = scoredArticles
+            const topRelevantArticles = scoredArticles
               .filter(item => item.score > 0)
               .sort((a, b) => b.score - a.score)
               .slice(0, 3)
               .map(item => item.article);
 
-            const relevantKnowledgeArticles = Array.from(new Set([...pinnedArticles, ...topUnpinned]));
+            const combinedArticles = Array.from(
+              new Set([...pinnedArticles, ...topRelevantArticles])
+            );
 
-            const knowledgeBaseContent = relevantKnowledgeArticles.length > 0
-              ? `\n\n***Relevant Knowledge Base & Context Memory:***\n${relevantKnowledgeArticles.map(article => `Title: ${article.title}${article.pinned ? ' [PINNED]' : ''}\nContent: ${article.content.substring(0, 2000)}\nTags: ${article.tags.join(', ')}\n---`).join('\n')}\n`
-              : '';
-            // --- End Ultra-Fast Multi-Turn RAG Search Engine ---
+            let knowledgeBaseContent = '';
+            if (combinedArticles.length > 0) {
+              knowledgeBaseContent = '\n\n=== RELEVANT KNOWLEDGE BASE CONTEXT (RAG MATCHED) ===\n' +
+                combinedArticles.map(a => `--- ARTICLE: ${a.title} ---\nTags: ${a.tags.join(', ')}\n${a.content}`).join('\n\n') +
+                '\n======================================================\n';
+            }
+            // --- End RAG Search Engine ---
 
-            const systemContent = `You are NEXUS, a world-class, highly intelligent AI personal consultant and project partner.
-${customInstructions ? `***IMPORTANT PERSONA INSTRUCTIONS:\n${customInstructions}\n***\n` : ''}
-CORE BEHAVIOR RULES:
-1. Speak naturally, fluently, warmly, and engagingly (like ChatGPT or Claude). Always maintain seamless conversational context from previous turns.
-2. Directly answer the user's immediate question or response. If the user answers "yes" or "ok", continue naturally from the previous assistant message.
-3. Refer to Knowledge Base articles and current Action Board tasks when relevant to provide rich, grounded answers.
-
-Current System Time: ${new Date().toLocaleString()}
-
-${get().tasks.length > 0 ? `Current Action Board Tasks:\n${get().tasks.map(t => `- [${t.completed ? 'x' : ' '}] ${t.title}`).join('\n')}` : ''}
+            const systemContent = `You are NEXUS, an advanced agentic AI assistant OS. 
+Answer questions directly, write clean code, and execute user requests efficiently.
+${customInstructions ? `Role / Persona Instructions: ${customInstructions}` : ''}
 ${knowledgeBaseContent}
 
 TASK & PROJECT PLAN INSTRUCTION:
@@ -637,19 +636,28 @@ Rules for Action Items:
 - ONLY list actionable step tasks under ### Action Items. Do NOT add conversational closing notes (e.g. "Want me to drill deeper...", "Let me know...") under ### Action Items. Put conversational notes before ### Action Items.
 - Do NOT generate "### Action Items" for casual conversational turns (like "hello", "yes", or simple factual questions).`;
 
-            // Clean up and format chat messages for OpenAI compatibility:
-            // Ensure strictly non-empty content and avoid duplicate adjacent role payloads
-            const sanitizedHistory: { role: string; content: string }[] = [];
+            // Clean up and format chat messages for OpenAI Vision & text compatibility:
+            const sanitizedHistory: any[] = [];
             (updatedConversation?.messages || [])
-              .filter(m => m.id !== 'welcome-msg' && m.content.trim().length > 0)
+              .filter(m => m.id !== 'welcome-msg' && (m.content.trim().length > 0 || m.imageUrl))
               .slice(-10)
               .forEach(m => {
                 const role = m.role === 'agent' ? 'assistant' : 'user';
+                
+                // Build message content payload (Vision base64 image or text string)
+                let messageContent: any = m.content;
+                if (m.imageUrl) {
+                  messageContent = [
+                    { type: 'text', text: m.content || 'Analyze this image.' },
+                    { type: 'image_url', image_url: { url: m.imageUrl } }
+                  ];
+                }
+
                 const last = sanitizedHistory[sanitizedHistory.length - 1];
-                if (last && last.role === role) {
-                  last.content += `\n${m.content}`;
+                if (last && last.role === role && typeof last.content === 'string' && typeof messageContent === 'string') {
+                  last.content += `\n${messageContent}`;
                 } else {
-                  sanitizedHistory.push({ role, content: m.content });
+                  sanitizedHistory.push({ role, content: messageContent });
                 }
               });
 
@@ -657,12 +665,6 @@ Rules for Action Items:
               { role: 'system', content: systemContent },
               ...sanitizedHistory
             ];
-
-            // If last message isn't the current user message, append it
-            const lastMsg = messagesPayload[messagesPayload.length - 1];
-            if (!lastMsg || lastMsg.role !== 'user' || lastMsg.content !== userContent) {
-              messagesPayload.push({ role: 'user', content: userContent });
-            }
 
             console.log("NEXUS Debug: Sanitized Messages sent to AI:", messagesPayload);
 

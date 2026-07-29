@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu } from 'lucide-react';
+import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
@@ -88,26 +88,40 @@ export default function ChatArea() {
     scrollToBottom();
   }, [activeMessages.length, isProcessing, activeConversationId]);
 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      setInput(prev => prev + (prev ? '\n\n' : '') + `[Document: ${file.name}]\n${text}\n`);
-    };
-    reader.readAsText(file);
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setSelectedImage(base64);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        setInput(prev => prev + (prev ? '\n\n' : '') + `[Document: ${file.name}]\n${text}\n`);
+      };
+      reader.readAsText(file);
+    }
     e.target.value = '';
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isProcessing) return;
+    if ((!input.trim() && !selectedImage) || isProcessing) return;
     
     const userMessage = input.trim();
+    const imageToAttach = selectedImage || undefined;
+
     setInput('');
-    processAgentResponse(userMessage);
+    setSelectedImage(null);
+    processAgentResponse(userMessage || (imageToAttach ? 'Please analyze this uploaded image.' : ''), imageToAttach);
   };
 
   return (
@@ -272,6 +286,9 @@ export default function ChatArea() {
                   ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-950 font-medium shadow-md shadow-cyan-500/10 rounded-tr-xs' 
                   : 'glass-panel text-slate-100 rounded-tl-xs border border-white/10 shadow-glass prose prose-invert prose-p:leading-relaxed prose-pre:bg-slate-950/90 prose-pre:border prose-pre:border-white/10 prose-headings:text-primary'
               }`}>
+                {msg.imageUrl && (
+                  <img src={msg.imageUrl} alt="Attached upload" className="max-w-full max-h-64 object-cover rounded-xl mb-2 border border-slate-900/30 shadow-md" />
+                )}
                 {msg.role === 'agent' ? (
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 ) : (
@@ -341,6 +358,20 @@ export default function ChatArea() {
 
       {/* Pinned Bottom Input Area */}
       <div className="shrink-0 p-2.5 sm:p-4 border-t border-white/10 bg-slate-900/90 backdrop-blur-xl">
+        {/* Selected Image Thumbnail Preview */}
+        {selectedImage && (
+          <div className="max-w-4xl mx-auto mb-2 relative inline-block group">
+            <img src={selectedImage} alt="Selected preview" className="w-20 h-20 object-cover rounded-xl border border-primary/50 shadow-glow-cyan" />
+            <button
+              type="button"
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Quick Action Plan Pill */}
         <div className="flex items-center gap-2 mb-2 max-w-4xl mx-auto font-mono text-[11px] overflow-x-auto custom-scrollbar pb-1">
           <button
@@ -362,13 +393,13 @@ export default function ChatArea() {
               ref={fileInputRef} 
               onChange={handleFileUpload} 
               className="hidden" 
-              accept=".txt,.md,.csv,.json,.js,.ts,.html,.css"
+              accept="image/*,.png,.jpg,.jpeg,.webp,.gif,.txt,.md,.csv,.json,.js,.ts,.html,.css"
             />
             <button 
               type="button" 
               onClick={() => fileInputRef.current?.click()}
               className="p-2.5 text-text-muted hover:text-primary hover:bg-white/5 rounded-xl transition-all shrink-0"
-              title="Attach a text document"
+              title="Attach an image or document"
             >
               <Paperclip className="w-4 h-4" />
             </button>
