@@ -53,6 +53,15 @@ export interface Conversation {
   updatedAt: number;
 }
 
+export interface Artifact {
+  id: string;
+  title: string;
+  type: 'document' | 'code' | 'contract' | 'report' | 'table';
+  language?: string;
+  content: string;
+  createdAt: number;
+}
+
 interface AppState {
   conversations: Conversation[]; // Now an array of conversations
   activeConversationId: string | null; // ID of the currently active conversation
@@ -66,6 +75,13 @@ interface AppState {
   isActionBoardOpen: boolean;
   isMobileSidebarOpen: boolean;
   isAdminAuthenticated: boolean;
+  
+  // Artifact Studio State
+  activeArtifact: Artifact | null;
+  isArtifactStudioOpen: boolean;
+  openArtifact: (artifact: Artifact) => void;
+  closeArtifactStudio: () => void;
+  updateActiveArtifactContent: (content: string) => void;
 
   // Mobile Navigation Action
   toggleMobileSidebar: (isOpen?: boolean) => void;
@@ -179,6 +195,14 @@ export const useStore = create<AppState>()(
         isActionBoardOpen: false,
         isMobileSidebarOpen: false,
         isAdminAuthenticated: false,
+        activeArtifact: null,
+        isArtifactStudioOpen: false,
+
+        openArtifact: (artifact) => set({ activeArtifact: artifact, isArtifactStudioOpen: true }),
+        closeArtifactStudio: () => set({ isArtifactStudioOpen: false }),
+        updateActiveArtifactContent: (content) => set((state) => ({
+          activeArtifact: state.activeArtifact ? { ...state.activeArtifact, content } : null
+        })),
 
         toggleMobileSidebar: (isOpen) => set((state) => ({
           isMobileSidebarOpen: isOpen !== undefined ? isOpen : !state.isMobileSidebarOpen

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
+import ArtifactStudio from "@/components/ArtifactStudio";
 import Home from "@/pages/Home";
 import Settings from "@/pages/Settings";
 import History from "@/pages/History";
@@ -21,6 +22,9 @@ function AppLayout() {
       <main className="flex-1 h-full overflow-hidden flex flex-col relative z-10">
         <Outlet />
       </main>
+
+      {/* Live Artifact & Document Preview Canvas */}
+      <ArtifactStudio />
     </div>
   );
 }

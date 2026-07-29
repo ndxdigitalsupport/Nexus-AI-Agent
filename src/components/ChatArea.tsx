@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X } from 'lucide-react';
+import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X, FileText } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router-dom';
 
 export default function ChatArea() {
-  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar } = useStore();
+  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar, openArtifact } = useStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
@@ -441,6 +441,30 @@ export default function ChatArea() {
                       </>
                     )}
                   </button>
+
+                  {msg.role === 'agent' && msg.content.length > 80 && (
+                    <button
+                      onClick={() => {
+                        const titleMatch = msg.content.match(/^#+\s*(.+)$/m);
+                        const title = titleMatch ? titleMatch[1].replace(/[*_#`]/g, '').trim() : 'Generated Document';
+                        const isCode = msg.content.includes('```');
+                        const isContract = /contract|agreement|legal|policy/i.test(msg.content);
+                        const isTable = msg.content.includes('|---|') || msg.content.includes('| --- |');
+                        openArtifact({
+                          id: msg.id,
+                          title,
+                          type: isCode ? 'code' : isContract ? 'contract' : isTable ? 'table' : 'document',
+                          content: msg.content,
+                          createdAt: msg.timestamp
+                        });
+                      }}
+                      className="flex items-center gap-1 text-[11px] font-mono text-cyan-300 hover:text-cyan-200 transition-all bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 px-2.5 py-0.5 rounded-lg shadow-glow-cyan"
+                      title="Open full document preview in Live Artifact Studio side canvas"
+                    >
+                      <FileText className="w-3 h-3 text-cyan-400" />
+                      <span>Open in Studio</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
