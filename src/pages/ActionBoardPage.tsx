@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, Task } from '@/store';
-import { Zap, CheckCircle2, Circle, Trash2, Plus, CalendarDays, ArrowLeft, Folder, Sparkles, Filter, Check, ChevronDown, ChevronRight, Target } from 'lucide-react';
+import { Zap, CheckCircle2, Circle, Trash2, Plus, CalendarDays, ArrowLeft, Folder, Sparkles, Filter, Check, ChevronDown, ChevronRight, Target, Edit2 } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
@@ -260,6 +260,7 @@ export default function ActionBoardPage() {
                 isProcessing={isProcessing}
                 toggleTask={toggleTask}
                 deleteTask={deleteTask}
+                editTask={editTask}
                 handleExecuteTask={handleExecuteTask}
               />
             ))
@@ -285,6 +286,7 @@ function ProjectPlanBlock({
   isProcessing,
   toggleTask,
   deleteTask,
+  editTask,
   handleExecuteTask
 }: {
   projectName: string;
@@ -293,12 +295,22 @@ function ProjectPlanBlock({
   isProcessing: boolean;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
+  editTask: (id: string, newTitle?: string) => void;
   handleExecuteTask: (id: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(true);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTaskTitle, setEditTaskTitle] = useState('');
   const allTasksInProject = Object.values(phases).flat();
   const completedInProject = allTasksInProject.filter(t => t.completed).length;
   const isGeneral = projectName === 'General Tasks & Action Items';
+
+  const handleSaveTaskTitle = (taskId: string, originalTitle: string) => {
+    if (editTaskTitle.trim() && editTaskTitle.trim() !== originalTitle) {
+      editTask(taskId, editTaskTitle.trim());
+    }
+    setEditingTaskId(null);
+  };
 
   return (
     <div className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-xl">
@@ -318,113 +330,157 @@ function ProjectPlanBlock({
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <span className="font-mono text-xs font-bold text-cyan-300 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
-            {completedInProject} / {allTasksInProject.length} Completed
-          </span>
-          <div className="p-1.5 rounded-xl bg-white/5 text-text-muted group-hover:text-text transition-colors">
+          <div className="text-right font-mono hidden sm:block">
+            <div className="text-xs text-text-muted">{completedInProject} / {allTasksInProject.length} Completed</div>
+          </div>
+          <div className="p-2 rounded-xl bg-white/5 border border-white/10 text-text-muted group-hover:text-text">
             {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
           </div>
         </div>
       </button>
 
-      {/* Phases Container */}
+      {/* Project Phases Content */}
       {isOpen && (
-        <div className="p-6 space-y-6 bg-slate-950/40">
-              {Object.entries(phases)
-                .sort(([aPhase], [bPhase]) => {
-                  const aNum = parseInt(aPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
-                  const bNum = parseInt(bPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
-                  return aNum - bNum;
-                })
-                .map(([phaseName, phaseTasks]) => {
-                  const phaseCompleted = phaseTasks.filter(t => t.completed).length;
-                  const phasePercent = phaseTasks.length > 0 ? Math.round((phaseCompleted / phaseTasks.length) * 100) : 0;
-                  return (
-                    <div key={phaseName} className="space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                          <h3 className="font-mono font-bold text-sm text-text-muted uppercase tracking-wider">{phaseName}</h3>
-                          <span className="text-xs font-mono text-text-muted/60">({phaseCompleted}/{phaseTasks.length})</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 font-mono text-[11px]">
-                          <div className="w-24 bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/10">
-                            <div className="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full transition-all duration-300 rounded-full" style={{ width: `${phasePercent}%` }} />
-                          </div>
-                          <span className="text-emerald-400 font-bold">{phasePercent}%</span>
-                        </div>
-                      </div>
+        <div className="p-6 space-y-8 bg-slate-950/40">
+          {Object.entries(phases).map(([phaseName, phaseTasks]) => {
+            const phaseCompleted = phaseTasks.filter(t => t.completed).length;
+            const phasePercent = phaseTasks.length > 0 ? Math.round((phaseCompleted / phaseTasks.length) * 100) : 0;
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {phaseTasks.map(task => (
-                  <div
-                    key={task.id}
-                    className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
-                      task.completed
-                        ? 'bg-slate-950/40 border-white/5 opacity-60'
-                        : executingTaskId === task.id || (isProcessing && executingTaskId === task.id)
-                        ? 'bg-amber-500/10 border-amber-500/50 shadow-glow-violet animate-pulse'
-                        : 'bg-slate-900/80 border-white/10 hover:border-primary/40 shadow-md'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <button onClick={() => toggleTask(task.id)} className="mt-0.5 shrink-0">
-                          {task.completed ? (
-                            <CheckCircle2 className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
-                          ) : (
-                            <Circle className="w-5 h-5 text-text-muted hover:text-primary transition-colors" />
-                          )}
-                        </button>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {task.priority && (
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${
-                              task.priority === 'high' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
-                              task.priority === 'medium' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
-                              'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                            }`}>
-                              {task.priority}
-                            </span>
-                          )}
-                          <button onClick={() => deleteTask(task.id)} className="p-1 text-text-muted hover:text-rose-400 transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <p className={`text-sm font-medium leading-relaxed ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}>
-                        {(task.title.includes(' ➔ ') ? task.title.split(' ➔ ').slice(-1)[0] : task.title).replace(/\*\*/g, '')}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between gap-2">
-                      {task.dueDate ? (
-                        <span className="flex items-center gap-1 text-[11px] font-mono text-text-muted">
-                          <CalendarDays className="w-3.5 h-3.5 text-primary" />
-                          {new Date(task.dueDate).toLocaleDateString()}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono text-text-muted/60">No due date</span>
-                      )}
-
-                      {!task.completed && (
-                        <button
-                          onClick={() => handleExecuteTask(task.id)}
-                          disabled={executingTaskId === task.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-primary text-white text-xs font-mono font-bold hover:brightness-110 transition-all shadow-glow-cyan"
-                        >
-                          <Zap className="w-3.5 h-3.5 text-amber-300" />
-                          <span>Execute with AI</span>
-                        </button>
-                      )}
-                    </div>
+            return (
+              <div key={phaseName} className="space-y-4">
+                {/* Phase Header */}
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-cyan-400" />
+                    <h3 className="text-sm font-bold font-mono text-text uppercase tracking-wider">{phaseName}</h3>
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-text-muted border border-white/10">
+                      {phaseTasks.length} tasks
+                    </span>
                   </div>
-                ))}
+                  
+                  <div className="flex items-center gap-2 font-mono text-[11px]">
+                    <div className="w-24 bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/10">
+                      <div className="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full transition-all duration-300 rounded-full" style={{ width: `${phasePercent}%` }} />
+                    </div>
+                    <span className="text-emerald-400 font-bold">{phasePercent}%</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {phaseTasks.map(task => {
+                    const isEditing = editingTaskId === task.id;
+                    const cleanTitle = (task.title.includes(' ➔ ') ? task.title.split(' ➔ ').slice(-1)[0] : task.title).replace(/\*\*/g, '');
+
+                    return (
+                      <div
+                        key={task.id}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          setEditingTaskId(task.id);
+                          setEditTaskTitle(cleanTitle);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'F2') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditingTaskId(task.id);
+                            setEditTaskTitle(cleanTitle);
+                          }
+                        }}
+                        tabIndex={0}
+                        className={`p-4 rounded-2xl border transition-all flex flex-col justify-between focus:outline-none focus:ring-1 focus:ring-cyan-400/50 ${
+                          task.completed
+                            ? 'bg-slate-950/40 border-white/5 opacity-60'
+                            : executingTaskId === task.id || (isProcessing && executingTaskId === task.id)
+                            ? 'bg-amber-500/10 border-amber-500/50 shadow-glow-violet animate-pulse'
+                            : 'bg-slate-900/80 border-white/10 hover:border-primary/40 shadow-md'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <button onClick={() => toggleTask(task.id)} className="mt-0.5 shrink-0">
+                              {task.completed ? (
+                                <CheckCircle2 className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
+                              ) : (
+                                <Circle className="w-5 h-5 text-text-muted hover:text-primary transition-colors" />
+                              )}
+                            </button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {task.priority && (
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${
+                                  task.priority === 'high' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
+                                  task.priority === 'medium' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                                  'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                }`}>
+                                  {task.priority}
+                                </span>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTaskId(task.id);
+                                  setEditTaskTitle(cleanTitle);
+                                }}
+                                className="p-1 text-text-muted hover:text-cyan-300 transition-colors"
+                                title="Rename Task (F2)"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => deleteTask(task.id)} className="p-1 text-text-muted hover:text-rose-400 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={editTaskTitle}
+                              onChange={(e) => setEditTaskTitle(e.target.value)}
+                              onBlur={() => handleSaveTaskTitle(task.id, cleanTitle)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveTaskTitle(task.id, cleanTitle);
+                                if (e.key === 'Escape') setEditingTaskId(null);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                              className="w-full bg-slate-950 border border-cyan-400 rounded px-2 py-1 text-sm font-medium text-text focus:outline-none"
+                            />
+                          ) : (
+                            <p className={`text-sm font-medium leading-relaxed ${task.completed ? 'line-through text-text-muted' : 'text-text'}`} title="Double-click or press F2 to rename">
+                              {cleanTitle}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between gap-2">
+                          {task.dueDate ? (
+                            <span className="flex items-center gap-1 text-[11px] font-mono text-text-muted">
+                              <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                              {new Date(task.dueDate).toLocaleDateString()}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono text-text-muted/60">No due date</span>
+                          )}
+
+                          {!task.completed && (
+                            <button
+                              onClick={() => handleExecuteTask(task.id)}
+                              disabled={executingTaskId === task.id}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-primary text-white text-xs font-mono font-bold hover:brightness-110 transition-all shadow-glow-cyan"
+                            >
+                              <Zap className="w-3.5 h-3.5 text-amber-300" />
+                              <span>Execute with AI</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
         </div>
       )}
     </div>

@@ -111,6 +111,7 @@ interface AppState {
   togglePinConversation: (id: string) => void;
   setConversationCategory: (id: string, category: string) => void;
   addFolder: (folderName: string) => void;
+  renameFolder: (oldName: string, newName: string) => void;
   deleteFolder: (folderName: string) => void;
   
   // Action Board Toggle & Execution
@@ -413,6 +414,16 @@ ${chatText}`;
           const trimmed = folderName.trim();
           if (!trimmed || (state.folders || []).includes(trimmed)) return state;
           return { folders: [...(state.folders || []), trimmed] };
+        }),
+
+        renameFolder: (oldName, newName) => set((state) => {
+          const trimmedNew = newName.trim();
+          if (!trimmedNew || oldName === trimmedNew) return state;
+          const updatedFolders = (state.folders || []).map(f => f === oldName ? trimmedNew : f);
+          const updatedConvs = state.conversations.map(conv =>
+            conv.category === oldName ? { ...conv, category: trimmedNew } : conv
+          );
+          return { folders: updatedFolders, conversations: updatedConvs };
         }),
 
         deleteFolder: (folderName) => set((state) => ({

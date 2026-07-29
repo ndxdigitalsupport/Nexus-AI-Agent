@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target, LogOut, LogIn } from 'lucide-react';
+import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target, LogOut, LogIn, Edit2 } from 'lucide-react';
 import { useStore } from '../store';
 import ConfirmModal from './ConfirmModal';
 
@@ -14,9 +14,11 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
     startNewConversation,
     loadConversation,
     deleteConversation,
+    updateConversationTitle,
     togglePinConversation,
     setConversationCategory,
     addFolder,
+    renameFolder,
     deleteFolder,
     isMobileSidebarOpen,
     toggleMobileSidebar,
@@ -28,9 +30,18 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingFolder, setIsAddingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [editingFolderName, setEditingFolderName] = useState<string | null>(null);
+  const [editFolderValue, setEditFolderValue] = useState('');
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+
+  const handleSaveFolderRename = (oldName: string) => {
+    if (editFolderValue.trim() && editFolderValue.trim() !== oldName) {
+      renameFolder(oldName, editFolderValue.trim());
+    }
+    setEditingFolderName(null);
+  };
 
   // Custom Modal Confirmation State
   const [confirmModal, setConfirmModal] = useState<{
@@ -247,6 +258,7 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
                     onSelect={() => handleSelectConversation(conv.id)}
                     onTogglePin={() => togglePinConversation(conv.id)}
                     onDelete={() => handleDeleteConversation(conv.id, conv.title)}
+                    onRename={(newTitle) => updateConversationTitle(conv.id, newTitle)}
                     onAssignFolder={(cat) => setConversationCategory(conv.id, cat)}
                     onDragStart={() => handleDragStart(conv.id)}
                   />
@@ -319,23 +331,67 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
                     >
                       {/* Folder Accordion Header */}
                       <div
-                        onClick={() => toggleFolderExpand(folderName)}
-                        className="group flex items-center justify-between p-2 cursor-pointer select-none"
+                        onClick={() => {
+                          if (editingFolderName !== folderName) toggleFolderExpand(folderName);
+                        }}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          setEditingFolderName(folderName);
+                          setEditFolderValue(folderName);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'F2') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditingFolderName(folderName);
+                            setEditFolderValue(folderName);
+                          }
+                        }}
+                        tabIndex={0}
+                        className="group flex items-center justify-between p-2 cursor-pointer select-none focus:outline-none focus:ring-1 focus:ring-cyan-400/50 rounded-lg"
                       >
-                        <div className="flex items-center gap-2 font-mono text-xs font-semibold text-text">
+                        <div className="flex items-center gap-2 font-mono text-xs font-semibold text-text flex-1 min-w-0 pr-2">
                           {isExpanded ? (
-                            <ChevronDown className="w-3.5 h-3.5 text-primary" />
+                            <ChevronDown className="w-3.5 h-3.5 text-primary shrink-0" />
                           ) : (
-                            <ChevronRight className="w-3.5 h-3.5 text-text-muted" />
+                            <ChevronRight className="w-3.5 h-3.5 text-text-muted shrink-0" />
                           )}
-                          <Folder className="w-3.5 h-3.5 text-cyan-400" />
-                          <span className="truncate">{folderName}</span>
+                          <Folder className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                          {editingFolderName === folderName ? (
+                            <input
+                              type="text"
+                              value={editFolderValue}
+                              onChange={(e) => setEditFolderValue(e.target.value)}
+                              onBlur={() => handleSaveFolderRename(folderName)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveFolderRename(folderName);
+                                if (e.key === 'Escape') setEditingFolderName(null);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                              className="w-full bg-slate-950 border border-cyan-400 rounded px-1.5 py-0.5 text-xs text-text font-mono focus:outline-none"
+                            />
+                          ) : (
+                            <span className="truncate" title="Double-click or press F2 to rename">{folderName}</span>
+                          )}
                         </div>
 
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 shrink-0">
                           <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/5 text-text-muted border border-white/10">
                             {folderChats.length}
                           </span>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingFolderName(folderName);
+                              setEditFolderValue(folderName);
+                            }}
+                            className="hidden group-hover:flex p-1 text-text-muted hover:text-cyan-300"
+                            title="Rename folder (F2)"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
 
                           <button
                             onClick={(e) => handleDeleteFolder(folderName, e)}
@@ -368,6 +424,7 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
                               onSelect={() => handleSelectConversation(conv.id)}
                               onTogglePin={() => togglePinConversation(conv.id)}
                               onDelete={() => handleDeleteConversation(conv.id, conv.title)}
+                              onRename={(newTitle) => updateConversationTitle(conv.id, newTitle)}
                               onAssignFolder={(cat) => setConversationCategory(conv.id, cat)}
                               onDragStart={() => handleDragStart(conv.id)}
                             />
@@ -410,6 +467,7 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
                   onSelect={() => handleSelectConversation(conv.id)}
                   onTogglePin={() => togglePinConversation(conv.id)}
                   onDelete={() => handleDeleteConversation(conv.id, conv.title)}
+                  onRename={(newTitle) => updateConversationTitle(conv.id, newTitle)}
                   onAssignFolder={(cat) => setConversationCategory(conv.id, cat)}
                   onDragStart={() => handleDragStart(conv.id)}
                 />
@@ -474,6 +532,7 @@ function ConversationItem({
   onSelect,
   onTogglePin,
   onDelete,
+  onRename,
   onAssignFolder,
   onDragStart
 }: {
@@ -483,17 +542,43 @@ function ConversationItem({
   onSelect: () => void;
   onTogglePin: () => void;
   onDelete: () => void;
+  onRename: (newTitle: string) => void;
   onAssignFolder: (cat: string) => void;
   onDragStart: () => void;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(conv.title);
+
+  const handleSaveTitle = () => {
+    if (editTitle.trim() && editTitle.trim() !== conv.title) {
+      onRename(editTitle.trim());
+    } else {
+      setEditTitle(conv.title);
+    }
+    setIsEditing(false);
+  };
 
   return (
     <div
-      draggable
+      draggable={!isEditing}
       onDragStart={onDragStart}
-      onClick={onSelect}
-      className={`group relative flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all duration-200 active:cursor-grabbing ${
+      onClick={() => {
+        if (!isEditing) onSelect();
+      }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'F2') {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsEditing(true);
+        }
+      }}
+      tabIndex={0}
+      className={`group relative flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 active:cursor-grabbing ${
         isActive
           ? 'bg-primary/10 border border-primary/40 text-primary shadow-glow-cyan'
           : 'text-text-muted hover:text-text hover:bg-white/5 border border-transparent'
@@ -502,10 +587,39 @@ function ConversationItem({
       <GripVertical className="w-3.5 h-3.5 text-text-muted/40 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 cursor-grab" />
       <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-primary' : 'text-text-muted group-hover:text-primary'}`} />
       <div className="flex flex-col flex-1 min-w-0">
-        <span className="text-xs font-medium truncate">{conv.title}</span>
+        {isEditing ? (
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onBlur={handleSaveTitle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSaveTitle();
+              if (e.key === 'Escape') {
+                setEditTitle(conv.title);
+                setIsEditing(false);
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            autoFocus
+            className="w-full bg-slate-950 border border-cyan-400/80 rounded px-1.5 py-0.5 text-xs text-text font-medium focus:outline-none"
+          />
+        ) : (
+          <span className="text-xs font-medium truncate" title="Double-click or press F2 to rename">{conv.title}</span>
+        )}
       </div>
 
       <div className="hidden md:group-hover:flex items-center gap-0.5 shrink-0 relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsEditing(true);
+          }}
+          className="p-1 rounded-lg text-text-muted hover:text-cyan-300 hover:bg-white/10 transition-colors"
+          title="Rename Chat (F2)"
+        >
+          <Edit2 className="w-3.5 h-3.5" />
+        </button>
         {/* Assign Folder Dropdown */}
         <button
           onClick={(e) => {
