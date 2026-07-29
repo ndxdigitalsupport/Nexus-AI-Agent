@@ -138,7 +138,7 @@ const createNewConversation = (): Conversation => ({
     {
       id: 'welcome-msg',
       role: 'agent',
-      content: 'System initialized. I am NEXUS, your AI agent. How can I assist you today?',
+      content: "👋 **Welcome! I'm NEXUS, your AI co-pilot.**\n\nWhat can I help you accomplish today? You can ask me to draft documents, create project plans, analyze business ideas, or answer any question.",
       timestamp: Date.now(),
     }
   ],
