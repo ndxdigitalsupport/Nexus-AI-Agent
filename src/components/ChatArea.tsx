@@ -479,19 +479,6 @@ export default function ChatArea() {
           </div>
         )}
 
-        {/* Quick Action Plan Pill */}
-        <div className="flex items-center gap-2 mb-2 max-w-4xl mx-auto font-mono text-[11px] overflow-x-auto custom-scrollbar pb-1">
-          <button
-            type="button"
-            onClick={() => setInput('Create a detailed, step-by-step project execution plan for my goal and send all action items directly to my Action Board: ')}
-            className="group flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/15 via-cyan-500/10 to-violet-500/15 hover:from-amber-500/25 hover:to-cyan-500/20 text-amber-300 border border-amber-500/40 rounded-xl transition-all duration-300 shadow-glow-violet active:scale-95 shrink-0"
-            title="Prompt AI to generate a full plan and automatically inject all tasks onto your Action Board"
-          >
-            <Target className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform shrink-0" />
-            <span className="font-semibold tracking-wide text-xs">Plan Project & Auto-Populate Board</span>
-          </button>
-        </div>
-
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-cyan-400 to-violet-600 opacity-20 group-hover:opacity-40 blur-md transition-all duration-300 rounded-2xl" />
           <div className="relative flex items-end gap-2 bg-slate-950/90 border border-white/15 rounded-2xl p-2 focus-within:border-primary/60 transition-colors shadow-xl">
