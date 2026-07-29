@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X, FileText, Volume2, VolumeX, Lightbulb, Compass, FileCheck, HelpCircle } from 'lucide-react';
+import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X, FileText, Volume2, VolumeX, Lightbulb, Compass, FileCheck, HelpCircle, RefreshCw } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -55,6 +55,15 @@ export default function ChatArea() {
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
+  const [promptOffset, setPromptOffset] = useState(0);
+
+  // Smoothly rotate 3 minimal prompt chips every 7 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPromptOffset(prev => (prev + 3) % PROMPT_POOL.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
   const [isMemorySaved, setIsMemorySaved] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPersonaMenu, setShowPersonaMenu] = useState(false);
@@ -518,23 +527,33 @@ export default function ChatArea() {
 
       {/* Pinned Bottom Input Area */}
       <div className="shrink-0 p-2.5 sm:p-4 border-t border-white/10 bg-slate-900/90 backdrop-blur-xl">
-        {/* Sleek Minimal Starter Prompt Guide Chips */}
+        {/* Sleek Minimal Starter Prompt Chips (Auto-rotating & Refreshable) */}
         {activeMessages.length <= 1 && (
-          <div className="max-w-7xl mx-auto mb-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-mono text-text-muted/70 flex items-center gap-1 mr-1">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Guide:
-            </span>
-            {PROMPT_POOL.slice(0, 4).map((item, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setInput(item.prompt)}
-                className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/15 border border-white/10 hover:border-cyan-500/40 text-xs text-text-muted hover:text-cyan-300 font-medium transition-all duration-200 active:scale-95 shadow-sm flex items-center gap-1.5"
-              >
-                <span>{item.category.split(' ')[0]}</span>
-                <span>{item.title}</span>
-              </button>
-            ))}
+          <div className="max-w-7xl mx-auto mb-3 flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+            <button
+              type="button"
+              onClick={() => setPromptOffset(prev => (prev + 3) % PROMPT_POOL.length)}
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400 hover:rotate-180 transition-all duration-500 shrink-0"
+              title="Shuffle new prompt suggestions"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {PROMPT_POOL.slice(promptOffset, promptOffset + 3).concat(
+                PROMPT_POOL.slice(0, Math.max(0, (promptOffset + 3) - PROMPT_POOL.length))
+              ).map((item, idx) => (
+                <button
+                  key={`${item.title}-${idx}`}
+                  type="button"
+                  onClick={() => setInput(item.prompt)}
+                  className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/15 border border-white/10 hover:border-cyan-500/40 text-xs text-text-muted hover:text-cyan-300 font-medium transition-all duration-300 active:scale-95 shadow-sm flex items-center gap-2 animate-fadeIn shrink-0"
+                >
+                  <span className="text-sm">{item.category.split(' ')[0]}</span>
+                  <span>{item.title}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
