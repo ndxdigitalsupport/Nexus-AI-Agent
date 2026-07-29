@@ -634,6 +634,7 @@ Rules for Action Items:
 - NEVER use generic titles like "Web App Development Plan" if the user mentioned a specific app name like Techlaw!
 - Group tasks under clear phase headers in square brackets like [Phase 1: Phase Name].
 - List 2-3 specific, actionable step tasks under each phase header.
+- ONLY list actionable step tasks under ### Action Items. Do NOT add conversational closing notes (e.g. "Want me to drill deeper...", "Let me know...") under ### Action Items. Put conversational notes before ### Action Items.
 - Do NOT generate "### Action Items" for casual conversational turns (like "hello", "yes", or simple factual questions).`;
 
             // Clean up and format chat messages for OpenAI compatibility:
@@ -797,7 +798,16 @@ Rules for Action Items:
                   }
 
                   const rawTask = line.replace(/^[-*•\d.]+\s*/, '').trim();
-                  if (rawTask && !rawTask.startsWith('#')) {
+                  // Ignore markdown headers, empty lines, or AI follow-up sign-off lines (e.g., "Want me to...", "Let me know...")
+                  if (
+                    rawTask &&
+                    !rawTask.startsWith('#') &&
+                    !/^want me to/i.test(rawTask) &&
+                    !/^would you like me/i.test(rawTask) &&
+                    !/^let me know/i.test(rawTask) &&
+                    !/^if you need/i.test(rawTask) &&
+                    !/^feel free to/i.test(rawTask)
+                  ) {
                     let title = rawTask;
                     let priority: 'low' | 'medium' | 'high' | undefined = undefined;
                     let dueDate: number | undefined = undefined;

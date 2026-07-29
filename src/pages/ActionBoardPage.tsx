@@ -316,7 +316,13 @@ function ProjectPlanBlock({
       {/* Phases Container */}
       {isOpen && (
         <div className="p-6 space-y-6 bg-slate-950/40">
-          {Object.entries(phases).map(([phaseName, phaseTasks]) => (
+          {Object.entries(phases)
+            .sort(([aPhase], [bPhase]) => {
+              const aNum = parseInt(aPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
+              const bNum = parseInt(bPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
+              return aNum - bNum;
+            })
+            .map(([phaseName, phaseTasks]) => (
             <div key={phaseName} className="space-y-3">
               <div className="flex items-center gap-2 border-b border-white/5 pb-2">
                 <span className="w-2 h-2 rounded-full bg-cyan-400"></span>

@@ -348,7 +348,13 @@ function ProjectPlanFolder({
       {/* Nested Phases Inside Project */}
       {isProjectOpen && (
         <div className="p-2 space-y-2 bg-slate-950/60">
-          {Object.entries(phases).map(([phaseName, phaseTasks]) => (
+          {Object.entries(phases)
+            .sort(([aPhase], [bPhase]) => {
+              const aNum = parseInt(aPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
+              const bNum = parseInt(bPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
+              return aNum - bNum;
+            })
+            .map(([phaseName, phaseTasks]) => (
             <CollapsiblePhaseFolder
               key={phaseName}
               phaseName={phaseName}
