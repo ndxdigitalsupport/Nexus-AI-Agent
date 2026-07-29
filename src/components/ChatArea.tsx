@@ -587,28 +587,6 @@ export default function ChatArea() {
                     )}
                   </button>
 
-                  <button
-                    onClick={() => handleSpeakMessage(msg.content, msg.id)}
-                    className={`flex items-center gap-1 text-[11px] font-mono transition-colors px-2 py-0.5 rounded-lg border ${
-                      speakingMessageId === msg.id 
-                        ? 'bg-violet-500/20 text-violet-300 border-violet-500/50 animate-pulse' 
-                        : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
-                    }`}
-                    title="Listen to response out loud"
-                  >
-                    {speakingMessageId === msg.id ? (
-                      <>
-                        <VolumeX className="w-3 h-3 text-violet-400" />
-                        <span className="text-violet-300 font-semibold">Stop Speaking</span>
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 className="w-3 h-3" />
-                        <span>🔊 Listen</span>
-                      </>
-                    )}
-                  </button>
-
                   {msg.role === 'agent' && msg.content.length > 80 && (
                     <button
                       onClick={() => {
