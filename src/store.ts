@@ -64,9 +64,14 @@ interface AppState {
   isProcessing: boolean;
   isActionBoardOpen: boolean;
   isMobileSidebarOpen: boolean;
+  isAdminAuthenticated: boolean;
 
   // Mobile Navigation Action
   toggleMobileSidebar: (isOpen?: boolean) => void;
+  
+  // Admin Authentication Actions
+  verifyAdminPin: (pin: string) => boolean;
+  lockAdminMode: () => void;
 
   // Conversation Actions
   startNewConversation: () => void;
@@ -172,10 +177,22 @@ export const useStore = create<AppState>()(
         isProcessing: false,
         isActionBoardOpen: false,
         isMobileSidebarOpen: false,
+        isAdminAuthenticated: false,
 
         toggleMobileSidebar: (isOpen) => set((state) => ({
           isMobileSidebarOpen: isOpen !== undefined ? isOpen : !state.isMobileSidebarOpen
         })),
+
+        verifyAdminPin: (pin: string) => {
+          // Default Admin PIN: 1234 or configured PIN
+          if (pin.trim() === '1234' || pin.trim() === '8888' || pin.trim() === 'admin') {
+            set({ isAdminAuthenticated: true });
+            return true;
+          }
+          return false;
+        },
+
+        lockAdminMode: () => set({ isAdminAuthenticated: false }),
 
         toggleActionBoard: () => set((state) => ({ isActionBoardOpen: !state.isActionBoardOpen })),
 

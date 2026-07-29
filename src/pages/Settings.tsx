@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
-import { Key, Cpu, Sliders, Check, Eye, EyeOff, RotateCcw, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Key, Cpu, Sliders, Check, Eye, EyeOff, RotateCcw, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft, ShieldCheck, Lock, Unlock } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
 export interface ModelPreset {
@@ -63,7 +63,7 @@ export const MODEL_PRESETS: ModelPreset[] = [
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { settings, updateSettings, exportState, importState, resetAllData } = useStore();
+  const { settings, updateSettings, exportState, importState, resetAllData, isAdminAuthenticated, verifyAdminPin, lockAdminMode } = useStore();
 
   const isPresetModel = MODEL_PRESETS.some(p => p.id === (settings?.selectedModel || 'openrouter/free'));
   const [apiKey, setApiKey] = useState(settings?.apiKey || '');
@@ -71,6 +71,23 @@ export default function Settings() {
   const [customModelInput, setCustomModelInput] = useState(!isPresetModel ? (settings?.selectedModel || '') : '');
   const [customEndpoint, setCustomEndpoint] = useState(settings?.customEndpoint || 'https://openrouter.ai/api/v1/chat/completions');
   const [temperature, setTemperature] = useState(settings?.temperature ?? 0.7);
+
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const [pinSuccess, setPinSuccess] = useState(false);
+
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (verifyAdminPin(pinInput)) {
+      setPinError(false);
+      setPinSuccess(true);
+      setPinInput('');
+      setTimeout(() => setPinSuccess(false), 3000);
+    } else {
+      setPinError(true);
+      setTimeout(() => setPinError(false), 3000);
+    }
+  };
 
   const [showApiKey, setShowApiKey] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -227,6 +244,75 @@ export default function Settings() {
             <span>{importMessage.text}</span>
           </div>
         )}
+
+        {/* Admin Access Control Card */}
+        <div className={`p-6 rounded-2xl border transition-all duration-300 mb-8 ${
+          isAdminAuthenticated 
+            ? 'bg-emerald-500/10 border-emerald-500/40 shadow-glow-cyan' 
+            : 'glass-panel border-amber-500/40 shadow-xl'
+        }`}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-xl border ${
+                isAdminAuthenticated ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
+              }`}>
+                {isAdminAuthenticated ? <ShieldCheck className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                  <span>Admin Control & Permission Mode</span>
+                  {isAdminAuthenticated ? (
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-mono">
+                      👑 Admin Mode Unlocked
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-mono">
+                      🔒 User Mode (Read-Only Editing)
+                    </span>
+                  )}
+                </h2>
+                <p className="text-xs text-text-muted mt-0.5">
+                  {isAdminAuthenticated 
+                    ? 'You have full administrative privileges to edit personas, API keys, system endpoints, and memory articles.' 
+                    : 'Enter the Admin PIN (default: 1234) once below to unlock editing rights across all settings and personas.'}
+                </p>
+              </div>
+            </div>
+
+            {isAdminAuthenticated ? (
+              <button
+                type="button"
+                onClick={lockAdminMode}
+                className="px-4 py-2 bg-slate-900 border border-white/15 hover:border-rose-500/50 text-text-muted hover:text-rose-400 rounded-xl text-xs font-mono transition-all flex items-center gap-2"
+              >
+                <Lock className="w-3.5 h-3.5" /> Lock Admin Mode
+              </button>
+            ) : (
+              <form onSubmit={handlePinSubmit} className="flex items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="password"
+                  placeholder="Enter Admin PIN (1234)..."
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  className="bg-slate-950 border border-white/15 rounded-xl px-3.5 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-cyan-400 font-mono w-full sm:w-48"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-primary text-slate-950 font-bold rounded-xl hover:brightness-110 transition-all text-xs font-mono shrink-0 shadow-glow-cyan flex items-center gap-1.5"
+                >
+                  <Unlock className="w-3.5 h-3.5" /> Unlock
+                </button>
+              </form>
+            )}
+          </div>
+
+          {pinError && (
+            <p className="text-xs font-mono text-rose-400 mt-3 font-semibold">❌ Incorrect PIN code. Default PIN is 1234.</p>
+          )}
+          {pinSuccess && (
+            <p className="text-xs font-mono text-emerald-400 mt-3 font-semibold">✅ Admin Mode Unlocked! You can now edit all settings, personas, and system parameters.</p>
+          )}
+        </div>
 
         <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
           {/* API Key Section */}

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, Persona } from '@/store';
-import { Plus, Edit, Trash2, CheckCircle2, User, Sparkles, Bot, ShieldCheck, Zap, ArrowLeft } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckCircle2, User, Sparkles, Bot, ShieldCheck, Zap, ArrowLeft, Lock } from 'lucide-react';
 
 export default function Agents() {
   const navigate = useNavigate();
-  const { personas, activePersonaId, addPersona, updatePersona, deletePersona, setActivePersona } = useStore();
+  const { personas, activePersonaId, addPersona, updatePersona, deletePersona, setActivePersona, isAdminAuthenticated } = useStore();
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [newPersonaName, setNewPersonaName] = useState('');
   const [newPersonaInstructions, setNewPersonaInstructions] = useState('');
@@ -45,16 +45,34 @@ export default function Agents() {
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold font-mono neon-text">Persona & Role Manager</h1>
+              <h1 className="text-3xl font-bold font-mono neon-text flex items-center gap-3">
+                <span>Persona & Role Manager</span>
+                {!isAdminAuthenticated && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-mono font-normal">
+                    🔒 User Mode (Selecting Only)
+                  </span>
+                )}
+              </h1>
               <p className="text-text-muted mt-1">Configure AI behavioral instructions, system roles, and expert personas.</p>
             </div>
 
             <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary via-cyan-400 to-cyan-500 text-slate-950 font-bold rounded-xl hover:brightness-110 transition-all shadow-glow-cyan"
+              onClick={() => {
+                if (!isAdminAuthenticated) {
+                  navigate('/settings');
+                } else {
+                  setShowAddForm(!showAddForm);
+                }
+              }}
+              className={`flex items-center gap-2 px-5 py-2.5 font-bold rounded-xl transition-all shadow-glow-cyan ${
+                isAdminAuthenticated
+                  ? 'bg-gradient-to-r from-primary via-cyan-400 to-cyan-500 text-slate-950 hover:brightness-110'
+                  : 'bg-white/5 border border-white/10 text-amber-400 hover:bg-white/10'
+              }`}
+              title={!isAdminAuthenticated ? "Unlock Admin Mode in Settings to create custom personas" : "Create a new custom persona"}
             >
-              <Plus className="w-4 h-4" />
-              <span>Create Custom Persona</span>
+              {isAdminAuthenticated ? <Plus className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              <span>{isAdminAuthenticated ? 'Create Custom Persona' : 'Unlock Admin to Create'}</span>
             </button>
           </div>
         </div>
@@ -226,25 +244,27 @@ export default function Agents() {
                           </button>
                         )}
 
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setEditingPersona(persona)}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-white/10 transition-colors"
-                            title="Edit Persona"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-
-                          {!['nexus-growth-advisor', 'tech-architect', 'product-strategist', 'seo-content-specialist'].includes(persona.id) && (
+                        {isAdminAuthenticated && (
+                          <div className="flex items-center gap-1">
                             <button
-                              onClick={() => deletePersona(persona.id)}
-                              className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-white/10 transition-colors"
-                              title="Delete Persona"
+                              onClick={() => setEditingPersona(persona)}
+                              className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-white/10 transition-colors"
+                              title="Edit Persona"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Edit className="w-4 h-4" />
                             </button>
-                          )}
-                        </div>
+
+                            {!['nexus-growth-advisor', 'tech-architect', 'product-strategist', 'seo-content-specialist'].includes(persona.id) && (
+                              <button
+                                onClick={() => deletePersona(persona.id)}
+                                className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-white/10 transition-colors"
+                                title="Delete Persona"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
