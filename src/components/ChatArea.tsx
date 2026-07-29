@@ -55,16 +55,6 @@ export default function ChatArea() {
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
-  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
-  const [promptOffset, setPromptOffset] = useState(0);
-
-  // Auto-rotate starter cards every 8 seconds with smooth animation
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setPromptOffset(prev => (prev + 2) % PROMPT_POOL.length);
-    }, 8000);
-    return () => clearInterval(timer);
-  }, []);
   const [isMemorySaved, setIsMemorySaved] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPersonaMenu, setShowPersonaMenu] = useState(false);
@@ -83,63 +73,6 @@ export default function ChatArea() {
     navigator.clipboard.writeText(content);
     setCopiedMessageId(msgId);
     setTimeout(() => setCopiedMessageId(null), 2500);
-  };
-
-  const handleSpeakMessage = (content: string, msgId: string) => {
-    if (!('speechSynthesis' in window)) {
-      alert('Speech Synthesis is not supported in this browser.');
-      return;
-    }
-
-    // Toggle stop if already speaking this message
-    if (speakingMessageId === msgId) {
-      window.speechSynthesis.cancel();
-      setSpeakingMessageId(null);
-      return;
-    }
-
-    // Stop previous speech & resume synth queue if paused by browser
-    window.speechSynthesis.cancel();
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-    }
-
-    // Clean markdown formatting symbols (#, *, `, _, ~, etc.)
-    const cleanText = content
-      .replace(/```[\s\S]*?```/g, 'Code block omitted.')
-      .replace(/[#*`_~|\-[\]()]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (!cleanText) return;
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    utterance.lang = 'en-US';
-
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      const preferredVoice = voices.find(v => v.lang.includes('en') || v.lang.includes('US')) || voices[0];
-      if (preferredVoice) utterance.voice = preferredVoice;
-    }
-
-    utterance.onstart = () => {
-      setSpeakingMessageId(msgId);
-    };
-
-    utterance.onend = () => {
-      setSpeakingMessageId(null);
-    };
-
-    utterance.onerror = (e) => {
-      console.warn('SpeechSynthesis error:', e);
-      setSpeakingMessageId(null);
-    };
-
-    setSpeakingMessageId(msgId);
-    window.speechSynthesis.speak(utterance);
   };
 
   const handleConvertToTask = (content: string, msgId: string) => {
@@ -454,53 +387,48 @@ export default function ChatArea() {
 
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar">
-        {/* Welcome Animated Prompt Cards (Shown when starting a chat) */}
+        {/* Welcome Static Prompt Cards (Shown when starting a chat) */}
         {activeMessages.length <= 1 && (
           <div className="max-w-4xl mx-auto my-6 p-6 rounded-3xl glass-panel border border-white/10 bg-slate-900/60 shadow-2xl animate-fadeIn">
             <div className="flex items-center justify-between gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 shadow-glow-cyan">
-                  <Sparkles className="w-5 h-5 animate-pulse" />
+                  <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-text font-sans">What would you like assistance with today?</h3>
-                  <p className="text-xs text-text-muted">Click any recommendation below or type your own question.</p>
+                  <p className="text-xs text-text-muted">Click any prompt card below or type your own request.</p>
                 </div>
               </div>
-              <span className="text-[10px] font-mono text-cyan-400/80 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 animate-pulse hidden sm:inline-block">
-                ✨ Auto-suggesting...
+              <span className="text-[10px] font-mono text-cyan-400 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 hidden sm:inline-block">
+                ⚡ Suggested Actions
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 transition-all duration-700">
-              {PROMPT_POOL.slice(promptOffset, promptOffset + 2).concat(
-                PROMPT_POOL.slice(0, Math.max(0, (promptOffset + 2) - PROMPT_POOL.length))
-              ).map((item, idx) => {
-                const ItemIcon = item.icon;
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setInput(item.prompt);
-                    }}
-                    className={`p-4 rounded-2xl border text-left transition-all duration-300 bg-gradient-to-br ${item.gradient} hover:scale-[1.02] hover:shadow-lg active:scale-95 group flex flex-col justify-between`}
-                  >
-                    <div>
-                      <span className="text-[10px] font-bold font-mono tracking-wider uppercase opacity-80 block mb-1">
-                        {item.category}
-                      </span>
-                      <h4 className="font-bold text-xs text-text group-hover:text-cyan-300 transition-colors line-clamp-2">
-                        {item.title}
-                      </h4>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-[11px] font-mono opacity-60 group-hover:opacity-100 transition-opacity">
-                      <span>Click to use prompt</span>
-                      <span>→</span>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {PROMPT_POOL.slice(0, 4).map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setInput(item.prompt);
+                  }}
+                  className={`p-4 rounded-2xl border text-left transition-all duration-200 bg-gradient-to-br ${item.gradient} hover:scale-[1.01] hover:border-cyan-400/50 hover:shadow-lg active:scale-95 group flex flex-col justify-between`}
+                >
+                  <div>
+                    <span className="text-[10px] font-bold font-mono tracking-wider uppercase opacity-80 block mb-1">
+                      {item.category}
+                    </span>
+                    <h4 className="font-bold text-xs text-text group-hover:text-cyan-300 transition-colors line-clamp-2">
+                      {item.title}
+                    </h4>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-[11px] font-mono opacity-60 group-hover:opacity-100 transition-opacity">
+                    <span>Click to use prompt</span>
+                    <span>→</span>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
         )}
