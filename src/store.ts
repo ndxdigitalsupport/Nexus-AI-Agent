@@ -712,17 +712,41 @@ ${chatText}`;
             }
             // --- End RAG Search Engine ---
 
-            const systemContent = `You are NEXUS, an advanced agentic AI assistant OS. 
+            // --- Live Project Board & Tasks Context Injection ---
+            const currentTasks = get().tasks;
+            let projectBoardContext = '';
+            if (currentTasks.length > 0) {
+              const completedCount = currentTasks.filter(t => t.completed).length;
+              const pendingTasks = currentTasks.filter(t => !t.completed);
+              const completedTasks = currentTasks.filter(t => t.completed);
+
+              projectBoardContext = `\n\n=== LIVE WORKSPACE PROJECT PLANS & TASK TRACKER ===\n` +
+                `Total Tasks: ${currentTasks.length} | Completed: ${completedCount} | Pending: ${pendingTasks.length}\n\n` +
+                `[CURRENT PENDING TASKS]:\n` +
+                (pendingTasks.length > 0 
+                  ? pendingTasks.map(t => `- [ ] ${t.title}${t.priority ? ` (${t.priority.toUpperCase()} priority)` : ''}`).join('\n')
+                  : 'None') + '\n\n' +
+                `[COMPLETED TASKS]:\n` +
+                (completedTasks.length > 0 
+                  ? completedTasks.map(t => `- [x] ${t.title}`).join('\n')
+                  : 'None') +
+                `\n======================================================\n`;
+            }
+
+            const systemContent = `You are NEXUS, an advanced agentic AI assistant OS with full live context of the user's workspace, project plans, and action items. 
 Answer questions directly, write clean code, and execute user requests efficiently.
 ${customInstructions ? `Role / Persona Instructions: ${customInstructions}` : ''}
 ${knowledgeBaseContent}
+${projectBoardContext}
 
 TASK & PROJECT PLAN INSTRUCTION:
-Whenever the user asks to create a plan, roadmap, breakdown, or strategy (or clicks "Plan Project & Auto-Populate Board"):
+Whenever the user asks to check, review, update, or analyze their project/tasks (or asks "check my cha app", "where am I at now", "what's left to do?"), use the LIVE WORKSPACE PROJECT PLANS & TASK TRACKER context above to give them an exact, intelligent update on their progress, completed milestones, and immediate next tasks!
+
+Whenever the user asks to create a new plan, roadmap, breakdown, or strategy (or clicks "Plan Project & Auto-Populate Board"):
 1. In your main response, present a clear, beautifully structured plan divided into logical phases.
 2. At the VERY END of your message, output the exact project name extracted from the user request under the exact header:
 ### Action Items
-Project: [Exact Name requested by user e.g. "Techlaw Web App Plan" or "Finance Tracker Plan"]
+Project: [Exact Name requested by user e.g. "Techlaw Web App Plan" or "CHA App Plan"]
 
 [Phase 1: Foundation & Strategy]
 - [High] Define core features & MVP scope (due: 2 days)
@@ -733,8 +757,8 @@ Project: [Exact Name requested by user e.g. "Techlaw Web App Plan" or "Finance T
 - [Medium] Implement authentication & security
 
 Rules for Action Items:
-- Start with Project: [Specific App/Project Name] matching the user's prompt (e.g. Project: Techlaw Web App Plan).
-- NEVER use generic titles like "Web App Development Plan" if the user mentioned a specific app name like Techlaw!
+- Start with Project: [Specific App/Project Name] matching the user's prompt (e.g. Project: CHA App Plan).
+- NEVER use generic titles like "Web App Development Plan" if the user mentioned a specific app name like CHA App!
 - Group tasks under clear phase headers in square brackets like [Phase 1: Phase Name].
 - List 2-3 specific, actionable step tasks under each phase header.
 - ONLY list actionable step tasks under ### Action Items. Do NOT add conversational closing notes (e.g. "Want me to drill deeper...", "Let me know...") under ### Action Items. Put conversational notes before ### Action Items.
