@@ -73,7 +73,7 @@ export interface UserAccount {
 interface AppState {
   currentUser: UserAccount | null;
   isAuthenticated: boolean;
-  loginUser: (email: string, pass: string, role?: 'admin' | 'user') => boolean;
+  loginUser: (emailOrUser: string, pass: string) => boolean;
   logoutUser: () => void;
 
   conversations: Conversation[]; // Now an array of conversations
@@ -200,26 +200,25 @@ export const useStore = create<AppState>()(
         },
         isAuthenticated: true,
 
-        loginUser: (email: string, pass: string, requestedRole?: 'admin' | 'user') => {
-          const lowerEmail = email.toLowerCase().trim();
+        loginUser: (emailOrUser: string, pass: string) => {
+          const cleanUser = emailOrUser.trim();
           const cleanPass = pass.trim();
           const validPins = [get().settings?.adminPin?.trim(), '1234', '8888', 'admin'].filter(Boolean);
 
-          const isAdminLogin = requestedRole === 'admin' || lowerEmail.includes('admin') || validPins.includes(cleanPass);
+          const isAdmin = cleanUser.toLowerCase().includes('admin') || validPins.includes(cleanPass);
           
-          const newRole = isAdminLogin ? 'admin' : 'user';
           const newUser: UserAccount = {
-            id: isAdminLogin ? 'admin-1' : `user-${Math.random().toString(36).substr(2, 5)}`,
-            name: isAdminLogin ? 'NEXUS Administrator' : (email.split('@')[0] || 'Team Member'),
-            email: email.trim() || (isAdminLogin ? 'admin@nexus.ai' : 'member@nexus.ai'),
-            role: newRole,
-            avatar: isAdminLogin ? '👑' : '👤'
+            id: isAdmin ? 'admin-1' : `user-${Math.random().toString(36).substr(2, 5)}`,
+            name: cleanUser.includes('@') ? cleanUser.split('@')[0] : cleanUser,
+            email: cleanUser,
+            role: isAdmin ? 'admin' : 'user',
+            avatar: isAdmin ? '👑' : '👤'
           };
 
           set({
             currentUser: newUser,
             isAuthenticated: true,
-            isAdminAuthenticated: isAdminLogin
+            isAdminAuthenticated: isAdmin
           });
 
           return true;

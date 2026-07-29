@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target, LogOut } from 'lucide-react';
+import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target, LogOut, LogIn } from 'lucide-react';
 import { useStore } from '../store';
 import ConfirmModal from './ConfirmModal';
 
-export default function Sidebar() {
+export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const {
@@ -424,7 +424,7 @@ export default function Sidebar() {
         <NavItem icon={<Settings className="w-5 h-5" />} label="Settings" to="/settings" active={location.pathname === '/settings'} onClick={() => toggleMobileSidebar(false)} />
 
         {/* Logged in User Profile Card */}
-        {currentUser && (
+        {currentUser ? (
           <div className="p-2.5 rounded-xl bg-slate-950/80 border border-white/10 flex items-center justify-between gap-2 mt-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-base shrink-0">{currentUser.avatar || '👤'}</span>
@@ -436,14 +436,21 @@ export default function Sidebar() {
             <button
               onClick={() => {
                 logoutUser();
-                navigate('/login');
               }}
               className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
-              title="Log out of Team Portal"
+              title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
+        ) : (
+          <button
+            onClick={onOpenLoginModal}
+            className="w-full mt-2 flex items-center justify-center gap-2 p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-bold hover:bg-cyan-500/20 transition-all shadow-glow-cyan"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Sign In</span>
+          </button>
         )}
       </div>
 

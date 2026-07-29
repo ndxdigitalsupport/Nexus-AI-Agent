@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
+import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import ArtifactStudio from "@/components/ArtifactStudio";
 import Home from "@/pages/Home";
@@ -7,15 +8,12 @@ import History from "@/pages/History";
 import Agents from "@/pages/Agents";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import ActionBoardPage from "@/pages/ActionBoardPage";
-import LoginPage from "@/pages/LoginPage";
+import LoginModal from "@/components/LoginModal";
 import { useStore } from "@/store";
 
-function ProtectedLayout() {
+function AppLayout() {
   const { isAuthenticated } = useStore();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
     <div className="flex h-full w-full inset-0 fixed bg-[#070913] overflow-hidden selection:bg-primary selection:text-background font-sans text-text">
@@ -24,7 +22,7 @@ function ProtectedLayout() {
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-violet-600/5 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Persistent Sidebar */}
-      <Sidebar />
+      <Sidebar onOpenLoginModal={() => setIsLoginModalOpen(true)} />
 
       {/* Main Content Area */}
       <main className="flex-1 h-full overflow-hidden flex flex-col relative z-10">
@@ -33,6 +31,9 @@ function ProtectedLayout() {
 
       {/* Live Artifact & Document Preview Canvas */}
       <ArtifactStudio />
+
+      {/* Pop-up Sign In Modal */}
+      <LoginModal isOpen={isLoginModalOpen || !isAuthenticated} onClose={() => setIsLoginModalOpen(false)} />
     </div>
   );
 }
@@ -41,8 +42,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route element={<ProtectedLayout />}>
+        <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/history" element={<History />} />

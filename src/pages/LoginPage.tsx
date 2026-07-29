@@ -18,15 +18,15 @@ export default function LoginPage() {
       return;
     }
 
-    loginUser(email, password, selectedRole);
+    loginUser(email, password);
     navigate('/');
   };
 
   const handleQuickPresetLogin = (role: 'admin' | 'user') => {
     if (role === 'admin') {
-      loginUser('admin@nexus.ai', '1234', 'admin');
+      loginUser('admin@nexus.ai', '1234');
     } else {
-      loginUser('team.member@nexus.ai', '1234', 'user');
+      loginUser('team.member@nexus.ai', '1234');
     }
     navigate('/');
   };
