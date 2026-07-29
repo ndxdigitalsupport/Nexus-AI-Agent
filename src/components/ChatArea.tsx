@@ -90,6 +90,40 @@ export default function ChatArea() {
   }, [activeMessages.length, isProcessing, activeConversationId]);
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setSelectedImage(base64);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        setInput(prev => prev + (prev ? '\n\n' : '') + `[Document: ${file.name}]\n${text}\n`);
+      };
+      reader.readAsText(file);
+    }
+  };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData?.items;
@@ -148,7 +182,24 @@ export default function ChatArea() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-950/40 relative overflow-hidden">
+    <div
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className="flex-1 flex flex-col h-full bg-slate-950/40 relative overflow-hidden"
+    >
+      {/* Full-Screen Drag & Drop Overlay */}
+      {isDraggingFile && (
+        <div className="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-xl border-4 border-dashed border-cyan-400 flex flex-col items-center justify-center text-center p-6 animate-fadeIn pointer-events-none">
+          <div className="p-5 rounded-3xl bg-cyan-500/20 border border-cyan-400 text-cyan-300 mb-4 shadow-glow-cyan">
+            <Paperclip className="w-12 h-12 animate-bounce" />
+          </div>
+          <h2 className="text-2xl font-bold font-mono text-cyan-300 mb-2">Drop File or Screenshot Here</h2>
+          <p className="text-sm font-mono text-text-muted max-w-md">
+            Images (.png, .jpg, .webp) and text documents (.md, .txt, .json, .js) will be automatically attached to your prompt.
+          </p>
+        </div>
+      )}
       {/* Top Header Status Bar */}
       <header className="h-14 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between z-10 shrink-0 select-none">
         <div className="flex items-center gap-2 sm:gap-3">

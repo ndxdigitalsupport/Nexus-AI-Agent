@@ -188,32 +188,46 @@ export default function ActionBoardPage() {
             </div>
           </form>
 
-          {/* Filter Bar */}
+          {/* Pill-Style Filter Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/5 text-xs font-mono">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-text-muted flex items-center gap-1">
                 <Filter className="w-3.5 h-3.5 text-cyan-400" /> Filter:
               </span>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-                className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-text focus:outline-none focus:border-primary"
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending font-semibold">Pending Only</option>
-                <option value="completed font-semibold">Completed Only</option>
-              </select>
+              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-white/10">
+                {(['all', 'pending', 'completed'] as const).map(st => (
+                  <button
+                    key={st}
+                    onClick={() => setFilterStatus(st)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                      filterStatus === st
+                        ? 'bg-primary/20 text-cyan-300 border border-primary/40 shadow-glow-cyan font-bold'
+                        : 'text-text-muted hover:text-text hover:bg-white/5'
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
 
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value as FilterPriority)}
-                className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-text focus:outline-none focus:border-primary"
-              >
-                <option value="all">All Priorities</option>
-                <option value="high">High Priority</option>
-                <option value="medium">Medium Priority</option>
-                <option value="low">Low Priority</option>
-              </select>
+              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-white/10">
+                {(['all', 'high', 'medium', 'low'] as const).map(prio => (
+                  <button
+                    key={prio}
+                    onClick={() => setFilterPriority(prio)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                      filterPriority === prio
+                        ? prio === 'high' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 font-bold'
+                          : prio === 'medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold'
+                          : prio === 'low' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold'
+                          : 'bg-primary/20 text-cyan-300 border border-primary/40 font-bold shadow-glow-cyan'
+                        : 'text-text-muted hover:text-text hover:bg-white/5'
+                    }`}
+                  >
+                    {prio}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {completedTasksCount > 0 && (
@@ -316,21 +330,33 @@ function ProjectPlanBlock({
       {/* Phases Container */}
       {isOpen && (
         <div className="p-6 space-y-6 bg-slate-950/40">
-          {Object.entries(phases)
-            .sort(([aPhase], [bPhase]) => {
-              const aNum = parseInt(aPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
-              const bNum = parseInt(bPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
-              return aNum - bNum;
-            })
-            .map(([phaseName, phaseTasks]) => (
-            <div key={phaseName} className="space-y-3">
-              <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                <h3 className="font-mono font-bold text-sm text-text-muted uppercase tracking-wider">{phaseName}</h3>
-                <span className="text-xs font-mono text-text-muted/60">({phaseTasks.filter(t => t.completed).length}/{phaseTasks.length})</span>
-              </div>
+              {Object.entries(phases)
+                .sort(([aPhase], [bPhase]) => {
+                  const aNum = parseInt(aPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
+                  const bNum = parseInt(bPhase.match(/Phase\s*(\d+)/i)?.[1] || '999', 10);
+                  return aNum - bNum;
+                })
+                .map(([phaseName, phaseTasks]) => {
+                  const phaseCompleted = phaseTasks.filter(t => t.completed).length;
+                  const phasePercent = phaseTasks.length > 0 ? Math.round((phaseCompleted / phaseTasks.length) * 100) : 0;
+                  return (
+                    <div key={phaseName} className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                          <h3 className="font-mono font-bold text-sm text-text-muted uppercase tracking-wider">{phaseName}</h3>
+                          <span className="text-xs font-mono text-text-muted/60">({phaseCompleted}/{phaseTasks.length})</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 font-mono text-[11px]">
+                          <div className="w-24 bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/10">
+                            <div className="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full transition-all duration-300 rounded-full" style={{ width: `${phasePercent}%` }} />
+                          </div>
+                          <span className="text-emerald-400 font-bold">{phasePercent}%</span>
+                        </div>
+                      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {phaseTasks.map(task => (
                   <div
                     key={task.id}
@@ -397,7 +423,8 @@ function ProjectPlanBlock({
                 ))}
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
     </div>

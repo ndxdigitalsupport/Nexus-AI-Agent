@@ -306,11 +306,37 @@ export default function Settings() {
             )}
           </div>
 
+          {isAdminAuthenticated && (
+            <div className="mt-4 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs">
+              <div className="flex items-center gap-2 text-text-muted">
+                <Key className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Customize Secret Admin PIN:</span>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="New PIN (e.g. 9999)..."
+                  defaultValue={settings?.adminPin || ''}
+                  onBlur={(e) => {
+                    const newPin = e.target.value.trim();
+                    if (newPin) {
+                      updateSettings({ adminPin: newPin });
+                      setPinSuccess(true);
+                      setTimeout(() => setPinSuccess(false), 3000);
+                    }
+                  }}
+                  className="bg-slate-950 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-cyan-300 font-mono focus:outline-none focus:border-cyan-400 w-full sm:w-40"
+                />
+                <span className="text-[10px] text-text-muted/60">(Saved auto on blur)</span>
+              </div>
+            </div>
+          )}
+
           {pinError && (
-            <p className="text-xs font-mono text-rose-400 mt-3 font-semibold">❌ Incorrect PIN code. Default PIN is 1234.</p>
+            <p className="text-xs font-mono text-rose-400 mt-3 font-semibold">❌ Incorrect PIN code.</p>
           )}
           {pinSuccess && (
-            <p className="text-xs font-mono text-emerald-400 mt-3 font-semibold">✅ Admin Mode Unlocked! You can now edit all settings, personas, and system parameters.</p>
+            <p className="text-xs font-mono text-emerald-400 mt-3 font-semibold">✅ Admin settings & secret PIN updated successfully!</p>
           )}
         </div>
 

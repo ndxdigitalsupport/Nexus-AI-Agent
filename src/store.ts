@@ -39,6 +39,7 @@ export interface AppSettings {
   selectedModel: string;
   customEndpoint: string;
   temperature: number;
+  adminPin?: string;
 }
 
 // New Conversation Interface
@@ -184,8 +185,9 @@ export const useStore = create<AppState>()(
         })),
 
         verifyAdminPin: (pin: string) => {
-          // Default Admin PIN: 1234 or configured PIN
-          if (pin.trim() === '1234' || pin.trim() === '8888' || pin.trim() === 'admin') {
+          const customPin = get().settings?.adminPin?.trim();
+          const enteredPin = pin.trim();
+          if ((customPin && enteredPin === customPin) || enteredPin === '1234' || enteredPin === '8888' || enteredPin === 'admin') {
             set({ isAdminAuthenticated: true });
             return true;
           }
