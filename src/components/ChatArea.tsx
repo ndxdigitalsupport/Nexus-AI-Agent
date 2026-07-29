@@ -343,7 +343,7 @@ export default function ChatArea() {
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar">
         {activeMessages.map((msg) => (
-          <div key={msg.id} className={`flex gap-3 max-w-4xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+          <div key={msg.id} className={`flex gap-3 max-w-7xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             {/* Avatar */}
             <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border shadow-md ${
               msg.role === 'agent' 
@@ -448,7 +448,7 @@ export default function ChatArea() {
         ))}
         
         {isProcessing && (
-          <div className="flex gap-3 max-w-4xl mx-auto">
+          <div className="flex gap-3 max-w-7xl mx-auto">
             <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border bg-gradient-to-tr from-cyan-500/20 to-violet-600/30 border-primary/40 text-primary shadow-glow-cyan">
               <Sparkles className="w-4 h-4 animate-spin text-primary" style={{ animationDuration: '3s' }} />
             </div>
@@ -467,7 +467,7 @@ export default function ChatArea() {
       <div className="shrink-0 p-2.5 sm:p-4 border-t border-white/10 bg-slate-900/90 backdrop-blur-xl">
         {/* Selected Image Thumbnail Preview */}
         {selectedImage && (
-          <div className="max-w-4xl mx-auto mb-2 relative inline-block group">
+          <div className="max-w-7xl mx-auto mb-2 relative inline-block group">
             <img src={selectedImage} alt="Selected preview" className="w-20 h-20 object-cover rounded-xl border border-primary/50 shadow-glow-cyan" />
             <button
               type="button"
@@ -479,7 +479,7 @@ export default function ChatArea() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative group">
+        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-cyan-400 to-violet-600 opacity-20 group-hover:opacity-40 blur-md transition-all duration-300 rounded-2xl" />
           <div className="relative flex items-end gap-2 bg-slate-950/90 border border-white/15 rounded-2xl p-2 focus-within:border-primary/60 transition-colors shadow-xl">
             <input 
