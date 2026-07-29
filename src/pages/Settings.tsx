@@ -414,6 +414,9 @@ export default function Settings() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
             {/* Custom Model ID Card (ADMIN ONLY - HIDDEN BY DEFAULT) */}
             {isAdminAuthenticated && (
               <div className={`p-4 rounded-2xl border transition-all duration-300 mt-6 ${
@@ -526,39 +529,37 @@ export default function Settings() {
                     </button>
                   </div>
                 </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-text-muted flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-accent" />
+                      Temperature (Creativity)
+                    </label>
+                    <span className="font-mono text-sm text-primary font-bold">{temperature.toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.0"
+                    max="1.0"
+                    step="0.05"
+                    value={temperature}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setTemperature(val);
+                      saveSettingsToStore(apiKey, selectedModel, customModelInput, customEndpoint, val);
+                    }}
+                    className="w-full accent-primary cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-text-muted mt-1">
+                    <span>0.0 (Precise / Analytical)</span>
+                    <span>0.7 (Balanced)</span>
+                    <span>1.0 (Creative)</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-text-muted flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-accent" />
-                    Temperature (Creativity)
-                  </label>
-                  <span className="font-mono text-sm text-primary font-bold">{temperature.toFixed(2)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.0"
-                  max="1.0"
-                  step="0.05"
-                  value={temperature}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    setTemperature(val);
-                    saveSettingsToStore(apiKey, selectedModel, customModelInput, customEndpoint, val);
-                  }}
-                  className="w-full accent-primary cursor-pointer"
-                />
-                <div className="flex justify-between text-xs text-text-muted mt-1">
-                  <span>0.0 (Precise / Analytical)</span>
-                  <span>0.7 (Balanced)</span>
-                  <span>1.0 (Creative)</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Data Backup & Recovery Section */}
           <div className="glass-panel p-6 rounded-2xl border border-white/10">
