@@ -54,19 +54,78 @@ export default function KnowledgeBase() {
     setUrlFetchSuccess(null);
 
     try {
-      // Use AllOrigins CORS proxy to fetch website HTML directly in browser
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-      const response = await fetch(proxyUrl);
+      let rawHtml = '';
+      let fetchSuccess = false;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Primary Proxy 1: AllOrigins
+      try {
+        const proxyUrl1 = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+        const res1 = await fetch(proxyUrl1);
+        if (res1.ok) {
+          const data1 = await res1.json();
+          if (data1.contents) {
+            rawHtml = data1.contents;
+            fetchSuccess = true;
+          }
+        }
+      } catch (err) {
+        console.warn('Proxy 1 (AllOrigins) failed, trying Proxy 2...', err);
       }
 
-      const data = await response.json();
-      const rawHtml = data.contents;
+      // Fallback Proxy 2: CorsProxy.io
+      if (!fetchSuccess) {
+        try {
+          const proxyUrl2 = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+          const res2 = await fetch(proxyUrl2);
+          if (res2.ok) {
+            rawHtml = await res2.text();
+            fetchSuccess = true;
+          }
+        } catch (err) {
+          console.warn('Proxy 2 (CorsProxy) failed, trying Proxy 3...', err);
+        }
+      }
+
+      // Fallback Proxy 3: CodeTabs
+      if (!fetchSuccess) {
+        try {
+          const proxyUrl3 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
+          const res3 = await fetch(proxyUrl3);
+          if (res3.ok) {
+            rawHtml = await res3.text();
+            fetchSuccess = true;
+          }
+        } catch (err) {
+          console.warn('Proxy 3 (CodeTabs) failed, trying Jina Reader...', err);
+        }
+      }
+
+      // Fallback Proxy 4: Jina AI Reader API
+      if (!fetchSuccess) {
+        try {
+          const proxyUrl4 = `https://r.jina.ai/${targetUrl}`;
+          const res4 = await fetch(proxyUrl4);
+          if (res4.ok) {
+            const jinaMarkdown = await res4.text();
+            if (jinaMarkdown && jinaMarkdown.length > 50) {
+              const domainTag = new URL(targetUrl).hostname.replace(/^www\./, '');
+              const articleTitle = `🌐 ${domainTag}`;
+              const articleContent = `Source URL: ${targetUrl}\n\n=== WEBSITE CONTENT ===\n${jinaMarkdown.substring(0, 15000)}`;
+              addArticle(articleTitle, articleContent, ['web-scrape', domainTag, 'url-import']);
+              setUrlFetchSuccess(`Successfully scraped and stored "${domainTag}" in Knowledge Base!`);
+              setWebUrlInput('');
+              setTimeout(() => setUrlFetchSuccess(null), 4000);
+              setIsFetchingUrl(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('Proxy 4 (Jina) failed.', err);
+        }
+      }
 
       if (!rawHtml) {
-        throw new Error('No content returned from website.');
+        throw new Error('Unable to bypass website security or network blocks. Please copy/paste the webpage text directly into the article editor below!');
       }
 
       // Parse HTML title and clean text body
@@ -83,7 +142,7 @@ export default function KnowledgeBase() {
       bodyText = bodyText.replace(/\n\s*\n/g, '\n\n').trim();
 
       if (bodyText.length < 50) {
-        throw new Error('Extracted website text is too short or empty.');
+        throw new Error('Extracted website text is too short or protected by JavaScript anti-bot protection.');
       }
 
       const articleTitle = `🌐 ${pageTitle}`;
@@ -97,7 +156,7 @@ export default function KnowledgeBase() {
       setTimeout(() => setUrlFetchSuccess(null), 4000);
     } catch (err: any) {
       console.error('NEXUS URL Fetch Error:', err);
-      setUrlFetchError(err.message || 'Failed to fetch website URL. Please check the URL and try again.');
+      setUrlFetchError(err.message || 'Failed to fetch website URL. Please check the URL or copy the webpage text manually.');
     } finally {
       setIsFetchingUrl(false);
     }
