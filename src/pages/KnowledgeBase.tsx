@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Search, BookOpen, Tag, Pin, UploadCloud, FileText, CheckCircle2, ArrowLeft, Globe, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, BookOpen, Tag, Pin, UploadCloud, FileText, CheckCircle2, ArrowLeft, Globe, Loader2, Link as LinkIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { useStore, KnowledgeArticle } from '../store';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -14,6 +14,13 @@ export default function KnowledgeBase() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [importedFileCount, setImportedFileCount] = useState<number | null>(null);
+
+  // Accordion Expand State for Minimal Knowledge Cards
+  const [expandedArticles, setExpandedArticles] = useState<Record<string, boolean>>({});
+
+  const toggleExpandArticle = (id: string) => {
+    setExpandedArticles(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Web URL Scraper state
   const [webUrlInput, setWebUrlInput] = useState('');
@@ -56,6 +63,7 @@ export default function KnowledgeBase() {
     try {
       let rawHtml = '';
       let fetchSuccess = false;
+      const originHost = new URL(targetUrl).hostname;
 
       // Primary Proxy 1: AllOrigins
       try {
@@ -108,9 +116,9 @@ export default function KnowledgeBase() {
           if (res4.ok) {
             const jinaMarkdown = await res4.text();
             if (jinaMarkdown && jinaMarkdown.length > 50) {
-              const domainTag = new URL(targetUrl).hostname.replace(/^www\./, '');
+              const domainTag = originHost.replace(/^www\./, '');
               const articleTitle = `🌐 ${domainTag}`;
-              const articleContent = `Source URL: ${targetUrl}\n\n=== WEBSITE CONTENT ===\n${jinaMarkdown.substring(0, 15000)}`;
+              const articleContent = `Source URL: ${targetUrl}\n\n=== WEBSITE CONTENT ===\n${jinaMarkdown.substring(0, 20000)}`;
               addArticle(articleTitle, articleContent, ['web-scrape', domainTag, 'url-import']);
               setUrlFetchSuccess(`Successfully scraped and stored "${domainTag}" in Knowledge Base!`);
               setWebUrlInput('');
@@ -132,10 +140,26 @@ export default function KnowledgeBase() {
       const parser = new DOMParser();
       const doc = parser.parseFromString(rawHtml, 'text/html');
 
+      // Extract internal sub-page navigation links (e.g., /about, /services, /contact)
+      const internalLinks: string[] = [];
+      doc.querySelectorAll('a[href]').forEach(a => {
+        const href = a.getAttribute('href')?.trim();
+        if (!href) return;
+        try {
+          const absoluteUrl = new URL(href, targetUrl).href;
+          const parsedLinkHost = new URL(absoluteUrl).hostname;
+          if (parsedLinkHost === originHost && !internalLinks.includes(absoluteUrl) && absoluteUrl !== targetUrl && !href.startsWith('#') && !href.startsWith('javascript:')) {
+            internalLinks.push(absoluteUrl);
+          }
+        } catch (e) {
+          // ignore invalid URLs
+        }
+      });
+
       // Remove script, style, nav, footer tags to clean readable content
       doc.querySelectorAll('script, style, noscript, svg, iframe, nav, footer').forEach(el => el.remove());
 
-      const pageTitle = doc.querySelector('title')?.textContent?.trim() || new URL(targetUrl).hostname;
+      const pageTitle = doc.querySelector('title')?.textContent?.trim() || originHost;
       const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim();
       
       let bodyText = doc.body.innerText || doc.body.textContent || '';
@@ -145,13 +169,46 @@ export default function KnowledgeBase() {
         throw new Error('Extracted website text is too short or protected by JavaScript anti-bot protection.');
       }
 
-      const articleTitle = `🌐 ${pageTitle}`;
-      const articleContent = `Source URL: ${targetUrl}\n${metaDescription ? `Description: ${metaDescription}\n` : ''}\n=== WEBSITE CONTENT ===\n${bodyText.substring(0, 15000)}`;
-      const domainTag = new URL(targetUrl).hostname.replace(/^www\./, '');
-      const tags = ['web-scrape', domainTag, 'url-import'];
+      // Attempt to crawl up to 4 internal sub-pages for complete site coverage!
+      const subPageTexts: string[] = [];
+      const subPagesToCrawl = internalLinks.slice(0, 4);
 
-      addArticle(articleTitle, articleContent, tags);
-      setUrlFetchSuccess(`Successfully scraped and stored "${pageTitle}" in Knowledge Base!`);
+      for (const subUrl of subPagesToCrawl) {
+        try {
+          const subProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(subUrl)}`;
+          const subRes = await fetch(subProxyUrl);
+          if (subRes.ok) {
+            const subData = await subRes.json();
+            if (subData.contents) {
+              const subDoc = parser.parseFromString(subData.contents, 'text/html');
+              subDoc.querySelectorAll('script, style, noscript, svg, iframe, nav, footer').forEach(el => el.remove());
+              const subTitle = subDoc.querySelector('title')?.textContent?.trim() || subUrl;
+              let subBody = subDoc.body.innerText || subDoc.body.textContent || '';
+              subBody = subBody.replace(/\n\s*\n/g, '\n\n').trim();
+              if (subBody.length > 50) {
+                subPageTexts.push(`--- SUB-PAGE: ${subTitle} (${subUrl}) ---\n${subBody.substring(0, 4000)}`);
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore individual sub-page crawl failures
+        }
+      }
+
+      const articleTitle = `🌐 ${pageTitle}`;
+      const fullSiteContent = [
+        `Source URL: ${targetUrl}`,
+        metaDescription ? `Description: ${metaDescription}` : '',
+        `Discovered Internal Pages: ${internalLinks.length} sub-pages found (${subPagesToCrawl.length} indexed)`,
+        `\n=== MAIN HOMEPAGE CONTENT ===\n${bodyText.substring(0, 8000)}`,
+        subPageTexts.length > 0 ? `\n=== SUB-PAGES & DEEP SITE CONTENT ===\n${subPageTexts.join('\n\n')}` : ''
+      ].filter(Boolean).join('\n\n');
+
+      const domainTag = originHost.replace(/^www\./, '');
+      const tags = ['web-scrape', domainTag, 'url-import', `${internalLinks.length}-pages`].filter(Boolean);
+
+      addArticle(articleTitle, fullSiteContent, tags);
+      setUrlFetchSuccess(`Successfully scraped homepage & ${subPageTexts.length} sub-page(s) for "${pageTitle}"!`);
       setWebUrlInput('');
       setTimeout(() => setUrlFetchSuccess(null), 4000);
     } catch (err: any) {
@@ -475,65 +532,81 @@ export default function KnowledgeBase() {
                     </div>
                   </div>
                 ) : (
-                  // Display Mode
+                  // Minimal Collapsible Display Mode
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <FileText className={`w-5 h-5 ${article.pinned ? 'text-primary' : 'text-accent'}`} />
-                        <h3 className="text-base font-bold text-text">{article.title}</h3>
-                      </div>
-
-                      {article.pinned && (
-                        <span className="px-3 py-1 bg-primary/20 text-primary border border-primary/40 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 shadow-glow-cyan">
-                          <Pin className="w-3.5 h-3.5 fill-primary" /> Pinned Context
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="text-sm text-text-muted leading-relaxed whitespace-pre-wrap bg-slate-950/40 p-4 rounded-xl border border-white/5 font-sans mb-3">
-                      {article.content}
-                    </p>
-
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                      <div className="flex flex-wrap gap-1.5">
-                        {article.tags.map((tag, index) => (
-                          <span key={index} className="px-2.5 py-0.5 bg-white/5 border border-white/10 rounded-lg text-text-muted text-[11px] font-mono flex items-center gap-1">
-                            <Tag className="w-3 h-3 text-primary" /> {tag}
+                    {/* Clickable Minimal Title Header */}
+                    <div
+                      onClick={() => toggleExpandArticle(article.id)}
+                      className="flex items-center justify-between cursor-pointer group select-none py-1"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 pr-2">
+                        <FileText className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110 ${article.pinned ? 'text-primary' : 'text-accent'}`} />
+                        <h3 className="text-base font-bold text-text truncate group-hover:text-primary transition-colors">{article.title}</h3>
+                        {article.pinned && (
+                          <span className="px-2.5 py-0.5 bg-primary/20 text-primary border border-primary/40 rounded-full text-[10px] font-mono font-bold flex items-center gap-1 shrink-0 shadow-glow-cyan">
+                            <Pin className="w-3 h-3 fill-primary" /> Pinned
                           </span>
-                        ))}
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => togglePinArticle(article.id)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-semibold transition-all ${
-                            article.pinned
-                              ? 'bg-primary/20 text-primary border border-primary/40 shadow-glow-cyan'
-                              : 'bg-white/5 text-text-muted hover:text-text border border-white/10 hover:border-primary/40'
-                          }`}
-                          title={article.pinned ? "Unpin from AI context" : "Pin to always include in AI context"}
-                        >
-                          <Pin className={`w-3.5 h-3.5 ${article.pinned ? 'fill-primary' : ''}`} />
-                          <span>{article.pinned ? 'Pinned' : 'Pin Context'}</span>
-                        </button>
-
-                        <button
-                          onClick={() => startEditing(article)}
-                          className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-white/10 transition-colors"
-                          title="Edit Article"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          onClick={() => handleDeleteClick(article.id, article.title)}
-                          className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-white/10 transition-colors"
-                          title="Delete Article"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] font-mono text-text-muted hover:text-text">
+                          {expandedArticles[article.id] ? 'Hide Content ▲' : 'Read Content ▼'}
+                        </span>
+                        <div className="p-1 rounded-lg bg-white/5 text-text-muted group-hover:text-text transition-colors">
+                          {expandedArticles[article.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Expandable Content Area */}
+                    {expandedArticles[article.id] && (
+                      <div className="mt-4 pt-4 border-t border-white/5 space-y-4 animate-fadeIn">
+                        <p className="text-sm text-text-muted leading-relaxed whitespace-pre-wrap bg-slate-950/60 p-4 rounded-xl border border-white/10 font-sans max-h-96 overflow-y-auto custom-scrollbar">
+                          {article.content}
+                        </p>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap gap-1.5">
+                            {article.tags.map((tag, index) => (
+                              <span key={index} className="px-2.5 py-0.5 bg-white/5 border border-white/10 rounded-lg text-text-muted text-[11px] font-mono flex items-center gap-1">
+                                <Tag className="w-3 h-3 text-primary" /> {tag}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); togglePinArticle(article.id); }}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-semibold transition-all ${
+                                article.pinned
+                                  ? 'bg-primary/20 text-primary border border-primary/40 shadow-glow-cyan'
+                                  : 'bg-white/5 text-text-muted hover:text-text border border-white/10 hover:border-primary/40'
+                              }`}
+                              title={article.pinned ? "Unpin from AI context" : "Pin to always include in AI context"}
+                            >
+                              <Pin className={`w-3.5 h-3.5 ${article.pinned ? 'fill-primary' : ''}`} />
+                              <span>{article.pinned ? 'Pinned' : 'Pin Context'}</span>
+                            </button>
+
+                            <button
+                              onClick={(e) => { e.stopPropagation(); startEditing(article); }}
+                              className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-white/10 transition-colors"
+                              title="Edit Article"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteClick(article.id, article.title); }}
+                              className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-white/10 transition-colors"
+                              title="Delete Article"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
