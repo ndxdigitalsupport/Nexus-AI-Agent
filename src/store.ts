@@ -654,6 +654,32 @@ ${chatText}`;
           
           const isLocal = endpoint.includes('localhost') || endpoint.includes('127.0.0.1');
 
+          // Check if user is requesting image generation on the web app
+          const isImageGen = /generate (an )?image|draw|create (an )?image|picture of|photo of|make an image|illustration of/i.test(userContent);
+          if (isImageGen) {
+            setProcessing(true);
+            setTimeout(() => {
+              const cleanPrompt = userContent
+                .replace(/^Generate an image of\s*/i, '')
+                .replace(/^Generate image of\s*/i, '')
+                .replace(/^Draw a\s*/i, '')
+                .replace(/^Create an image of\s*/i, '')
+                .replace(/^Photo of\s*/i, '')
+                .replace(/^Picture of\s*/i, '')
+                .replace(/["']/g, '')
+                .trim();
+
+              const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+
+              get().addMessage({
+                role: 'agent',
+                content: `🎨 **Generated Image:** *${cleanPrompt}*\n\n![${cleanPrompt}](${imageUrl})`
+              });
+              setProcessing(false);
+            }, 600);
+            return;
+          }
+
           if (!apiKey && !isLocal) {
             setProcessing(false);
             get().addMessage({ 
