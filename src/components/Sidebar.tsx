@@ -483,18 +483,22 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
 
         {/* Logged in User Profile Card */}
         {currentUser ? (
-          <div className="p-2.5 rounded-xl bg-slate-950/80 border border-white/10 flex items-center justify-between gap-2 mt-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-base shrink-0">{currentUser.avatar || '👤'}</span>
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-950/90 via-slate-900/80 to-slate-950/90 border border-cyan-500/20 shadow-lg flex items-center justify-between gap-3 mt-2 group hover:border-cyan-500/40 transition-all">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-slate-900 border border-cyan-500/30 shrink-0">
+                <span className="text-sm">{currentUser.avatar || '👤'}</span>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950"></span>
+              </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-text truncate leading-none">{currentUser.name}</p>
+                <p className="text-xs font-bold text-text truncate group-hover:text-cyan-300 transition-colors">{currentUser.name}</p>
+                <span className="text-[10px] font-mono text-text-muted/70 block">Workspace Member</span>
               </div>
             </div>
             <button
               onClick={() => {
                 logoutUser();
               }}
-              className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
+              className="p-1.5 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/15 border border-transparent hover:border-rose-500/30 transition-all shrink-0 active:scale-95"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
