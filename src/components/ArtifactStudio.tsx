@@ -21,16 +21,31 @@ export default function ArtifactStudio() {
   const handlePrintPdf = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
+    // Format content cleanly for PDF: strip markdown asterisks and convert bold/headers
+    const cleanHtmlContent = activeArtifact.content
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '<em>$1</em>')
+      .replace(/^###\s*(.+)$/gm, '<h3>$1</h3>')
+      .replace(/^##\s*(.+)$/gm, '<h2>$1</h2>')
+      .replace(/^#\s*(.+)$/gm, '<h1>$1</h1>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br />');
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
           <title>${activeArtifact.title} - NEXUS AI</title>
           <style>
-            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; line-height: 1.6; }
-            h1 { color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-            pre { background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; font-family: monospace; white-space: pre-wrap; }
-            .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 1px solid #cbd5e1; padding-bottom: 15px; font-size: 12px; color: #64748b; }
+            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; line-height: 1.7; font-size: 14px; }
+            h1 { color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 24px; margin-bottom: 20px; }
+            h2 { color: #0369a1; font-size: 18px; margin-top: 20px; }
+            h3 { color: #0284c7; font-size: 15px; margin-top: 15px; }
+            strong { color: #0f172a; font-weight: 700; }
+            p { margin-bottom: 12px; }
+            .header { display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid #cbd5e1; padding-bottom: 12px; font-size: 11px; color: #64748b; font-family: monospace; text-transform: uppercase; }
+            .doc-body { background: #ffffff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; }
           </style>
         </head>
         <body>
@@ -39,7 +54,7 @@ export default function ArtifactStudio() {
             <div>${new Date().toLocaleDateString()}</div>
           </div>
           <h1>${activeArtifact.title}</h1>
-          <div><pre>${activeArtifact.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></div>
+          <div class="doc-body"><p>${cleanHtmlContent}</p></div>
         </body>
       </html>
     `);
