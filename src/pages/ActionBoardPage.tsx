@@ -539,10 +539,11 @@ function ProjectPlanBlock({
                             <button
                               onClick={() => handleExecuteTask(task.id)}
                               disabled={executingTaskId === task.id}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 via-primary to-violet-600 text-slate-950 font-mono font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-glow-cyan group"
+                              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 text-slate-950 font-sans font-extrabold text-xs hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] hover:shadow-[0_0_22px_rgba(0,240,255,0.7)] group border border-cyan-300/40 relative overflow-hidden"
                             >
-                              <Zap className="w-3.5 h-3.5 text-slate-950 group-hover:rotate-12 transition-transform" />
-                              <span>Execute with AI</span>
+                              <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
+                              <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950 group-hover:scale-125 transition-transform duration-300 shrink-0" />
+                              <span className="tracking-tight">Execute with AI</span>
                             </button>
                           )}
                         </div>
