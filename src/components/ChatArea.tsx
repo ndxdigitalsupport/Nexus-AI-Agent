@@ -20,11 +20,14 @@ const PROMPT_POOL = [
   { category: '🛠️ Productivity', title: 'How to organize daily tasks & manage team work?', prompt: 'Give me a simple daily task management framework for leading a small 5-person team.' }
 ];
 
+import { MODEL_PRESETS } from '@/pages/Settings';
+
 export default function ChatArea() {
-  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar, openArtifact } = useStore();
+  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, updateSettings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar, openArtifact } = useStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
+  const [showModelMenu, setShowModelMenu] = useState(false);
   
   // Truly randomize 3 prompts on load and shuffle
   const getRandomPrompts = () => {
@@ -271,9 +274,48 @@ export default function ChatArea() {
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-primary/10 border border-primary/30 text-primary px-2 sm:px-3 py-1 rounded-full text-xs font-mono shadow-glow-cyan shrink">
-            <Cpu className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate max-w-[85px] sm:max-w-[180px] md:max-w-[280px] font-semibold">{currentModel}</span>
+          {/* Interactive AI Model Dropdown Selector */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowModelMenu(!showModelMenu);
+                setShowPersonaMenu(false);
+              }}
+              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary px-2.5 sm:px-3 py-1 rounded-full text-xs font-mono shadow-glow-cyan shrink transition-all active:scale-95 cursor-pointer"
+              title="Switch AI Engine Model"
+            >
+              <Cpu className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate max-w-[85px] sm:max-w-[180px] md:max-w-[280px] font-semibold">{currentModel}</span>
+              <ChevronDown className="w-3 h-3 text-cyan-400 shrink-0" />
+            </button>
+
+            {showModelMenu && (
+              <div className="absolute left-0 mt-2 w-72 sm:w-80 max-h-96 overflow-y-auto custom-scrollbar rounded-2xl bg-slate-950/95 border border-cyan-500/30 shadow-2xl p-2 z-40 font-sans text-xs space-y-1 backdrop-blur-2xl animate-fadeIn">
+                <div className="px-2.5 py-1.5 text-[10px] font-mono text-text-muted uppercase font-bold border-b border-white/10 mb-1 flex justify-between items-center">
+                  <span>Switch AI Engine</span>
+                  <Link to="/settings" className="text-cyan-400 hover:underline font-semibold text-[10px]">All Models</Link>
+                </div>
+
+                {MODEL_PRESETS.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      updateSettings({ selectedModel: m.id });
+                      setShowModelMenu(false);
+                    }}
+                    className={`w-full text-left p-2 rounded-xl transition-all flex flex-col gap-0.5 ${
+                      m.id === currentModel ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold' : 'hover:bg-white/10 text-text'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-semibold text-xs text-text">{m.name}</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-text-muted font-mono">{m.provider}</span>
+                    </div>
+                    <span className="text-[10px] text-text-muted/70 line-clamp-1">{m.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Persona Button (Visible on mobile & desktop) */}
