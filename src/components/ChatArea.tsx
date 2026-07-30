@@ -21,13 +21,15 @@ const PROMPT_POOL = [
 ];
 
 import { MODEL_PRESETS } from '@/pages/Settings';
+import UpgradeModal from '@/components/UpgradeModal';
 
 export default function ChatArea() {
-  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, updateSettings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar, openArtifact } = useStore();
+  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, updateSettings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar, openArtifact, isAdminAuthenticated } = useStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{ isOpen: boolean; modelName?: string }>({ isOpen: false });
   
   // Truly randomize 3 prompts on load and shuffle
   const getRandomPrompts = () => {
@@ -303,6 +305,11 @@ export default function ChatArea() {
                     <button
                       key={m.id}
                       onClick={() => {
+                        if (isPaid && !isAdminAuthenticated) {
+                          setShowModelMenu(false);
+                          setUpgradeModal({ isOpen: true, modelName: m.name });
+                          return;
+                        }
                         updateSettings({ selectedModel: m.id });
                         setShowModelMenu(false);
                       }}
@@ -637,6 +644,12 @@ export default function ChatArea() {
           </div>
         </form>
       </div>
+
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={() => setUpgradeModal({ isOpen: false })}
+        selectedModelName={upgradeModal.modelName}
+      />
     </div>
   );
 }

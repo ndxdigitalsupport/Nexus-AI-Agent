@@ -18,6 +18,42 @@ export default function ArtifactStudio() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const handlePrintPdf = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${activeArtifact.title} - NEXUS AI</title>
+          <style>
+            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; line-height: 1.6; }
+            h1 { color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+            pre { background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; font-family: monospace; white-space: pre-wrap; }
+            .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 1px solid #cbd5e1; padding-bottom: 15px; font-size: 12px; color: #64748b; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div><strong>NEXUS AI AGENT</strong> - ${activeArtifact.type.toUpperCase()} EXPORT</div>
+            <div>${new Date().toLocaleDateString()}</div>
+          </div>
+          <h1>${activeArtifact.title}</h1>
+          <div><pre>${activeArtifact.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+
+    setDownloadNotice('Opened PDF Print Dialog');
+    setTimeout(() => setDownloadNotice(null), 3000);
+  };
+
   const handleExportFile = (extension: 'md' | 'txt' | 'json' | 'html') => {
     const blob = new Blob([activeArtifact.content], { type: 'text/plain;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -87,7 +123,14 @@ export default function ArtifactStudio() {
         </button>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-text-muted font-medium">Download As:</span>
+          <span className="text-[11px] text-text-muted font-medium">Export As:</span>
+          <button
+            onClick={handlePrintPdf}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-bold transition-all shadow-glow-violet"
+          >
+            <Download className="w-3.5 h-3.5 text-amber-400" />
+            <span>PDF Document (.pdf)</span>
+          </button>
           <button
             onClick={() => handleExportFile('txt')}
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-bold transition-all shadow-glow-cyan"
