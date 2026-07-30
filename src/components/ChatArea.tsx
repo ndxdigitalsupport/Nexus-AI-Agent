@@ -263,7 +263,8 @@ export default function ChatArea() {
         </div>
       )}
       {/* Top Header Status Bar */}
-      <header className="h-14 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between z-10 shrink-0 select-none">
+      <header className="h-14 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between z-10 shrink-0 select-none">
+        {/* Left Side: Navigation Drawer Toggle & Core Control Dropdowns */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Mobile Navigation Drawer Toggle */}
           <button
@@ -281,11 +282,11 @@ export default function ChatArea() {
                 setShowModelMenu(!showModelMenu);
                 setShowPersonaMenu(false);
               }}
-              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary px-2.5 sm:px-3 py-1 rounded-full text-xs font-mono shadow-glow-cyan shrink transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary px-3 py-1.5 rounded-xl text-xs font-mono shadow-glow-cyan transition-all active:scale-95 cursor-pointer"
               title="Switch AI Engine Model"
             >
-              <Cpu className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate max-w-[85px] sm:max-w-[180px] md:max-w-[280px] font-semibold">{currentModel}</span>
+              <Cpu className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+              <span className="font-semibold text-text max-w-[120px] sm:max-w-[200px] md:max-w-[260px] truncate">{currentModel}</span>
               <ChevronDown className="w-3 h-3 text-cyan-400 shrink-0" />
             </button>
 
@@ -321,19 +322,22 @@ export default function ChatArea() {
           {/* Persona Button (Visible on mobile & desktop) */}
           <div className="relative">
             <button
-              onClick={() => setShowPersonaMenu(!showPersonaMenu)}
-              className="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/30 text-text-muted hover:text-text px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-mono transition-all shadow-sm active:scale-95"
+              onClick={() => {
+                setShowPersonaMenu(!showPersonaMenu);
+                setShowModelMenu(false);
+              }}
+              className="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/30 text-text-muted hover:text-text px-3 py-1.5 rounded-xl text-xs font-mono transition-all shadow-sm active:scale-95 cursor-pointer"
               title="Switch AI Role Persona"
             >
               <User className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span className="truncate max-w-[100px] sm:max-w-[160px] font-semibold text-text">
+              <span className="font-semibold text-text max-w-[100px] sm:max-w-[180px] truncate">
                 {activePersona ? activePersona.name : 'Persona'}
               </span>
               <ChevronDown className="w-3 h-3 text-text-muted shrink-0" />
             </button>
 
             {showPersonaMenu && (
-              <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-64 sm:w-72 rounded-2xl bg-slate-950/95 border border-cyan-500/30 shadow-2xl p-2 z-40 font-sans text-xs space-y-1 backdrop-blur-2xl animate-fadeIn">
+              <div className="absolute left-0 mt-2 w-64 sm:w-72 rounded-2xl bg-slate-950/95 border border-cyan-500/30 shadow-2xl p-2 z-40 font-sans text-xs space-y-1 backdrop-blur-2xl animate-fadeIn">
                 <div className="px-2.5 py-1.5 text-[10px] font-mono text-text-muted uppercase font-bold border-b border-white/10 mb-1">
                   <span>Select Agent Persona</span>
                 </div>
@@ -356,7 +360,10 @@ export default function ChatArea() {
               </div>
             )}
           </div>
+        </div>
 
+        {/* Right Side: Project Plans & Settings Navigation Actions */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Project Plans Button (Desktop Only) */}
           <button
             onClick={toggleActionBoard}
@@ -378,11 +385,11 @@ export default function ChatArea() {
 
           <Link
             to="/settings"
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-lg"
+            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-cyan-300 transition-all bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-lg active:scale-95"
             title="Configure AI Settings & Keys"
           >
-            <SettingsIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline font-medium">Settings</span>
+            <SettingsIcon className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline font-mono font-semibold">Settings</span>
           </Link>
         </div>
       </header>
