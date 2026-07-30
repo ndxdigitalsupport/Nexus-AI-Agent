@@ -4,7 +4,7 @@
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8965138171:AAEvStnqro33T8u28CrKRQdlyINkkB8qKKc';
 const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8';
 const AI_ENDPOINT = process.env.VITE_CUSTOM_AI_ENDPOINT || 'https://gpt-agent.cc/v1/chat/completions';
-const DEFAULT_MODEL = 'deepseek-v3';
+const DEFAULT_MODEL = 'deepseek-v4-flash';
 
 const SYSTEM_INSTRUCTION = `You are NEXUS, an advanced autonomous AI Agent developed by the NEXUS Digital Support team.
 You are interacting natively inside a Telegram chat conversation with the user (Manus Agent style).
