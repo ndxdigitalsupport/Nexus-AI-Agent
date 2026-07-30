@@ -583,7 +583,7 @@ function ConversationItem({
       tabIndex={0}
       className={`group relative flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 active:cursor-grabbing ${
         isActive
-          ? 'bg-primary/10 border border-primary/40 text-primary shadow-glow-cyan'
+          ? 'bg-gradient-to-r from-cyan-500/20 via-cyan-500/10 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-500/30 text-cyan-300 font-semibold shadow-glow-cyan'
           : 'text-text-muted hover:text-text hover:bg-white/5 border border-transparent'
       }`}
     >

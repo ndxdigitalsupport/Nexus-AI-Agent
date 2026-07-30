@@ -524,10 +524,10 @@ function TaskCard({ task, isExecuting, onToggle, onDelete, onEdit, onExecute }: 
           ) : (
             <div className="flex flex-col">
               <p
-                className={`text-xs font-medium leading-snug break-words ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}
+                className={`text-xs font-medium leading-relaxed break-words ${task.completed ? 'line-through text-text-muted' : 'text-text'}`}
                 onDoubleClick={() => setIsEditing(true)}
               >
-                {(task.title.includes(' ➔ ') ? task.title.split(' ➔ ').slice(1).join(' ➔ ') : task.title).replace(/\*\*/g, '')}
+                {(task.title.includes(' ➔ ') ? task.title.split(' ➔ ').slice(-1)[0] : task.title).replace(/\*\*/g, '')}
               </p>
               <div className="flex items-center gap-2 mt-2">
                 {getPriorityBadge(task.priority)}
@@ -543,15 +543,15 @@ function TaskCard({ task, isExecuting, onToggle, onDelete, onEdit, onExecute }: 
                 <button
                   onClick={onExecute}
                   disabled={isExecuting}
-                  className={`flex items-center justify-center gap-1.5 text-[11px] font-mono px-3 py-1.5 rounded-lg transition-all mt-2.5 max-w-full whitespace-nowrap shadow-glow-violet active:scale-95 group/btn ${
+                  className={`w-full flex items-center justify-center gap-1.5 text-xs font-sans font-extrabold px-3 py-1.5 rounded-xl transition-all duration-300 mt-2.5 shadow-md active:scale-95 group/btn border overflow-hidden relative ${
                     isExecuting
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 cursor-wait'
-                      : 'text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30'
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 cursor-wait animate-pulse'
+                      : 'bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 text-slate-950 border-cyan-300/40 hover:scale-[1.02] hover:shadow-[0_0_18px_rgba(0,240,255,0.6)]'
                   }`}
                   title="Ask AI Agent to execute and solve this task"
                 >
-                  <Zap className={`w-3 h-3 text-amber-400 shrink-0 ${isExecuting ? 'animate-spin' : 'group-hover/btn:rotate-12 transition-transform'}`} />
-                  <span className="font-semibold whitespace-nowrap truncate">{isExecuting ? 'AI Executing...' : 'Execute with AI'}</span>
+                  <Zap className={`w-3.5 h-3.5 fill-slate-950 text-slate-950 shrink-0 ${isExecuting ? 'animate-spin' : 'group-hover/btn:scale-110 transition-transform'}`} />
+                  <span className="tracking-tight whitespace-nowrap">{isExecuting ? 'Executing Task...' : '⚡ Execute with AI'}</span>
                 </button>
               )}
             </div>
