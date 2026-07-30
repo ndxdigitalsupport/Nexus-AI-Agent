@@ -207,30 +207,30 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
         </button>
 
         {/* Main Navigation */}
-        <nav className="flex flex-col gap-1.5 mb-5">
-          <NavItem icon={<Terminal className="w-5 h-5" />} label="Terminal" to="/" active={location.pathname === '/'} onClick={() => toggleMobileSidebar(false)} />
-          <NavItem icon={<Target className="w-5 h-5 text-amber-400" />} label="Project Plans" to="/action-board" active={location.pathname === '/action-board'} onClick={() => toggleMobileSidebar(false)} />
-          <NavItem icon={<History className="w-5 h-5" />} label="History" to="/history" active={location.pathname === '/history'} onClick={() => toggleMobileSidebar(false)} />
+        <nav className="flex flex-col gap-1.5 mb-4">
+          <NavItem icon={<Terminal className="w-4 h-4 text-cyan-400" />} label="Terminal" to="/" active={location.pathname === '/'} onClick={() => toggleMobileSidebar(false)} />
+          <NavItem icon={<Target className="w-4 h-4 text-amber-400" />} label="Project Plans" to="/action-board" active={location.pathname === '/action-board'} onClick={() => toggleMobileSidebar(false)} />
+          <NavItem icon={<History className="w-4 h-4 text-violet-400" />} label="History" to="/history" active={location.pathname === '/history'} onClick={() => toggleMobileSidebar(false)} />
           {isAdminAuthenticated && (
             <>
-              <NavItem icon={<Cpu className="w-5 h-5" />} label="Personas" to="/agents" active={location.pathname === '/agents'} onClick={() => toggleMobileSidebar(false)} />
-              <NavItem icon={<Book className="w-5 h-5" />} label="Knowledge Base" to="/knowledge-base" active={location.pathname === '/knowledge-base'} onClick={() => toggleMobileSidebar(false)} />
+              <NavItem icon={<Cpu className="w-4 h-4 text-emerald-400" />} label="Personas" to="/agents" active={location.pathname === '/agents'} onClick={() => toggleMobileSidebar(false)} />
+              <NavItem icon={<Book className="w-4 h-4 text-blue-400" />} label="Knowledge Base" to="/knowledge-base" active={location.pathname === '/knowledge-base'} onClick={() => toggleMobileSidebar(false)} />
             </>
           )}
         </nav>
 
         {/* Search Bar */}
-        <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-slate-950/60 border border-white/10 text-xs text-text-muted">
-          <Search className="w-3.5 h-3.5 text-primary shrink-0" />
+        <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-slate-950/80 border border-cyan-500/20 focus-within:border-cyan-400/60 focus-within:shadow-glow-cyan text-xs text-text-muted transition-all">
+          <Search className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
           <input
             type="text"
             placeholder="Search chats..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent border-none focus:outline-none text-text placeholder:text-text-muted/60 text-xs font-sans"
+            className="w-full bg-transparent border-none focus:outline-none text-text placeholder:text-text-muted/50 text-xs font-sans"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-text-muted hover:text-text text-[10px]">✕</button>
+            <button onClick={() => setSearchQuery('')} className="text-text-muted hover:text-text text-[10px] p-0.5">✕</button>
           )}
         </div>
 
@@ -703,16 +703,19 @@ function NavItem({ icon, label, active = false, to, onClick }: { icon: React.Rea
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center gap-3 p-2.5 md:p-3 rounded-xl transition-all duration-200 ${
+      className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl font-mono transition-all duration-200 ${
         active
-          ? 'bg-gradient-to-r from-primary/20 to-violet-500/10 border border-primary/40 text-primary shadow-glow-cyan'
-          : 'text-text-muted hover:text-text hover:bg-white/5 border border-transparent'
+          ? 'bg-gradient-to-r from-cyan-500/15 via-cyan-500/10 to-transparent border border-cyan-500/40 text-cyan-300 shadow-glow-cyan font-bold'
+          : 'text-text-muted hover:text-text hover:bg-white/5 border border-transparent font-medium'
       }`}
     >
-      <span className={`${active ? 'drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]' : ''}`}>
+      {active && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-cyan-400 shadow-[0_0_10px_#00f0ff]"></span>
+      )}
+      <span className={`${active ? 'drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]' : ''} shrink-0`}>
         {icon}
       </span>
-      <span className="font-medium text-sm truncate">{label}</span>
+      <span className="text-xs truncate tracking-wide">{label}</span>
     </Link>
   );
 }
