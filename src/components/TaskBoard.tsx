@@ -551,7 +551,7 @@ function TaskCard({ task, isExecuting, onToggle, onDelete, onEdit, onExecute }: 
                   title="Ask AI Agent to execute and solve this task"
                 >
                   <Zap className={`w-3.5 h-3.5 fill-slate-950 text-slate-950 shrink-0 ${isExecuting ? 'animate-spin' : 'group-hover/btn:scale-110 transition-transform'}`} />
-                  <span className="tracking-tight whitespace-nowrap">{isExecuting ? 'Executing Task...' : '⚡ Execute with AI'}</span>
+                  <span className="tracking-tight whitespace-nowrap">{isExecuting ? 'Executing Task...' : 'Execute with AI'}</span>
                 </button>
               )}
             </div>
