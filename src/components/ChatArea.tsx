@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X, FileText, Volume2, VolumeX, Lightbulb, Compass, FileCheck, HelpCircle, RefreshCw } from 'lucide-react';
+import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X, FileText, Volume2, VolumeX, Lightbulb, Compass, FileCheck, HelpCircle, RefreshCw, ChevronDown } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -280,21 +280,21 @@ export default function ChatArea() {
           <div className="relative">
             <button
               onClick={() => setShowPersonaMenu(!showPersonaMenu)}
-              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium transition-all"
+              className="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/30 text-text-muted hover:text-text px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-mono transition-all shadow-sm active:scale-95"
               title="Switch AI Role Persona"
             >
-              <User className="w-3.5 h-3.5 text-accent shrink-0" />
-              <span className="truncate max-w-[90px] sm:max-w-none">
-                <span className="sm:hidden font-semibold text-text">{activePersona ? activePersona.name.split(' ')[0] : 'Persona'}</span>
-                <span className="hidden sm:inline">Persona: <strong className="text-text">{activePersona ? activePersona.name : 'Default Agent'}</strong></span>
+              <User className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="truncate max-w-[100px] sm:max-w-[160px] font-semibold text-text">
+                {activePersona ? activePersona.name : 'Persona'}
               </span>
+              <ChevronDown className="w-3 h-3 text-text-muted shrink-0" />
             </button>
 
             {showPersonaMenu && (
-              <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-72 rounded-xl bg-slate-900 border border-white/15 shadow-2xl p-1.5 z-30 font-sans text-xs space-y-1 backdrop-blur-xl">
-                <div className="px-2.5 py-1 text-[10px] font-mono text-text-muted uppercase font-bold border-b border-white/10 flex justify-between items-center">
+              <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-64 sm:w-72 rounded-2xl bg-slate-950/95 border border-cyan-500/30 shadow-2xl p-2 z-40 font-sans text-xs space-y-1 backdrop-blur-2xl animate-fadeIn">
+                <div className="px-2.5 py-1.5 text-[10px] font-mono text-text-muted uppercase font-bold border-b border-white/10 flex justify-between items-center mb-1">
                   <span>Select Agent Persona</span>
-                  <Link to="/agents" className="text-primary hover:underline font-normal text-[10px]">Manage</Link>
+                  <Link to="/agents" className="text-cyan-400 hover:underline font-semibold text-[10px]">Manage</Link>
                 </div>
 
                 {personas.map(p => (
@@ -304,12 +304,12 @@ export default function ChatArea() {
                       setActivePersona(p.id);
                       setShowPersonaMenu(false);
                     }}
-                    className={`w-full text-left p-2 rounded-lg transition-colors flex flex-col gap-0.5 ${
-                      p.id === activePersonaId ? 'bg-primary/20 text-primary border border-primary/40' : 'hover:bg-white/10 text-text'
+                    className={`w-full text-left p-2 rounded-xl transition-all flex flex-col gap-0.5 ${
+                      p.id === activePersonaId ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold' : 'hover:bg-white/10 text-text'
                     }`}
                   >
-                    <span className="font-semibold">{p.name}</span>
-                    <span className="text-[10px] text-text-muted/80 line-clamp-1">{p.instructions}</span>
+                    <span className="font-semibold text-xs">{p.name}</span>
+                    <span className="text-[10px] text-text-muted/70 line-clamp-1">{p.instructions}</span>
                   </button>
                 ))}
               </div>
