@@ -50,6 +50,18 @@ export default async function handler(req: any, res: any) {
         return res.status(200).json({ ok: true });
       }
 
+      // Check if user is asking to generate an image
+      const isImageRequest = /generate (an )?image|draw|create (an )?image|picture of|photo of|make an image/i.test(userText);
+
+      if (isImageRequest) {
+        await sendTelegramChatAction(chatId, 'upload_photo');
+        const promptText = userText.replace(/generate (an )?image (of )?|draw (a )?|create (an )?image (of )?|make an image (of )?/gi, '').trim() || userText;
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+        
+        await sendTelegramPhoto(chatId, imageUrl, `🎨 Generated image for: <b>${escapeHtml(promptText)}</b>`);
+        return res.status(200).json({ ok: true });
+      }
+
       // Send typing status indicator to Telegram while generating AI response
       await sendTelegramChatAction(chatId, 'typing');
 
@@ -77,6 +89,10 @@ export default async function handler(req: any, res: any) {
     console.error('Webhook error:', error);
     return res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
+}
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // Convert markdown syntax into Telegram HTML tags
@@ -173,5 +189,39 @@ async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: a
     }
   } catch (e) {
     console.error('Error sending Telegram message:', e);
+  }
+}
+
+// Send Photo back to Telegram Chat
+async function sendTelegramPhoto(chatId: number, photoUrl: string, caption?: string) {
+  try {
+    const payload: any = {
+      chat_id: chatId,
+      photo: photoUrl,
+      caption: caption,
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: '💻 Open in NEXUS App',
+              web_app: { url: 'https://nexus-ai-agent-beta.vercel.app/' }
+            }
+          ]
+        ]
+      }
+    };
+
+    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      console.error('Telegram sendPhoto error:', await res.text());
+    }
+  } catch (e) {
+    console.error('Error sending Telegram photo:', e);
   }
 }
