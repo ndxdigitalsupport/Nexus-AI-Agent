@@ -292,9 +292,8 @@ export default function ChatArea() {
 
             {showPersonaMenu && (
               <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-64 sm:w-72 rounded-2xl bg-slate-950/95 border border-cyan-500/30 shadow-2xl p-2 z-40 font-sans text-xs space-y-1 backdrop-blur-2xl animate-fadeIn">
-                <div className="px-2.5 py-1.5 text-[10px] font-mono text-text-muted uppercase font-bold border-b border-white/10 flex justify-between items-center mb-1">
+                <div className="px-2.5 py-1.5 text-[10px] font-mono text-text-muted uppercase font-bold border-b border-white/10 mb-1">
                   <span>Select Agent Persona</span>
-                  <Link to="/agents" className="text-cyan-400 hover:underline font-semibold text-[10px]">Manage</Link>
                 </div>
 
                 {personas.map(p => (
@@ -479,19 +478,10 @@ export default function ChatArea() {
 
       {/* Pinned Bottom Input Area */}
       <div className="shrink-0 p-2.5 sm:p-4 border-t border-white/10 bg-slate-900/90 backdrop-blur-xl">
-        {/* Sleek Minimal Starter Prompt Chips (Auto-rotating & Refreshable) */}
+        {/* Sleek Minimal Starter Prompt Chips (Auto-rotating every 9s) */}
         {activeMessages.length <= 1 && (
           <div className="max-w-7xl mx-auto mb-3 flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
-            <button
-              type="button"
-              onClick={triggerStaggeredShuffle}
-              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400 hover:rotate-180 transition-all duration-500 shrink-0"
-              title="Shuffle new prompt suggestions"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${animatingStage !== 'idle' ? 'animate-spin' : ''}`} />
-            </button>
-
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full">
               {activePrompts.map((item, idx) => {
                 const isFadingThis = animatingStage === 'fading' && idx <= fadingIndex;
                 const isPoppingThis = animatingStage === 'popping' && idx <= poppingIndex;
@@ -503,6 +493,8 @@ export default function ChatArea() {
                     type="button"
                     onClick={() => setInput(item.prompt)}
                     className={`px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/15 border border-white/10 hover:border-cyan-500/40 text-xs text-text-muted hover:text-cyan-300 font-medium transition-all duration-300 active:scale-95 shadow-sm flex items-center gap-2 shrink-0 ${
+                      idx > 0 ? 'hidden sm:flex' : 'flex'
+                    } ${
                       isFadingThis
                         ? 'opacity-0 scale-90 -translate-y-2'
                         : isPoppingThis
@@ -513,7 +505,7 @@ export default function ChatArea() {
                     }`}
                   >
                     <span className="text-sm">{item.category.split(' ')[0]}</span>
-                    <span>{item.title}</span>
+                    <span className="truncate max-w-[260px] sm:max-w-none">{item.title}</span>
                   </button>
                 );
               })}
