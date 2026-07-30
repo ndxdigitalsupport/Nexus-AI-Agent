@@ -612,9 +612,14 @@ ${chatText}`;
           });
         },
 
-        processAgentResponse: async (userContent: string, imageUrl?: string) => {
-          const { addTask, setProcessing, personas, activePersonaId, knowledgeArticles, conversations, activeConversationId, updateConversationTitle } = get();
+        processAgentResponse: async (userContent, imageUrl) => {
+          const { activeConversationId, conversations, updateConversationTitle, setProcessing, knowledgeArticles, personas, activePersonaId, addTask } = get();
           
+          if (!activeConversationId) {
+            console.error("NEXUS: No active conversation found! Cannot process agent response.");
+            return;
+          }
+
           const currentConversation = conversations.find(conv => conv.id === activeConversationId);
           if (!currentConversation) {
             console.error("NEXUS: No active conversation found! Cannot process agent response.");
@@ -622,14 +627,52 @@ ${chatText}`;
             return;
           }
 
-          // Find the active persona's instructions
+          const isImageGen = /generate|draw|picture|photo|illustration|render|create/i.test(userContent) && /image|photo|picture|draw|illustration|render/i.test(userContent);
+
+          if (isImageGen) {
+            const userMessageId = Math.random().toString(36).substr(2, 9);
+            set((state) => ({
+              conversations: state.conversations.map(conv => 
+                conv.id === activeConversationId 
+                  ? { ...conv, messages: [...conv.messages, { id: userMessageId, role: 'user', content: userContent, imageUrl, timestamp: Date.now() }], updatedAt: Date.now() }
+                  : conv
+              )
+            }));
+
+            if (currentConversation.messages.length === 1 && currentConversation.messages[0].id === 'welcome-msg') {
+              updateConversationTitle(activeConversationId, userContent.substring(0, 50) + (userContent.length > 50 ? '...' : ''));
+            }
+
+            setProcessing(true);
+            setTimeout(() => {
+              const cleanPrompt = userContent
+                .replace(/^Generate a realistic image in\s*/i, '')
+                .replace(/^Generate an image of\s*/i, '')
+                .replace(/^Generate image of\s*/i, '')
+                .replace(/^Draw a\s*/i, '')
+                .replace(/^Create an image of\s*/i, '')
+                .replace(/^Photo of\s*/i, '')
+                .replace(/^Picture of\s*/i, '')
+                .replace(/["']/g, '')
+                .trim();
+
+              const generatedUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+
+              get().addMessage({
+                role: 'agent',
+                content: `🎨 **Generated Image:** *${cleanPrompt}*\n\n![${cleanPrompt}](${generatedUrl})`
+              });
+              setProcessing(false);
+            }, 600);
+            return;
+          }
+
           const activePersona = activePersonaId 
             ? personas.find(p => p.id === activePersonaId) 
             : undefined;
           
           const customInstructions = activePersona ? activePersona.instructions : '';
 
-          // Add user message to active conversation
           const userMessageId = Math.random().toString(36).substr(2, 9);
           set((state) => ({
             conversations: state.conversations.map(conv => 
@@ -639,7 +682,6 @@ ${chatText}`;
             )
           }));
 
-          // If it's the first user message in a new chat, set conversation title
           if (currentConversation.messages.length === 1 && currentConversation.messages[0].id === 'welcome-msg') {
             updateConversationTitle(activeConversationId, userContent.substring(0, 50) + (userContent.length > 50 ? '...' : ''));
           }
@@ -653,32 +695,6 @@ ${chatText}`;
           const temperature = settings?.temperature ?? 0.7;
           
           const isLocal = endpoint.includes('localhost') || endpoint.includes('127.0.0.1');
-
-          // Check if user is requesting image generation on the web app
-          const isImageGen = /generate (an )?image|draw|create (an )?image|picture of|photo of|make an image|illustration of/i.test(userContent);
-          if (isImageGen) {
-            setProcessing(true);
-            setTimeout(() => {
-              const cleanPrompt = userContent
-                .replace(/^Generate an image of\s*/i, '')
-                .replace(/^Generate image of\s*/i, '')
-                .replace(/^Draw a\s*/i, '')
-                .replace(/^Create an image of\s*/i, '')
-                .replace(/^Photo of\s*/i, '')
-                .replace(/^Picture of\s*/i, '')
-                .replace(/["']/g, '')
-                .trim();
-
-              const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
-
-              get().addMessage({
-                role: 'agent',
-                content: `🎨 **Generated Image:** *${cleanPrompt}*\n\n![${cleanPrompt}](${imageUrl})`
-              });
-              setProcessing(false);
-            }, 600);
-            return;
-          }
 
           if (!apiKey && !isLocal) {
             setProcessing(false);
