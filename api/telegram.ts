@@ -7,12 +7,19 @@ const AI_ENDPOINT = process.env.VITE_CUSTOM_AI_ENDPOINT || 'https://gpt-agent.cc
 const DEFAULT_MODEL = 'claude-fable-5';
 
 const SYSTEM_INSTRUCTION = `You are NEXUS, an advanced autonomous AI Agent developed by the NEXUS Digital Support team.
-You are interacting natively inside a Telegram chat conversation with the user.
-Your personality is professional, proactive, futuristic, and helpful.
-Format your responses using clean Markdown styling when appropriate. Keep messages concise and clear for mobile reading.`;
+You are interacting natively inside a Telegram chat conversation with the user (Manus Agent style).
+Your capabilities include:
+- Technical problem solving & code generation
+- Business strategy & content creation
+- Planning multi-step tasks & execution workflows
+
+Your personality is sharp, professional, proactive, and direct.
+Formatting guidelines for Telegram:
+- Use bold text for headers/key points.
+- Use clean bullet points.
+- Keep responses readable and well-structured.`;
 
 export default async function handler(req: any, res: any) {
-  // Allow simple GET check to confirm endpoint is healthy
   if (req.method === 'GET') {
     return res.status(200).json({ status: 'active', message: 'NEXUS Telegram Webhook API is live!' });
   }
@@ -25,7 +32,6 @@ export default async function handler(req: any, res: any) {
     const update = req.body;
     console.log('Received Telegram Webhook update:', JSON.stringify(update, null, 2));
 
-    // Handle normal text message from Telegram
     if (update && update.message && update.message.text) {
       const chatId = update.message.chat.id;
       const userText = update.message.text.trim();
@@ -33,13 +39,13 @@ export default async function handler(req: any, res: any) {
 
       // Handle standard /start command
       if (userText === '/start') {
-        const welcomeMessage = `👋 Hello *${userName}*!\n\n🤖 I am *NEXUS*, your personal AI Agent!\n\nYou can chat with me directly right here in Telegram just like a human assistant, or tap the button below to open the full *NEXUS Workspace Mini App* for Project Plans and Artifacts!`;
+        const welcomeMessage = `👋 Hello **${userName}**!\n\n🤖 I am **NEXUS**, your personal AI Agent!\n\nYou can chat with me directly right here in Telegram just like a human assistant, or tap the button below to launch the **NEXUS Workspace Mini App** anytime!`;
         
         await sendTelegramMessage(chatId, welcomeMessage, {
           inline_keyboard: [
             [
               {
-                text: '🚀 Open NEXUS Workspace',
+                text: '🚀 Open NEXUS Workspace App',
                 web_app: { url: 'https://nexus-ai-agent-beta.vercel.app/' }
               }
             ]
@@ -51,11 +57,20 @@ export default async function handler(req: any, res: any) {
       // Send typing status indicator to Telegram while generating AI response
       await sendTelegramChatAction(chatId, 'typing');
 
-      // Call AI Engine Backend (Custom OpenAI-compatible Endpoint)
+      // Call AI Engine Backend
       const aiReply = await fetchAiResponse(userText);
 
-      // Send AI response back into Telegram chat
-      await sendTelegramMessage(chatId, aiReply);
+      // Send AI response back into Telegram chat with inline keyboard launcher
+      await sendTelegramMessage(chatId, aiReply, {
+        inline_keyboard: [
+          [
+            {
+              text: '💻 Open in NEXUS App',
+              web_app: { url: 'https://nexus-ai-agent-beta.vercel.app/' }
+            }
+          ]
+        ]
+      });
     }
 
     return res.status(200).json({ ok: true });
@@ -119,8 +134,7 @@ async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: a
   try {
     const payload: any = {
       chat_id: chatId,
-      text: text,
-      parse_mode: 'Markdown'
+      text: text
     };
 
     if (replyMarkup) {
@@ -134,13 +148,7 @@ async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: a
     });
 
     if (!res.ok) {
-      // Fallback without markdown parsing if syntax error occurs
-      delete payload.parse_mode;
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      console.error('Telegram sendMessage error:', await res.text());
     }
   } catch (e) {
     console.error('Error sending Telegram message:', e);
