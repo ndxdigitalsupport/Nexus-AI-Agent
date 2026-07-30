@@ -69,16 +69,32 @@ export default function ArtifactStudio() {
     setTimeout(() => setDownloadNotice(null), 3000);
   };
 
-  const handleExportFile = (extension: 'md' | 'txt' | 'json' | 'html') => {
-    const blob = new Blob([activeArtifact.content], { type: 'text/plain;charset=utf-8;' });
+  const handleExportDoc = () => {
+    // Strip raw markdown asterisks and format cleanly for Word document
+    const cleanText = activeArtifact.content
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+      .replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '<i>$1</i>')
+      .replace(/\n/g, '<br/>');
+
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+      "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+      "xmlns='http://www.w3.org/TR/REC-html40'>"+
+      "<head><meta charset='utf-8'><title>Export Word Document</title>"+
+      "<style>body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #1e293b; }</style></head><body>"+
+      "<h1 style='color: #0284c7; border-bottom: 2px solid #e2e8f0;'>"+activeArtifact.title+"</h1>"+
+      "<div>"+cleanText+"</div></body></html>";
+
+    const blob = new Blob(['\ufeff', header], {
+      type: 'application/msword'
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${activeArtifact.title.toLowerCase().replace(/[^a-z0-9]/gi, '_')}.${extension}`;
+    a.download = `${activeArtifact.title.toLowerCase().replace(/[^a-z0-9]/gi, '_')}.doc`;
     a.click();
     URL.revokeObjectURL(url);
 
-    setDownloadNotice(`Exported as .${extension}`);
+    setDownloadNotice('Downloaded Word Document (.doc)');
     setTimeout(() => setDownloadNotice(null), 3000);
   };
 
@@ -154,18 +170,11 @@ export default function ArtifactStudio() {
             <span>PDF Document (.pdf)</span>
           </button>
           <button
-            onClick={() => handleExportFile('txt')}
+            onClick={handleExportDoc}
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-bold transition-all shadow-glow-cyan"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Word / Text (.txt)</span>
-          </button>
-          <button
-            onClick={() => handleExportFile('html')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-bold transition-all"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Web Page (.html)</span>
+            <span>Word Document (.doc)</span>
           </button>
         </div>
       </div>
