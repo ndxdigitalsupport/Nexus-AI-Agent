@@ -65,9 +65,10 @@ export default async function handler(req: any, res: any) {
           .replace(/["']/g, '')
           .trim();
 
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+        const enhancedPrompt = `${cleanPrompt}, 4k resolution, ultra-detailed, photorealistic, sharp focus, 8k wallpaper, studio lighting`;
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=2048&height=2048&model=flux&nologo=true&enhance=true&seed=${Math.floor(Math.random() * 1000000)}`;
         
-        await sendTelegramPhoto(chatId, imageUrl, `🎨 <b>Generated Image:</b> ${escapeHtml(cleanPrompt)}`);
+        await sendTelegramPhoto(chatId, imageUrl, `🎨 <b>Ultra HD 4K Image:</b> ${escapeHtml(cleanPrompt)}`);
         return res.status(200).json({ ok: true });
       }
 

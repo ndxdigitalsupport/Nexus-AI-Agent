@@ -656,11 +656,12 @@ ${chatText}`;
                 .replace(/["']/g, '')
                 .trim();
 
-              const generatedUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+              const enhancedPrompt = `${cleanPrompt}, 4k resolution, ultra-detailed, photorealistic, sharp focus, 8k wallpaper, masterwork, studio lighting`;
+              const generatedUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=2048&height=2048&model=flux&nologo=true&enhance=true&seed=${Math.floor(Math.random() * 1000000)}`;
 
               get().addMessage({
                 role: 'agent',
-                content: `🎨 **Generated Image:** *${cleanPrompt}*\n\n![${cleanPrompt}](${generatedUrl})`
+                content: `🎨 **Ultra HD 4K Generated Image:** *${cleanPrompt}*\n\n![${cleanPrompt}](${generatedUrl})`
               });
               setProcessing(false);
             }, 600);
