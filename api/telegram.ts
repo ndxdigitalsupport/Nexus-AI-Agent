@@ -81,17 +81,8 @@ export default async function handler(req: any, res: any) {
       // Clean Markdown formatting into Telegram-compatible HTML tags
       const formattedReply = convertMarkdownToTelegramHtml(rawAiReply);
 
-      // Send AI response back into Telegram chat with inline keyboard launcher
-      await sendTelegramMessage(chatId, formattedReply, {
-        inline_keyboard: [
-          [
-            {
-              text: '💻 Open in NEXUS App',
-              web_app: { url: 'https://nexus-ai-agent-beta.vercel.app/' }
-            }
-          ]
-        ]
-      });
+      // Send AI response back into Telegram chat cleanly without buttons
+      await sendTelegramMessage(chatId, formattedReply);
     }
 
     return res.status(200).json({ ok: true });
