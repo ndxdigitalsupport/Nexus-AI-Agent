@@ -733,7 +733,7 @@ ${chatText}`;
                 `\n======================================================\n`;
             }
 
-            const systemContent = `You are NEXUS, an advanced agentic AI assistant OS with full live context of the user's workspace, project plans, and action items. 
+            const systemContent = `You are NEXUS, an advanced agentic AI assistant with full live context of the user's workspace, project plans, and action items. 
 Answer questions directly, write clean code, and execute user requests efficiently.
 ${customInstructions ? `Role / Persona Instructions: ${customInstructions}` : ''}
 ${knowledgeBaseContent}

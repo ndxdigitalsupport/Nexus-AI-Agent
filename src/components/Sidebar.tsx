@@ -184,7 +184,7 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
               </div>
               <div className="flex flex-col">
                 <span className="font-mono font-extrabold text-xl tracking-wider gradient-text">NEXUS</span>
-                <span className="text-[10px] font-mono text-cyan-400/80 tracking-widest uppercase font-semibold">AI Agent OS</span>
+                <span className="text-[10px] font-mono text-cyan-400/80 tracking-widest uppercase font-semibold">AI Agent</span>
               </div>
             </div>
 
