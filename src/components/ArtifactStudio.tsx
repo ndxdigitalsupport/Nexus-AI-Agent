@@ -1,14 +1,30 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useStore } from '@/store';
 import { FileText, Code, Check, Copy, Download, X, Edit2, Sparkles, CheckCircle2, FileSpreadsheet, Scale, ExternalLink } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import SimpleMdeEditor from "react-simplemde-editor";
+import "easymde/dist/easymde.min.css";
 
 export default function ArtifactStudio() {
   const { activeArtifact, isArtifactStudioOpen, closeArtifactStudio, updateActiveArtifactContent } = useStore();
   const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
+
+  const mdeOptions = useMemo(() => {
+    return {
+      autofocus: true,
+      spellChecker: false,
+      toolbar: [
+        "bold", "italic", "heading", "|",
+        "quote", "unordered-list", "ordered-list", "|",
+        "link", "image", "|",
+        "preview", "side-by-side", "fullscreen", "|",
+        "guide"
+      ] as any,
+    };
+  }, []);
 
   if (!isArtifactStudioOpen || !activeArtifact) return null;
 
@@ -114,12 +130,14 @@ export default function ArtifactStudio() {
       {/* Main Studio Body */}
       <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950/60">
         {isEditing ? (
-          <textarea
-            value={activeArtifact.content}
-            onChange={(e) => updateActiveArtifactContent(e.target.value)}
-            className="w-full h-full min-h-[450px] bg-slate-900/90 border border-white/15 rounded-2xl p-4 font-mono text-xs text-text focus:outline-none focus:border-cyan-400 leading-relaxed shadow-inner"
-            placeholder="Edit artifact content..."
-          />
+          <div className="w-full h-full min-h-[480px] rounded-2xl overflow-hidden border border-cyan-500/30 shadow-inner">
+            <SimpleMdeEditor
+              options={mdeOptions}
+              value={activeArtifact.content}
+              onChange={updateActiveArtifactContent}
+              className="w-full h-full font-mono text-xs text-text"
+            />
+          </div>
         ) : (
           <div className="prose prose-invert max-w-none prose-pre:bg-slate-900 prose-pre:border prose-pre:border-white/15 prose-pre:rounded-2xl prose-headings:text-cyan-300 font-sans leading-relaxed">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
