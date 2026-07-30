@@ -18,55 +18,63 @@ export default function ArtifactStudio() {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handlePrintPdf = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    // Format content cleanly for PDF: strip markdown asterisks and convert bold/headers
+  const handleDownloadPdf = () => {
     const cleanHtmlContent = activeArtifact.content
       .replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '<em>$1</em>')
       .replace(/^###\s*(.+)$/gm, '<h3>$1</h3>')
-      .replace(/^##\s*(.+)$/gm, '<h2>$1</h2>')
+      .replace(/^##\s*(.+)$/gm, '<h2>$2</h2>')
       .replace(/^#\s*(.+)$/gm, '<h1>$1</h1>')
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br />');
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${activeArtifact.title} - NEXUS AI</title>
-          <style>
-            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; line-height: 1.7; font-size: 14px; }
-            h1 { color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 24px; margin-bottom: 20px; }
-            h2 { color: #0369a1; font-size: 18px; margin-top: 20px; }
-            h3 { color: #0284c7; font-size: 15px; margin-top: 15px; }
-            strong { color: #0f172a; font-weight: 700; }
-            p { margin-bottom: 12px; }
-            .header { display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid #cbd5e1; padding-bottom: 12px; font-size: 11px; color: #64748b; font-family: monospace; text-transform: uppercase; }
-            .doc-body { background: #ffffff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div><strong>NEXUS AI AGENT</strong> - ${activeArtifact.type.toUpperCase()} EXPORT</div>
-            <div>${new Date().toLocaleDateString()}</div>
-          </div>
-          <h1>${activeArtifact.title}</h1>
-          <div class="doc-body"><p>${cleanHtmlContent}</p></div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    const safeTitle = activeArtifact.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s_-]/g, '')
+      .trim()
+      .replace(/\s+/g, '_') || 'nexus_document';
 
-    setDownloadNotice('Opened PDF Print Dialog');
-    setTimeout(() => setDownloadNotice(null), 3000);
+    // Create invisible container element for PDF rendering
+    const element = document.createElement('div');
+    element.style.padding = '40px';
+    element.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    element.style.color = '#0f172a';
+    element.style.background = '#ffffff';
+
+    element.innerHTML = `
+      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 12px; font-size: 11px; color: #64748b; font-family: monospace; text-transform: uppercase; margin-bottom: 25px;">
+        <div><strong>NEXUS AI AGENT</strong> - ${activeArtifact.type.toUpperCase()} EXPORT</div>
+        <div>${new Date().toLocaleDateString()}</div>
+      </div>
+      <h1 style="color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 24px; margin-bottom: 20px;">${activeArtifact.title}</h1>
+      <div style="background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.7;">
+        <p>${cleanHtmlContent}</p>
+      </div>
+    `;
+
+    // Load html2pdf script dynamically if not present
+    const generatePdf = () => {
+      const opt = {
+        margin:       10,
+        filename:     `${safeTitle}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      (window as any).html2pdf().set(opt).from(element).save();
+      setDownloadNotice(`Downloaded ${safeTitle}.pdf`);
+      setTimeout(() => setDownloadNotice(null), 3000);
+    };
+
+    if ((window as any).html2pdf) {
+      generatePdf();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = generatePdf;
+      document.body.appendChild(script);
+    }
   };
 
   const handleExportDoc = () => {
@@ -187,7 +195,7 @@ export default function ArtifactStudio() {
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-text-muted font-medium">Export As:</span>
           <button
-            onClick={handlePrintPdf}
+            onClick={handleDownloadPdf}
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-bold transition-all shadow-glow-violet"
           >
             <Download className="w-3.5 h-3.5 text-amber-400" />
