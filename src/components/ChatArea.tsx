@@ -286,7 +286,7 @@ export default function ChatArea() {
               title="Switch AI Engine Model"
             >
               <Cpu className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
-              <span className="font-semibold text-text max-w-[120px] sm:max-w-[200px] md:max-w-[260px] truncate">{currentModel}</span>
+              <span className="font-semibold text-text max-w-[75px] min-[380px]:max-w-[100px] sm:max-w-[180px] md:max-w-[260px] truncate">{currentModel}</span>
               <ChevronDown className="w-3 h-3 text-cyan-400 shrink-0" />
             </button>
 
@@ -326,11 +326,11 @@ export default function ChatArea() {
                 setShowPersonaMenu(!showPersonaMenu);
                 setShowModelMenu(false);
               }}
-              className="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/30 text-text-muted hover:text-text px-3 py-1.5 rounded-xl text-xs font-mono transition-all shadow-sm active:scale-95 cursor-pointer"
+              className="flex items-center gap-1 bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/30 text-text-muted hover:text-text px-2 sm:px-3 py-1.5 rounded-xl text-xs font-mono transition-all shadow-sm active:scale-95 cursor-pointer"
               title="Switch AI Role Persona"
             >
               <User className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span className="font-semibold text-text max-w-[100px] sm:max-w-[180px] truncate">
+              <span className="font-semibold text-text max-w-[65px] min-[380px]:max-w-[85px] sm:max-w-[160px] truncate">
                 {activePersona ? activePersona.name : 'Persona'}
               </span>
               <ChevronDown className="w-3 h-3 text-text-muted shrink-0" />
