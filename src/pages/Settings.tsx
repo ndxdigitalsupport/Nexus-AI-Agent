@@ -324,6 +324,18 @@ export default function Settings() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-[460px] overflow-y-auto custom-scrollbar pr-2 p-1">
                 {MODEL_PRESETS.filter(p => providerFilter === 'All' || p.provider === providerFilter).map((preset) => {
                   const isSelected = selectedModel === preset.id && !customModelInput;
+                  const currentPaidIds = settings?.paidModelIds || [];
+                  const isPaid = currentPaidIds.includes(preset.id);
+
+                  const toggleTier = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (!isAdminAuthenticated) return;
+                    const updatedPaid = isPaid
+                      ? currentPaidIds.filter(id => id !== preset.id)
+                      : [...currentPaidIds, preset.id];
+                    updateSettings({ paidModelIds: updatedPaid });
+                  };
+
                   return (
                     <div
                       key={preset.id}
@@ -341,9 +353,33 @@ export default function Settings() {
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span className="font-semibold text-xs text-text truncate">{preset.name}</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-text-muted font-mono shrink-0">
-                            {preset.provider}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {isAdminAuthenticated ? (
+                              <button
+                                type="button"
+                                onClick={toggleTier}
+                                title="Click to toggle Free vs Paid Pro Tier (Admin Control)"
+                                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold transition-all shadow-sm ${
+                                  isPaid
+                                    ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 border border-amber-400/60 text-amber-300 hover:brightness-125'
+                                    : 'bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 hover:brightness-125'
+                                }`}
+                              >
+                                {isPaid ? '🔒 PRO' : '⚡ FREE'}
+                              </button>
+                            ) : (
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                                isPaid
+                                  ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 border border-amber-400/50 text-amber-300'
+                                  : 'bg-emerald-500/20 border border-emerald-400/40 text-emerald-300'
+                              }`}>
+                                {isPaid ? '🔒 PRO' : '⚡ FREE'}
+                              </span>
+                            )}
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-text-muted font-mono">
+                              {preset.provider}
+                            </span>
+                          </div>
                         </div>
                         <p className="text-[11px] text-text-muted/80 mb-3 leading-relaxed">{preset.description}</p>
                       </div>

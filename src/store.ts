@@ -40,6 +40,7 @@ export interface AppSettings {
   customEndpoint: string;
   temperature: number;
   adminPin?: string;
+  paidModelIds?: string[]; // Admin configurable list of paid PRO models
 }
 
 // New Conversation Interface
@@ -238,9 +239,18 @@ export const useStore = create<AppState>()(
         knowledgeArticles: [],
         settings: {
           apiKey: 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8',
-          selectedModel: 'claude-fable-5',
+          selectedModel: 'deepseek-v4-flash',
           customEndpoint: 'https://gpt-agent.cc/v1/chat/completions',
           temperature: 0.7,
+          paidModelIds: [
+            'claude-sonnet-5', 'claude-fable-5', 'claude-opus-4-6', 'claude-opus-4-7', 'claude-opus-4-8', 'claude-opus-5',
+            'gpt-5.6-sol', 'gpt-5.5', 'gpt-5.3-codex-spark',
+            'qwen3.7-max', 'qwen3.8-max',
+            'deepseek-v4-pro',
+            'doubao-seed-2.0-code',
+            'glm-5.2',
+            'kimi-k3', 'grok-4.5', 'mimo-v2.5-pro', 'MiniMax-M3', 'LongCat-2.0'
+          ]
         },
         isProcessing: false,
         isActionBoardOpen: false,

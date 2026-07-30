@@ -297,24 +297,38 @@ export default function ChatArea() {
                   <Link to="/settings" className="text-cyan-400 hover:underline font-semibold text-[10px]">All Models</Link>
                 </div>
 
-                {MODEL_PRESETS.map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      updateSettings({ selectedModel: m.id });
-                      setShowModelMenu(false);
-                    }}
-                    className={`w-full text-left p-2 rounded-xl transition-all flex flex-col gap-0.5 ${
-                      m.id === currentModel ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold' : 'hover:bg-white/10 text-text'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="font-semibold text-xs text-text">{m.name}</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-text-muted font-mono">{m.provider}</span>
-                    </div>
-                    <span className="text-[10px] text-text-muted/70 line-clamp-1">{m.description}</span>
-                  </button>
-                ))}
+                {MODEL_PRESETS.map(m => {
+                  const isPaid = (settings?.paidModelIds || []).includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        updateSettings({ selectedModel: m.id });
+                        setShowModelMenu(false);
+                      }}
+                      className={`w-full text-left p-2 rounded-xl transition-all flex flex-col gap-0.5 ${
+                        m.id === currentModel ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold' : 'hover:bg-white/10 text-text'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-semibold text-xs text-text truncate">{m.name}</span>
+                          {isPaid ? (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/30 to-amber-600/30 border border-amber-400/50 text-amber-300 font-mono font-bold shrink-0">
+                              🔒 PRO
+                            </span>
+                          ) : (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono font-bold shrink-0">
+                              FREE
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-text-muted font-mono shrink-0">{m.provider}</span>
+                      </div>
+                      <span className="text-[10px] text-text-muted/70 line-clamp-1">{m.description}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
