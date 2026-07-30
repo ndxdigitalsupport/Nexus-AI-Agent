@@ -106,7 +106,14 @@ export default function ArtifactStudio() {
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => {
+              if (!isEditing && activeArtifact) {
+                // Strip raw markdown bold/italic asterisks for clean text editing
+                const cleanedText = activeArtifact.content.replace(/\*\*/g, '').replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '$1');
+                updateActiveArtifactContent(cleanedText);
+              }
+              setIsEditing(!isEditing);
+            }}
             className={`px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 shadow-md ${
               isEditing 
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-glow-violet' 
