@@ -17,6 +17,7 @@ export default function ActionBoardPage() {
     editTask,
     executeTaskWithAI,
     clearCompletedTasks,
+    deleteProjectPlan,
     isProcessing,
   } = useStore();
 
@@ -262,6 +263,17 @@ export default function ActionBoardPage() {
                 deleteTask={deleteTask}
                 editTask={editTask}
                 handleExecuteTask={handleExecuteTask}
+                onDeleteProject={(pName) => {
+                  setConfirmModal({
+                    isOpen: true,
+                    title: `Delete ${pName}`,
+                    message: `⚠️ Are you sure you want to delete the entire project plan "${pName}" and all its tasks?`,
+                    onConfirm: () => {
+                      deleteProjectPlan(pName);
+                      setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    }
+                  });
+                }}
               />
             ))
           )}
@@ -287,7 +299,8 @@ function ProjectPlanBlock({
   toggleTask,
   deleteTask,
   editTask,
-  handleExecuteTask
+  handleExecuteTask,
+  onDeleteProject
 }: {
   projectName: string;
   phases: Record<string, Task[]>;
@@ -297,6 +310,7 @@ function ProjectPlanBlock({
   deleteTask: (id: string) => void;
   editTask: (id: string, newTitle?: string) => void;
   handleExecuteTask: (id: string) => void;
+  onDeleteProject: (projectName: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -399,6 +413,16 @@ function ProjectPlanBlock({
           <div className="text-right font-mono hidden sm:block">
             <div className="text-xs text-text-muted">{completedInProject} / {allTasksInProject.length} Completed</div>
           </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteProject(projectName);
+            }}
+            className="p-2 rounded-xl bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/40 text-text-muted hover:text-rose-400 transition-colors"
+            title="Delete entire project plan & all its tasks"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
           <div className="p-2 rounded-xl bg-white/5 border border-white/10 text-text-muted group-hover:text-text">
             {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
           </div>

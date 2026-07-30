@@ -120,6 +120,7 @@ interface AppState {
   executeTaskWithAI: (taskId: string) => Promise<void>;
   extractTasksFromChat: () => number;
   clearCompletedTasks: () => void;
+  deleteProjectPlan: (projectName: string) => void;
   
   // Message Actions (now operate on active conversation)
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
@@ -480,6 +481,14 @@ ${chatText}`;
         
         clearCompletedTasks: () => set((state) => ({
           tasks: state.tasks.filter(t => !t.completed)
+        })),
+
+        deleteProjectPlan: (projectName: string) => set((state) => ({
+          tasks: state.tasks.filter(t => {
+            const parts = t.title.split(' ➔ ');
+            const taskProject = parts.length >= 3 ? parts[0] : 'General Tasks & Action Items';
+            return taskProject.toLowerCase() !== projectName.toLowerCase();
+          })
         })),
 
         extractTasksFromChat: () => {
