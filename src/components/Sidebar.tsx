@@ -488,7 +488,6 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
               <span className="text-base shrink-0">{currentUser.avatar || '👤'}</span>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-text truncate leading-none">{currentUser.name}</p>
-                <span className="text-[10px] font-mono text-cyan-400 capitalize">{currentUser.role === 'admin' ? '👑 Admin' : '👤 User'}</span>
               </div>
             </div>
             <button
