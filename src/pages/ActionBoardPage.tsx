@@ -479,10 +479,10 @@ function ProjectPlanBlock({
                             </button>
                             <div className="flex items-center gap-1.5 shrink-0">
                               {task.priority && (
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${
-                                  task.priority === 'high' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
-                                  task.priority === 'medium' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
-                                  'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-bold border shadow-sm ${
+                                  task.priority === 'high' ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.3)]' :
+                                  task.priority === 'medium' ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.3)]' :
+                                  'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
                                 }`}>
                                   {task.priority}
                                 </span>
@@ -528,7 +528,7 @@ function ProjectPlanBlock({
                         <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between gap-2">
                           {task.dueDate ? (
                             <span className="flex items-center gap-1 text-[11px] font-mono text-text-muted">
-                              <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                              <CalendarDays className="w-3.5 h-3.5 text-cyan-400" />
                               {new Date(task.dueDate).toLocaleDateString()}
                             </span>
                           ) : (
@@ -539,9 +539,9 @@ function ProjectPlanBlock({
                             <button
                               onClick={() => handleExecuteTask(task.id)}
                               disabled={executingTaskId === task.id}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-primary text-white text-xs font-mono font-bold hover:brightness-110 transition-all shadow-glow-cyan"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 via-primary to-violet-600 text-slate-950 font-mono font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-glow-cyan group"
                             >
-                              <Zap className="w-3.5 h-3.5 text-amber-300" />
+                              <Zap className="w-3.5 h-3.5 text-slate-950 group-hover:rotate-12 transition-transform" />
                               <span>Execute with AI</span>
                             </button>
                           )}

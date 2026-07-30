@@ -91,6 +91,7 @@ export default function Settings() {
 
   const [showApiKey, setShowApiKey] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [providerFilter, setProviderFilter] = useState<string>('All');
   const [importMessage, setImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -291,14 +292,37 @@ export default function Settings() {
 
           {/* Model Selector Section */}
           <div className="glass-panel p-6 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <Cpu className="w-5 h-5 text-accent" />
-              <h2 className="text-xl font-semibold text-text">AI Model Selection</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <Cpu className="w-5 h-5 text-cyan-400" />
+                <h2 className="text-xl font-semibold text-text">AI Model Selection</h2>
+              </div>
+
+              {/* Provider Quick Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+                {['All', 'Anthropic', 'OpenAI', 'DeepSeek', 'Qwen'].map((provider) => {
+                  const isActive = providerFilter === provider;
+                  return (
+                    <button
+                      key={provider}
+                      type="button"
+                      onClick={() => setProviderFilter(provider)}
+                      className={`px-3 py-1 rounded-xl text-xs font-mono transition-all shrink-0 ${
+                        isActive
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-glow-cyan font-bold'
+                          : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border border-white/10'
+                      }`}
+                    >
+                      {provider}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="relative mb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-[460px] overflow-y-auto custom-scrollbar pr-2 p-1">
-                {MODEL_PRESETS.map((preset) => {
+                {MODEL_PRESETS.filter(p => providerFilter === 'All' || p.provider === providerFilter).map((preset) => {
                   const isSelected = selectedModel === preset.id && !customModelInput;
                   return (
                     <div

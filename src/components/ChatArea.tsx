@@ -511,14 +511,18 @@ export default function ChatArea() {
         ))}
         
         {isProcessing && (
-          <div className="flex gap-3 max-w-7xl mx-auto">
-            <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border bg-gradient-to-tr from-cyan-500/20 to-violet-600/30 border-primary/40 text-primary shadow-glow-cyan">
-              <Sparkles className="w-4 h-4 animate-spin text-primary" style={{ animationDuration: '3s' }} />
+          <div className="flex gap-3 max-w-7xl mx-auto animate-fadeIn">
+            <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border bg-gradient-to-tr from-cyan-500/20 via-violet-600/30 to-cyan-400/20 border-cyan-400/50 text-cyan-300 shadow-glow-cyan">
+              <Sparkles className="w-4 h-4 animate-spin text-cyan-400" style={{ animationDuration: '2.5s' }} />
             </div>
             <div className="flex-1 flex justify-start">
-              <div className="p-3.5 rounded-2xl glass-panel text-text flex items-center gap-2 border border-white/10">
-                <span className="w-2 h-2 bg-primary rounded-full animate-ping"></span>
-                <span className="text-xs font-mono text-primary font-semibold tracking-wider uppercase">NEXUS Generating...</span>
+              <div className="p-3.5 rounded-2xl glass-panel text-text flex items-center gap-3 border border-cyan-500/30 shadow-glow-cyan bg-slate-950/80">
+                <div className="flex items-center gap-1">
+                  <span className="w-1.5 h-4 bg-cyan-400 rounded-full animate-pulse" style={{ animationDuration: '0.6s' }}></span>
+                  <span className="w-1.5 h-6 bg-primary rounded-full animate-pulse" style={{ animationDuration: '0.9s', animationDelay: '0.15s' }}></span>
+                  <span className="w-1.5 h-3 bg-violet-400 rounded-full animate-pulse" style={{ animationDuration: '0.7s', animationDelay: '0.3s' }}></span>
+                </div>
+                <span className="text-xs font-mono text-cyan-300 font-bold tracking-wider uppercase">NEXUS Generating Response...</span>
               </div>
             </div>
           </div>
@@ -542,7 +546,7 @@ export default function ChatArea() {
                     key={`${item.title}-${idx}`}
                     type="button"
                     onClick={() => setInput(item.prompt)}
-                    className={`px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/15 border border-white/10 hover:border-cyan-500/40 text-xs text-text-muted hover:text-cyan-300 font-medium transition-all duration-300 active:scale-95 shadow-sm flex items-center gap-2 shrink-0 ${
+                    className={`px-3.5 py-2 rounded-xl bg-slate-950/80 hover:bg-cyan-500/15 border border-cyan-500/20 hover:border-cyan-400/60 text-xs text-text-muted hover:text-cyan-300 font-medium transition-all duration-300 active:scale-95 shadow-sm hover:shadow-glow-cyan flex items-center gap-2 shrink-0 group ${
                       idx > 0 ? 'hidden sm:flex' : 'flex'
                     } ${
                       isFadingThis
@@ -554,7 +558,7 @@ export default function ChatArea() {
                         : 'opacity-100 scale-100 translate-y-0'
                     }`}
                   >
-                    <span className="text-sm">{item.category.split(' ')[0]}</span>
+                    <span className="text-sm group-hover:scale-110 transition-transform">{item.category.split(' ')[0]}</span>
                     <span className="truncate max-w-[260px] sm:max-w-none">{item.title}</span>
                   </button>
                 );

@@ -89,8 +89,8 @@ export default function History() {
                   tabIndex={0}
                   className={`glass-panel p-6 rounded-2xl border transition-all duration-300 group flex flex-col md:flex-row items-start md:items-center justify-between gap-4 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 ${
                     isActive
-                      ? 'bg-primary/10 border-primary/50 shadow-glow-cyan'
-                      : 'bg-slate-900/60 border-white/10 hover:border-white/20'
+                      ? 'bg-gradient-to-r from-cyan-500/10 via-primary/10 to-violet-500/10 border-cyan-400/60 shadow-glow-cyan'
+                      : 'bg-slate-950/70 border-cyan-500/20 hover:border-cyan-400/50 hover:shadow-glow-cyan'
                   }`}
                 >
                   <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isEditing && handleLoadConversation(conv.id)}>
