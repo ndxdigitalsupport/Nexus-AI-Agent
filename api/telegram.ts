@@ -51,14 +51,23 @@ export default async function handler(req: any, res: any) {
       }
 
       // Check if user is asking to generate an image
-      const isImageRequest = /generate (an )?image|draw|create (an )?image|picture of|photo of|make an image/i.test(userText);
+      const isImageRequest = /image|draw|picture|photo|illustration|render|generate|create/i.test(userText) && /image|photo|picture|draw|generate|create|render/i.test(userText);
 
       if (isImageRequest) {
         await sendTelegramChatAction(chatId, 'upload_photo');
-        const promptText = userText.replace(/generate (an )?image (of )?|draw (a )?|create (an )?image (of )?|make an image (of )?/gi, '').trim() || userText;
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+        const cleanPrompt = userText
+          .replace(/^Generate an image of\s*/i, '')
+          .replace(/^Generate image of\s*/i, '')
+          .replace(/^Draw a\s*/i, '')
+          .replace(/^Create an image of\s*/i, '')
+          .replace(/^Photo of\s*/i, '')
+          .replace(/^Picture of\s*/i, '')
+          .replace(/["']/g, '')
+          .trim();
+
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
         
-        await sendTelegramPhoto(chatId, imageUrl, `🎨 Generated image for: <b>${escapeHtml(promptText)}</b>`);
+        await sendTelegramPhoto(chatId, imageUrl, `🎨 <b>Generated Image:</b> ${escapeHtml(cleanPrompt)}`);
         return res.status(200).json({ ok: true });
       }
 
