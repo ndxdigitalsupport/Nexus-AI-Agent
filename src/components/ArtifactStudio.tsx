@@ -74,27 +74,51 @@ export default function ArtifactStudio() {
     const cleanText = activeArtifact.content
       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
       .replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '<i>$1</i>')
+      .replace(/^###\s*(.+)$/gm, '<h3>$1</h3>')
+      .replace(/^##\s*(.+)$/gm, '<h2>$1</h2>')
+      .replace(/^#\s*(.+)$/gm, '<h1>$1</h1>')
       .replace(/\n/g, '<br/>');
 
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
-      "xmlns:w='urn:schemas-microsoft-com:office:word' "+
-      "xmlns='http://www.w3.org/TR/REC-html40'>"+
-      "<head><meta charset='utf-8'><title>Export Word Document</title>"+
-      "<style>body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #1e293b; }</style></head><body>"+
-      "<h1 style='color: #0284c7; border-bottom: 2px solid #e2e8f0;'>"+activeArtifact.title+"</h1>"+
-      "<div>"+cleanText+"</div></body></html>";
+    const wordHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <title>${activeArtifact.title}</title>
+          <style>
+            body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.6; color: #0f172a; padding: 20px; }
+            h1 { color: #0284c7; font-size: 20pt; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+            h2 { color: #0369a1; font-size: 15pt; margin-top: 14pt; }
+            h3 { color: #0284c7; font-size: 12pt; margin-top: 10pt; }
+            b { color: #0f172a; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h1>${activeArtifact.title}</h1>
+          <div>${cleanText}</div>
+        </body>
+      </html>
+    `;
 
-    const blob = new Blob(['\ufeff', header], {
-      type: 'application/msword'
+    // Modern Word document MIME type
+    const blob = new Blob(['\ufeff' + wordHtml], {
+      type: 'application/vnd.ms-word.document.macroEnabled.12'
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${activeArtifact.title.toLowerCase().replace(/[^a-z0-9]/gi, '_')}.doc`;
+
+    // Generate smart filename based on actual artifact title instead of default
+    const safeTitle = activeArtifact.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s_-]/g, '')
+      .trim()
+      .replace(/\s+/g, '_') || 'nexus_document';
+
+    a.download = `${safeTitle}.doc`;
     a.click();
     URL.revokeObjectURL(url);
 
-    setDownloadNotice('Downloaded Word Document (.doc)');
+    setDownloadNotice(`Downloaded ${safeTitle}.doc`);
     setTimeout(() => setDownloadNotice(null), 3000);
   };
 

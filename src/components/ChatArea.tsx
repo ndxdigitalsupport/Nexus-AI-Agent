@@ -505,8 +505,13 @@ export default function ChatArea() {
                   {msg.role === 'agent' && msg.content.length > 80 && (
                     <button
                       onClick={() => {
-                        const titleMatch = msg.content.match(/^#+\s*(.+)$/m);
-                        const title = titleMatch ? titleMatch[1].replace(/[*_#`]/g, '').trim() : 'Generated Document';
+                        // Extract descriptive title from headings, first line, or key terms
+                        const titleMatch = msg.content.match(/^#+\s*(.+)$/m) || msg.content.match(/\*\*(.+?)\*\*/);
+                        let title = titleMatch ? titleMatch[1].replace(/[*_#`:]/g, '').trim() : '';
+                        if (!title || title === 'Generated Document') {
+                          const firstLine = msg.content.split('\n')[0].replace(/[*_#`:]/g, '').trim();
+                          title = firstLine.length > 5 && firstLine.length < 50 ? firstLine : 'NEXUS Executive Summary';
+                        }
                         const isCode = msg.content.includes('```');
                         const isContract = /contract|agreement|legal|policy/i.test(msg.content);
                         const isTable = msg.content.includes('|---|') || msg.content.includes('| --- |');
