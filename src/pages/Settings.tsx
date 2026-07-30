@@ -291,14 +291,9 @@ export default function Settings() {
 
           {/* Model Selector Section */}
           <div className="glass-panel p-6 rounded-2xl border border-white/10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Cpu className="w-5 h-5 text-accent" />
-                <h2 className="text-xl font-semibold text-text">AI Model Selection</h2>
-              </div>
-              <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-text-muted">
-                {MODEL_PRESETS.length} Models Available • Scroll for more ↓
-              </span>
+            <div className="flex items-center gap-3 mb-4">
+              <Cpu className="w-5 h-5 text-accent" />
+              <h2 className="text-xl font-semibold text-text">AI Model Selection</h2>
             </div>
 
             <div className="relative mb-6">

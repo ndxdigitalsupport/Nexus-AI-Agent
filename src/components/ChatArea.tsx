@@ -271,9 +271,9 @@ export default function ChatArea() {
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary px-2.5 sm:px-3 py-1 rounded-full text-xs font-mono shadow-glow-cyan">
-            <Cpu className="w-3.5 h-3.5" />
-            <span className="truncate max-w-[120px] sm:max-w-[180px] md:max-w-[280px] font-semibold">{currentModel}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-primary/10 border border-primary/30 text-primary px-2 sm:px-3 py-1 rounded-full text-xs font-mono shadow-glow-cyan shrink">
+            <Cpu className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate max-w-[85px] sm:max-w-[180px] md:max-w-[280px] font-semibold">{currentModel}</span>
           </div>
 
           {/* Persona Button (Visible on mobile & desktop) */}
