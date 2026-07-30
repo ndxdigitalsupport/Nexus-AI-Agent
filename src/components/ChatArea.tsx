@@ -337,7 +337,7 @@ export default function ChatArea() {
             </button>
 
             {showPersonaMenu && (
-              <div className="absolute left-0 mt-2 w-64 sm:w-72 rounded-2xl bg-slate-950/95 border border-cyan-500/30 shadow-2xl p-2 z-40 font-sans text-xs space-y-1 backdrop-blur-2xl animate-fadeIn">
+              <div className="absolute left-0 min-[380px]:right-0 min-[380px]:left-auto sm:left-0 sm:right-auto mt-2 w-64 sm:w-72 max-w-[85vw] rounded-2xl bg-slate-950/95 border border-cyan-500/30 shadow-2xl p-2 z-40 font-sans text-xs space-y-1 backdrop-blur-2xl animate-fadeIn">
                 <div className="px-2.5 py-1.5 text-[10px] font-mono text-text-muted uppercase font-bold border-b border-white/10 mb-1">
                   <span>Select Agent Persona</span>
                 </div>
@@ -383,13 +383,14 @@ export default function ChatArea() {
             )}
           </button>
 
+          {/* Settings Link (Desktop Only - Hidden on Mobile) */}
           <Link
             to="/settings"
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-cyan-300 transition-all bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-lg active:scale-95"
+            className="hidden md:flex items-center gap-1.5 text-xs text-text-muted hover:text-cyan-300 transition-all bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-lg active:scale-95"
             title="Configure AI Settings & Keys"
           >
             <SettingsIcon className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline font-mono font-semibold">Settings</span>
+            <span className="font-mono font-semibold">Settings</span>
           </Link>
         </div>
       </header>
