@@ -276,19 +276,22 @@ export default function ChatArea() {
             <span className="truncate max-w-[120px] sm:max-w-[180px] md:max-w-[280px] font-semibold">{currentModel}</span>
           </div>
 
-          {/* Interactive Persona Dropdown Selector */}
+          {/* Persona Button (Visible on mobile & desktop) */}
           <div className="relative">
             <button
               onClick={() => setShowPersonaMenu(!showPersonaMenu)}
-              className="hidden sm:flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text px-3 py-1 rounded-full text-xs font-medium transition-all"
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-text px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium transition-all"
               title="Switch AI Role Persona"
             >
-              <User className="w-3.5 h-3.5 text-accent" />
-              <span>Persona: <strong className="text-text">{activePersona ? activePersona.name : 'Default Agent'}</strong></span>
+              <User className="w-3.5 h-3.5 text-accent shrink-0" />
+              <span className="truncate max-w-[90px] sm:max-w-none">
+                <span className="sm:hidden font-semibold text-text">{activePersona ? activePersona.name.split(' ')[0] : 'Persona'}</span>
+                <span className="hidden sm:inline">Persona: <strong className="text-text">{activePersona ? activePersona.name : 'Default Agent'}</strong></span>
+              </span>
             </button>
 
             {showPersonaMenu && (
-              <div className="absolute left-0 mt-2 w-72 rounded-xl bg-slate-900 border border-white/15 shadow-2xl p-1.5 z-30 font-sans text-xs space-y-1 backdrop-blur-xl">
+              <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-72 rounded-xl bg-slate-900 border border-white/15 shadow-2xl p-1.5 z-30 font-sans text-xs space-y-1 backdrop-blur-xl">
                 <div className="px-2.5 py-1 text-[10px] font-mono text-text-muted uppercase font-bold border-b border-white/10 flex justify-between items-center">
                   <span>Select Agent Persona</span>
                   <Link to="/agents" className="text-primary hover:underline font-normal text-[10px]">Manage</Link>
@@ -312,64 +315,11 @@ export default function ChatArea() {
               </div>
             )}
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {/* Save Summary to Memory Button */}
-          <button
-            onClick={handleSaveSummaryToMemory}
-            disabled={isProcessing || activeMessages.length <= 1}
-            className="hidden lg:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border bg-white/5 hover:bg-white/10 border-white/10 text-text-muted hover:text-cyan-300 disabled:opacity-40 transition-all"
-            title="Summarize conversation & save directly into Knowledge Base memory"
-          >
-            {isMemorySaved ? (
-              <>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400 font-semibold font-mono">Saved to Memory!</span>
-              </>
-            ) : (
-              <>
-                <Brain className="w-3.5 h-3.5 text-violet-400" />
-                <span className="font-mono">Save to Memory</span>
-              </>
-            )}
-          </button>
-
-          {/* Export Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowExportMenu(!showExportMenu)}
-              disabled={activeMessages.length <= 1}
-              className="hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border bg-white/5 hover:bg-white/10 border-white/10 text-text-muted hover:text-text disabled:opacity-40 transition-all"
-              title="Export chat log as Markdown or Text"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span className="font-mono">Export</span>
-            </button>
-
-            {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-xl bg-slate-900 border border-white/15 shadow-2xl p-1.5 z-30 font-mono text-xs space-y-1 backdrop-blur-xl">
-                <button
-                  onClick={handleExportMarkdown}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 text-text hover:text-primary transition-colors flex items-center justify-between"
-                >
-                  <span>Markdown (.md)</span>
-                  <span className="text-[10px] text-text-muted">Formatted</span>
-                </button>
-                <button
-                  onClick={handleExportText}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 text-text hover:text-primary transition-colors flex items-center justify-between"
-                >
-                  <span>Plain Text (.txt)</span>
-                  <span className="text-[10px] text-text-muted">Raw Log</span>
-                </button>
-              </div>
-            )}
-          </div>
-
+          {/* Project Plans Button (Desktop Only) */}
           <button
             onClick={toggleActionBoard}
-            className={`flex items-center gap-1 sm:gap-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-xl border transition-all duration-200 shrink-0 ${
+            className={`hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition-all duration-200 shrink-0 ${
               isActionBoardOpen
                 ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 shadow-glow-violet'
                 : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
@@ -377,10 +327,7 @@ export default function ChatArea() {
             title="Toggle Project Plans & Execution Board"
           >
             <Target className={`w-3.5 h-3.5 shrink-0 ${isActionBoardOpen ? 'text-amber-400' : 'text-text-muted'}`} />
-            <span className="font-mono font-semibold whitespace-nowrap">
-              <span className="inline sm:hidden">Plans</span>
-              <span className="hidden sm:inline">Project Plans</span>
-            </span>
+            <span className="font-mono font-semibold whitespace-nowrap">Project Plans</span>
             {pendingTasksCount > 0 && (
               <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">
                 {pendingTasksCount}
