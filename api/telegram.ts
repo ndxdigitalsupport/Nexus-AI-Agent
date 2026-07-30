@@ -8,16 +8,12 @@ const DEFAULT_MODEL = 'claude-fable-5';
 
 const SYSTEM_INSTRUCTION = `You are NEXUS, an advanced autonomous AI Agent developed by the NEXUS Digital Support team.
 You are interacting natively inside a Telegram chat conversation with the user (Manus Agent style).
-Your capabilities include:
-- Technical problem solving & code generation
-- Business strategy & content creation
-- Planning multi-step tasks & execution workflows
 
-Your personality is sharp, professional, proactive, and direct.
-Formatting guidelines for Telegram:
-- Use bold text for headers/key points.
-- Use clean bullet points.
-- Keep responses readable and well-structured.`;
+CRITICAL FORMATTING RULES FOR TELEGRAM CHAT:
+- DO NOT output raw markdown asterisks like **bold** or *italic*.
+- Use clean HTML tags for formatting: <b>bold headers</b>, <i>italic</i>, and <code>code</code>.
+- Use clean bullet emojis like • or 🚀 for lists.
+- Keep responses readable, elegant, concise, and structured like an executive assistant.`;
 
 export default async function handler(req: any, res: any) {
   if (req.method === 'GET') {
@@ -39,7 +35,7 @@ export default async function handler(req: any, res: any) {
 
       // Handle standard /start command
       if (userText === '/start') {
-        const welcomeMessage = `👋 Hello **${userName}**!\n\n🤖 I am **NEXUS**, your personal AI Agent!\n\nYou can chat with me directly right here in Telegram just like a human assistant, or tap the button below to launch the **NEXUS Workspace Mini App** anytime!`;
+        const welcomeMessage = `👋 Hello <b>${userName}</b>!\n\n🤖 I am <b>NEXUS</b>, your personal AI Agent!\n\nYou can chat with me directly right here in Telegram just like a human assistant, or tap the button below to launch the <b>NEXUS Workspace Mini App</b> anytime!`;
         
         await sendTelegramMessage(chatId, welcomeMessage, {
           inline_keyboard: [
@@ -58,10 +54,13 @@ export default async function handler(req: any, res: any) {
       await sendTelegramChatAction(chatId, 'typing');
 
       // Call AI Engine Backend
-      const aiReply = await fetchAiResponse(userText);
+      const rawAiReply = await fetchAiResponse(userText);
+
+      // Clean Markdown formatting into Telegram-compatible HTML tags
+      const formattedReply = convertMarkdownToTelegramHtml(rawAiReply);
 
       // Send AI response back into Telegram chat with inline keyboard launcher
-      await sendTelegramMessage(chatId, aiReply, {
+      await sendTelegramMessage(chatId, formattedReply, {
         inline_keyboard: [
           [
             {
@@ -78,6 +77,21 @@ export default async function handler(req: any, res: any) {
     console.error('Webhook error:', error);
     return res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
+}
+
+// Convert markdown syntax into Telegram HTML tags
+function convertMarkdownToTelegramHtml(text: string): string {
+  if (!text) return '';
+  return text
+    // Replace **bold** with <b>bold</b>
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    // Replace *italic* or _italic_ with <i>italic</i>
+    .replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '<i>$1</i>')
+    .replace(/(?<!\w)_(.*?)_(?!\w)/g, '<i>$1</i>')
+    // Replace `code` with <code>code</code>
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    // Clean remaining loose asterisks
+    .replace(/^\*\s+/gm, '• ');
 }
 
 // Fetch response from AI Engine
@@ -129,12 +143,13 @@ async function sendTelegramChatAction(chatId: number, action: string) {
   }
 }
 
-// Send Message back to Telegram Chat
+// Send Message back to Telegram Chat with HTML parse mode
 async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: any) {
   try {
     const payload: any = {
       chat_id: chatId,
-      text: text
+      text: text,
+      parse_mode: 'HTML'
     };
 
     if (replyMarkup) {
@@ -148,7 +163,13 @@ async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: a
     });
 
     if (!res.ok) {
-      console.error('Telegram sendMessage error:', await res.text());
+      console.error('Telegram HTML sendMessage failed, trying plaintext fallback...');
+      delete payload.parse_mode;
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
     }
   } catch (e) {
     console.error('Error sending Telegram message:', e);
