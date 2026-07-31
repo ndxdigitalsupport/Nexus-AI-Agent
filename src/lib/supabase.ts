@@ -118,3 +118,18 @@ export async function supabaseSignUp(email: string, pass: string) {
   }
 }
 
+export async function syncProfileToSupabase(email: string, role: string = 'user') {
+  try {
+    await supabase.from('profiles').upsert({
+      id: email,
+      email: email,
+      role: role,
+      plan: role === 'admin' ? 'pro' : 'free',
+      created_at: Date.now()
+    });
+  } catch (err) {
+    // Ignore profile sync errors
+  }
+}
+
+
