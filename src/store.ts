@@ -252,10 +252,14 @@ export const useStore = create<AppState>()(
         },
 
         logoutUser: () => {
+          const freshConv = createNewConversation();
           set({
             currentUser: null,
             isAuthenticated: false,
-            isAdminAuthenticated: false
+            isAdminAuthenticated: false,
+            conversations: [freshConv],
+            activeConversationId: freshConv.id,
+            tasks: []
           });
         },
 
