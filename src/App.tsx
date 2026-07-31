@@ -7,6 +7,7 @@ import Settings from "@/pages/Settings";
 import History from "@/pages/History";
 import Agents from "@/pages/Agents";
 import KnowledgeBase from "@/pages/KnowledgeBase";
+import AdminDashboard from "@/pages/AdminDashboard";
 import ActionBoardPage from "@/pages/ActionBoardPage";
 import LoginModal from "@/components/LoginModal";
 import { useStore } from "@/store";
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/action-board" element={<ActionBoardPage />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/knowledge-base" element={<KnowledgeBase />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Route>
       </Routes>
     </Router>

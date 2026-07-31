@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target, LogOut, LogIn, Edit2 } from 'lucide-react';
+import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target, LogOut, LogIn, Edit2, ShieldCheck } from 'lucide-react';
 import { useStore } from '../store';
 import ConfirmModal from './ConfirmModal';
 
@@ -213,6 +213,7 @@ export default function Sidebar({ onOpenLoginModal }: { onOpenLoginModal?: () =>
           <NavItem icon={<History className="w-4 h-4 text-violet-400" />} label="History" to="/history" active={location.pathname === '/history'} onClick={() => toggleMobileSidebar(false)} />
           {isAdminAuthenticated && (
             <>
+              <NavItem icon={<ShieldCheck className="w-4 h-4 text-cyan-400 animate-pulse" />} label="Admin Control" to="/admin" active={location.pathname === '/admin'} onClick={() => toggleMobileSidebar(false)} />
               <NavItem icon={<Cpu className="w-4 h-4 text-emerald-400" />} label="Personas" to="/agents" active={location.pathname === '/agents'} onClick={() => toggleMobileSidebar(false)} />
               <NavItem icon={<Book className="w-4 h-4 text-blue-400" />} label="Knowledge Base" to="/knowledge-base" active={location.pathname === '/knowledge-base'} onClick={() => toggleMobileSidebar(false)} />
             </>
