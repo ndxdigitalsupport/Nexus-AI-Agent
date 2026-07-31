@@ -221,6 +221,33 @@ export const useStore = create<AppState>()(
             isAdminAuthenticated: isAdmin
           });
 
+          // Fetch user-specific conversations from Supabase cloud for this logged in account
+          fetchUserConversationsFromSupabase(cleanUser).then((remoteConvs) => {
+            if (remoteConvs && remoteConvs.length > 0) {
+              const formattedConvs = remoteConvs.map((rc: any) => ({
+                id: rc.id,
+                title: rc.title,
+                messages: rc.messages || [],
+                pinned: rc.pinned || false,
+                category: rc.category || 'Unassigned',
+                createdAt: Number(rc.created_at) || Date.now(),
+                updatedAt: Number(rc.updated_at) || Date.now()
+              }));
+              set({
+                conversations: formattedConvs,
+                activeConversationId: formattedConvs[0].id
+              });
+            } else {
+              // New user with no cloud chats yet: give them a fresh clean workspace!
+              const freshConv = createNewConversation();
+              set({
+                conversations: [freshConv],
+                activeConversationId: freshConv.id,
+                tasks: []
+              });
+            }
+          });
+
           return true;
         },
 
