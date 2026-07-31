@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, devtools, createJSONStorage } from 'zustand/middleware';
-import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase, getProfileRole } from '@/lib/supabase';
+import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase, getProfileRole, supabase } from '@/lib/supabase';
 
 export interface Message {
   id: string;
@@ -75,7 +75,7 @@ export interface UserAccount {
 interface AppState {
   currentUser: UserAccount | null;
   isAuthenticated: boolean;
-  loginUser: (emailOrUser: string) => Promise<boolean>;
+  loginUser: (user: { id: string; email: string }) => Promise<boolean>;
   logoutUser: () => void;
 
   conversations: Conversation[]; // Now an array of conversations
@@ -198,18 +198,16 @@ export const useStore = create<AppState>()(
         currentUser: null,
         isAuthenticated: false,
 
-        loginUser: async (emailOrUser: string) => {
-          const cleanUser = emailOrUser.trim();
-
+        loginUser: async (user: { id: string; email: string }) => {
           // Admin status comes ONLY from the account role stored in Supabase —
           // never from a username or password checked in the browser.
-          const profileRole = await getProfileRole(cleanUser);
+          const profileRole = await getProfileRole(user.id);
           const isAdmin = profileRole === 'admin';
 
           const newUser: UserAccount = {
-            id: isAdmin ? 'admin-1' : `user-${Math.random().toString(36).substr(2, 5)}`,
-            name: cleanUser.includes('@') ? cleanUser.split('@')[0] : cleanUser,
-            email: cleanUser,
+            id: user.id,
+            name: user.email.includes('@') ? user.email.split('@')[0] : user.email,
+            email: user.email,
             role: isAdmin ? 'admin' : 'user',
             avatar: isAdmin ? '👑' : '👤'
           };
@@ -221,9 +219,17 @@ export const useStore = create<AppState>()(
           });
 
           // Fetch user-specific conversations from Supabase cloud for this logged in account
-          fetchUserConversationsFromSupabase(cleanUser).then((remoteConvs) => {
+          fetchUserConversationsFromSupabase(user.id).then((remoteConvs) => {
             if (remoteConvs && remoteConvs.length > 0) {
-              const formattedConvs = remoteConvs.map((rc: any) => ({
+              const formattedConvs = (remoteConvs as Array<{
+                id: string;
+                title: string;
+                messages?: Message[];
+                pinned?: boolean;
+                category?: string;
+                created_at?: number;
+                updated_at?: number;
+              }>).map((rc) => ({
                 id: rc.id,
                 title: rc.title,
                 messages: rc.messages || [],
@@ -251,6 +257,8 @@ export const useStore = create<AppState>()(
         },
 
         logoutUser: () => {
+          // Clear the Supabase auth session so RLS-scoped queries stop resolving.
+          supabase.auth.signOut();
           const freshConv = createNewConversation();
           set({
             currentUser: null,
@@ -496,14 +504,14 @@ ${chatText}`;
         
         addTask: (title, dueDate, priority) => set((state) => {
           const newTask: Task = { id: Math.random().toString(36).substr(2, 9), title, completed: false, createdAt: Date.now(), dueDate, priority };
-          const activeUser = state.currentUser?.email || 'guest_user';
+          const activeUser = state.currentUser?.id || '';
           syncTaskToSupabase(activeUser, newTask);
           return { tasks: [...state.tasks, newTask] };
         }),
         
         toggleTask: (id) => set((state) => {
           const updatedTasks = state.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-          const activeUser = state.currentUser?.email || 'guest_user';
+          const activeUser = state.currentUser?.id || '';
           const targetTask = updatedTasks.find(t => t.id === id);
           if (targetTask) syncTaskToSupabase(activeUser, targetTask);
           return { tasks: updatedTasks };
@@ -1089,7 +1097,7 @@ Rules for Action Items:
             // Sync conversation to Supabase cloud automatically
             const currentStore = get();
             const finishedConv = currentStore.conversations.find(c => c.id === activeConversationId);
-            const activeUser = currentStore.currentUser?.email || 'guest_user';
+            const activeUser = currentStore.currentUser?.id || '';
             if (finishedConv) {
               syncConversationToSupabase(activeUser, finishedConv);
             }

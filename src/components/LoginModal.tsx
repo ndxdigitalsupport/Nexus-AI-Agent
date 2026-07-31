@@ -39,14 +39,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const validEmail = username.includes('@') ? username.trim() : `${username.trim()}@nexus.ai`;
 
     if (isSignUpMode) {
-      const { error: err } = await supabaseSignUp(validEmail, password);
+      const { user, error: err } = await supabaseSignUp(validEmail, password);
       if (err) {
         setError(err);
         setLoading(false);
         return;
       }
-      await syncProfileToSupabase(validEmail, 'user');
-      await loginUser(validEmail);
+      if (!user) {
+        setError('Please check your email to confirm your account, then sign in.');
+        setLoading(false);
+        return;
+      }
+      await syncProfileToSupabase(user);
+      await loginUser(user);
       setLoading(false);
       onClose();
     } else {
@@ -56,9 +61,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         setLoading(false);
         return;
       }
-      const signedInEmail = user?.email || validEmail;
-      await syncProfileToSupabase(signedInEmail, 'user');
-      await loginUser(signedInEmail);
+      if (!user) {
+        setError('Sign in failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+      await syncProfileToSupabase(user);
+      await loginUser(user);
       setLoading(false);
       onClose();
     }

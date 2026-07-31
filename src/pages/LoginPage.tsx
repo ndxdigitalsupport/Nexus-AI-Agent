@@ -31,15 +31,20 @@ export default function LoginPage() {
     const validEmail = email.includes('@') ? email.trim() : `${email.trim()}@nexus.ai`;
 
     if (isSignUp) {
-      const { error: err } = await supabaseSignUp(validEmail, password);
+      const { user, error: err } = await supabaseSignUp(validEmail, password);
       if (err) {
         setError(err);
         setLoading(false);
         return;
       }
-      await syncProfileToSupabase(validEmail, 'user');
+      if (!user) {
+        setError('Please check your email to confirm your account, then sign in.');
+        setLoading(false);
+        return;
+      }
+      await syncProfileToSupabase(user);
       setNotice('✅ Account created successfully! Logging you in...');
-      await loginUser(validEmail);
+      await loginUser(user);
       setLoading(false);
       setTimeout(() => navigate('/'), 1000);
     } else {
@@ -49,9 +54,13 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      const signedInEmail = user?.email || validEmail;
-      await syncProfileToSupabase(signedInEmail, 'user');
-      await loginUser(signedInEmail);
+      if (!user) {
+        setError('Sign in failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+      await syncProfileToSupabase(user);
+      await loginUser(user);
       setLoading(false);
       navigate('/');
     }
