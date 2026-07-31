@@ -35,27 +35,31 @@ export default function LoginPage() {
 
     setLoading(true);
 
+    // Format email if user typed a plain username e.g. "jisu" -> "jisu@nexus.ai"
+    const validEmail = email.includes('@') ? email.trim() : `${email.trim()}@nexus.ai`;
+
     if (isSignUp) {
-      const { user, error: err } = await supabaseSignUp(email, password);
-      setLoading(false);
+      const { user, error: err } = await supabaseSignUp(validEmail, password);
       if (err) {
         setError(err);
+        setLoading(false);
       } else {
         setNotice('✅ Account created successfully! Logging you in...');
-        syncProfileToSupabase(email, selectedRole);
-        loginUser(email, password);
-        setTimeout(() => navigate('/'), 1200);
+        await syncProfileToSupabase(validEmail, selectedRole);
+        loginUser(validEmail, password);
+        setLoading(false);
+        setTimeout(() => navigate('/'), 1000);
       }
     } else {
-      const { user, error: err } = await supabaseSignIn(email, password);
+      const { user, error: err } = await supabaseSignIn(validEmail, password);
+      await syncProfileToSupabase(user?.email || validEmail, selectedRole);
       setLoading(false);
-      syncProfileToSupabase(user?.email || email, selectedRole);
       if (err) {
-        // Fallback to local session login if offline or demo email
-        loginUser(email, password);
+        // Fallback to local session login if offline or custom login
+        loginUser(validEmail, password);
         navigate('/');
       } else {
-        loginUser(user?.email || email, password);
+        loginUser(user?.email || validEmail, password);
         navigate('/');
       }
     }
