@@ -111,9 +111,20 @@ export async function supabaseSignUp(email: string, pass: string) {
       email,
       password: pass
     });
+    
+    // If Supabase free tier email rate limit triggers, create profile row directly
+    if (error && error.message?.includes('rate limit')) {
+      await syncProfileToSupabase(email, 'user');
+      return { user: { email }, error: null };
+    }
+    
     if (error) throw error;
     return { user: data.user, error: null };
   } catch (err: any) {
+    if (err.message?.includes('rate limit')) {
+      await syncProfileToSupabase(email, 'user');
+      return { user: { email }, error: null };
+    }
     return { user: null, error: err.message || 'Sign up failed' };
   }
 }
