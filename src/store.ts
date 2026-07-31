@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, devtools, createJSONStorage } from 'zustand/middleware';
+import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase } from '@/lib/supabase';
 
 export interface Message {
   id: string;
@@ -458,17 +459,25 @@ ${chatText}`;
           return { conversations: updatedConversations };
         }),
         
-        addTask: (title, dueDate, priority) => set((state) => ({
-          tasks: [...state.tasks, { id: Math.random().toString(36).substr(2, 9), title, completed: false, createdAt: Date.now(), dueDate, priority }]
-        })),
+        addTask: (title, dueDate, priority) => set((state) => {
+          const newTask: Task = { id: Math.random().toString(36).substr(2, 9), title, completed: false, createdAt: Date.now(), dueDate, priority };
+          const activeUser = state.currentUser?.email || 'guest_user';
+          syncTaskToSupabase(activeUser, newTask);
+          return { tasks: [...state.tasks, newTask] };
+        }),
         
-        toggleTask: (id) => set((state) => ({
-          tasks: state.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
-        })),
+        toggleTask: (id) => set((state) => {
+          const updatedTasks = state.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+          const activeUser = state.currentUser?.email || 'guest_user';
+          const targetTask = updatedTasks.find(t => t.id === id);
+          if (targetTask) syncTaskToSupabase(activeUser, targetTask);
+          return { tasks: updatedTasks };
+        }),
       
-        deleteTask: (id) => set((state) => ({
-          tasks: state.tasks.filter(t => t.id !== id)
-        })),
+        deleteTask: (id) => set((state) => {
+          deleteTaskFromSupabase(id);
+          return { tasks: state.tasks.filter(t => t.id !== id) };
+        }),
 
         editTask: (id, newTitle, newDueDate, newPriority) => set((state) => ({
           tasks: state.tasks.map(t => t.id === id ? { 
@@ -1046,6 +1055,14 @@ Rules for Action Items:
                 // Auto-open Action Board drawer so user sees project plan populate live!
                 set({ isActionBoardOpen: true });
               }
+            }
+
+            // Sync conversation to Supabase cloud automatically
+            const currentStore = get();
+            const finishedConv = currentStore.conversations.find(c => c.id === activeConversationId);
+            const activeUser = currentStore.currentUser?.email || 'guest_user';
+            if (finishedConv) {
+              syncConversationToSupabase(activeUser, finishedConv);
             }
 
           } catch (error: unknown) {

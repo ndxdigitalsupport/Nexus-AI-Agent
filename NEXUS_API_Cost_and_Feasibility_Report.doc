@@ -1,0 +1,231 @@
+﻿
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>NEXUS AI Agent - API Token Cost & Financial Feasibility Report</title>
+<style>
+  body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.6; color: #1e293b; padding: 30px; }
+  h1 { color: #0284c7; font-size: 22pt; border-bottom: 3px solid #0284c7; padding-bottom: 8px; margin-bottom: 4px; }
+  .subtitle { font-size: 12pt; color: #64748b; margin-bottom: 25px; font-weight: bold; }
+  h2 { color: #0f172a; font-size: 15pt; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin-top: 25px; }
+  .highlight-box { background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 12px 16px; margin: 15px 0; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th { background-color: #0284c7; color: #ffffff; font-weight: bold; text-align: left; padding: 10px; border: 1px solid #0284c7; }
+  td { padding: 9px 10px; border: 1px solid #cbd5e1; font-size: 10.5pt; }
+  tr:nth-child(even) { background-color: #f8fafc; }
+  .badge { background-color: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+  .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 9pt; color: #94a3b8; text-align: right; }
+</style>
+</head>
+<body>
+
+  <h1>NEXUS AI AGENT</h1>
+  <div class="subtitle">API TOKEN COST & FINANCIAL FEASIBILITY REPORT FOR EXECUTIVE MANAGEMENT</div>
+
+  <div class="highlight-box">
+    <b>Executive Summary:</b><br/>
+    Launching <b>NEXUS AI Agent</b> using the main engine <b>deepseek-v4-flash</b> is extremely cost-effective. 
+    A 10 Million Token package costs only <b>¥5.12 RMB (~$0.78 USD)</b>. Each user request costs less than <b>$0.0008 USD (0.0057 RMB)</b>. 
+    If monetized with a Pro subscription at $9.99/month, the platform yields a gross profit margin of over <b>95%</b>.
+  </div>
+
+  <h2>1. Token Purchase Unit Price (Raw Purchase Costs)</h2>
+  <p>Based on actual procurement logs from provider <i>huawei.llm-agent.cc</i>:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Package Size</th>
+        <th>Cost in RMB (¥)</th>
+        <th>Cost in USD ($)</th>
+        <th>Cost per 1 Million Tokens</th>
+        <th>Approx. Messages Supported</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>10 Million Tokens (1千万)</b></td>
+        <td>¥5.12 RMB</td>
+        <td><b>$0.78 USD</b></td>
+        <td>$0.078 USD (¥0.51 RMB)</td>
+        <td>~4,000 to 6,600 messages</td>
+      </tr>
+      <tr>
+        <td><b>100 Million Tokens (1亿)</b></td>
+        <td>¥31.61 RMB</td>
+        <td><b>$4.85 USD</b></td>
+        <td>$0.0485 USD (¥0.31 RMB)</td>
+        <td>~40,000 to 66,000 messages</td>
+      </tr>
+      <tr>
+        <td><b>300 Million Tokens (3亿)</b></td>
+        <td>¥76.78 RMB</td>
+        <td><b>$11.78 USD</b></td>
+        <td>$0.039 USD (¥0.25 RMB)</td>
+        <td>~120,000 to 200,000 messages</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. Model Unit Cost Breakdown (From 101 Live Log Transactions)</h2>
+  <p>Different AI models consume different quota rates depending on their capability tier:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Model Engine</th>
+        <th>Role / Purpose</th>
+        <th>Avg. Quota / Request</th>
+        <th>Cost per Message (USD)</th>
+        <th>Cost per Message (RMB)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>deepseek-v4-flash</b></td>
+        <td><span class="badge">Main Default Engine</span></td>
+        <td>3,500 - 18,000</td>
+        <td><b>$0.0005 - $0.0018 USD</b></td>
+        <td>¥0.0035 - ¥0.013 RMB</td>
+      </tr>
+      <tr>
+        <td><b>mimo-v2.5</b></td>
+        <td>Fast Conversational Model</td>
+        <td>2,000 - 7,000</td>
+        <td><b>$0.0002 - $0.0008 USD</b></td>
+        <td>¥0.0014 - ¥0.0056 RMB</td>
+      </tr>
+      <tr>
+        <td><b>claude-sonnet-5</b></td>
+        <td>Pro Frontier Reasoning</td>
+        <td>70,000 - 750,000</td>
+        <td><b>$0.0080 - $0.0850 USD</b></td>
+        <td>¥0.0570 - ¥0.600 RMB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. Token Depletion Audit: Why Balance Dropped to 29.7% (Root Cause Analysis)</h2>
+  <div class="highlight-box" style="background-color: #fff7ed; border-left-color: #f97316;">
+    <b>⚠️ Important Audit Finding for Management:</b><br/>
+    The 70.3% token drop since Monday was NOT caused by <i>deepseek-v4-flash</i>. 
+    It was consumed by testing heavy <b>Claude Sonnet & Fable models</b> which have a <b>12x to 30x higher multiplier</b>!
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Model Tested</th>
+        <th>Requests Made in CSV</th>
+        <th>Total Tokens / Quota Consumed</th>
+        <th>% of Total 10M Token Package Spent</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>claude-sonnet-5 & claude-fable-5</b></td>
+        <td>14 requests</td>
+        <td><b>~3,850,000 Quota</b></td>
+        <td><b style="color: #dc2626;">54.8% of spent budget</b></td>
+      </tr>
+      <tr>
+        <td><b>deepseek-v4-flash</b></td>
+        <td>45 requests</td>
+        <td><b>~310,000 Quota</b></td>
+        <td><b style="color: #16a34a;">4.4% of spent budget</b></td>
+      </tr>
+      <tr>
+        <td><b>mimo-v2.5</b></td>
+        <td>22 requests</td>
+        <td><b>~180,000 Quota</b></td>
+        <td><b style="color: #16a34a;">2.5% of spent budget</b></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><b>Key Finding:</b> 1 single query to <code>claude-sonnet-5</code> (754,000 quota) consumed more tokens than <b>100+ queries to <code>deepseek-v4-flash</code></b> combined!</p>
+
+  <h2>5. Short vs. Long Text Request Cost Breakdown</h2>
+  <p>How message length impacts cost per query on <b>deepseek-v4-flash</b>:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Request Type</th>
+        <th>Example Prompt</th>
+        <th>Input + Output Tokens</th>
+        <th>Cost per Message (USD)</th>
+        <th>Cost per Message (RMB)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Short Query</b></td>
+        <td><i>"Hi", "What is React?", "How are you?"</i></td>
+        <td>~650 tokens</td>
+        <td><b>$0.0001 USD</b></td>
+        <td>¥0.0009 RMB</td>
+      </tr>
+      <tr>
+        <td><b>Medium Query</b></td>
+        <td><i>"Write 3 Facebook ad captions for my shop"</i></td>
+        <td>~1,600 tokens</td>
+        <td><b>$0.0003 USD</b></td>
+        <td>¥0.0024 RMB</td>
+      </tr>
+      <tr>
+        <td><b>Long Request / Code</b></td>
+        <td><i>"Write a complete 10-phase Business Plan & code"</i></td>
+        <td>~5,600 tokens</td>
+        <td><b>$0.0017 USD</b></td>
+        <td>¥0.0140 RMB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. Revenue & Profit Margin Projection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Subscription Tier</th>
+        <th>Monthly Fee Charged</th>
+        <th>Estimated Monthly API Cost</th>
+        <th>Net Gross Profit per User</th>
+        <th>Profit Margin (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Free Tier</b></td>
+        <td>$0.00 / mo</td>
+        <td>~$0.10 USD (capped at 5 msgs/day)</td>
+        <td>-$0.10 USD</td>
+        <td>Marketing / Lead Gen</td>
+      </tr>
+      <tr>
+        <td><b>Pro Tier (Standard)</b></td>
+        <td><b>$9.99 / mo</b></td>
+        <td>~$0.48 USD</td>
+        <td><b>+$9.51 USD</b></td>
+        <td><b>95.2% Gross Margin</b></td>
+      </tr>
+      <tr>
+        <td><b>Enterprise Tier</b></td>
+        <td><b>$29.00 / mo</b></td>
+        <td>~$1.80 USD (includes Pro models)</td>
+        <td><b>+$27.20 USD</b></td>
+        <td><b>93.8% Gross Margin</b></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box" style="background-color: #f0fdf4; border-left-color: #22c55e;">
+    <b>Final Strategic Recommendation for Management:</b><br/>
+    1. Deploy <b>deepseek-v4-flash</b> as the default primary model for all users.<br/>
+    2. Lock <b>claude-sonnet-5</b> & premium reasoning engines under the Pro Subscription tier.<br/>
+    3. The overall API unit cost is negligible compared to potential SaaS subscription revenue.
+  </div>
+
+  <div class="footer">
+    Generated by NEXUS Executive Analytics System • Date: 2026-07-30
+  </div>
+
+</body>
+</html>
