@@ -91,3 +91,30 @@ export async function deleteTaskFromSupabase(taskId: string) {
     // Ignore offline errors
   }
 }
+
+export async function supabaseSignIn(email: string, pass: string) {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pass
+    });
+    if (error) throw error;
+    return { user: data.user, error: null };
+  } catch (err: any) {
+    return { user: null, error: err.message || 'Authentication failed' };
+  }
+}
+
+export async function supabaseSignUp(email: string, pass: string) {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: pass
+    });
+    if (error) throw error;
+    return { user: data.user, error: null };
+  } catch (err: any) {
+    return { user: null, error: err.message || 'Sign up failed' };
+  }
+}
+
