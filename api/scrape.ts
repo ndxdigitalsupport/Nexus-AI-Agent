@@ -5,12 +5,45 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Vercel handler req/res are untyped */
 
 import { lookup } from 'dns/promises';
-import { enforceRateLimit, getClientIp } from './lib/rateLimit';
 
 export const config = { runtime: 'nodejs' };
 
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 15000;
+
+// --- In-memory rate limiter (per warm function instance) ---
+interface Bucket { count: number; resetAt: number }
+const buckets = new Map<string, Bucket>();
+
+function getClientIp(req: any): string {
+  const fwd = req.headers?.['x-forwarded-for'];
+  if (typeof fwd === 'string' && fwd.trim()) return fwd.split(',')[0].trim();
+  const realIp = req.headers?.['x-real-ip'];
+  if (typeof realIp === 'string' && realIp.trim()) return realIp.trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function enforceRateLimit(req: any, res: any, limit: number, windowMs: number, key: string): boolean {
+  const now = Date.now();
+  const bucket = buckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    buckets.set(key, { count: 1, resetAt: now + windowMs });
+    res.setHeader('X-RateLimit-Limit', String(limit));
+    res.setHeader('X-RateLimit-Remaining', String(limit - 1));
+    return true;
+  }
+  bucket.count += 1;
+  if (bucket.count > limit) {
+    res.setHeader('Retry-After', String(Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))));
+    res.setHeader('X-RateLimit-Limit', String(limit));
+    res.setHeader('X-RateLimit-Remaining', '0');
+    res.status(429).json({ error: 'Too many requests. Please slow down and try again later.' });
+    return false;
+  }
+  res.setHeader('X-RateLimit-Limit', String(limit));
+  res.setHeader('X-RateLimit-Remaining', String(limit - bucket.count));
+  return true;
+}
 
 function isPrivateHostname(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/\.$/, '');

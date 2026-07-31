@@ -5,9 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- Vercel handler req/res are untyped */
 
-import { createClient } from '@supabase/supabase-js';
-import { enforceRateLimit, getClientIp } from './lib/rateLimit';
-
 export const config = { runtime: 'nodejs' };
 
 const AI_ENDPOINT = process.env.AI_ENDPOINT || 'https://gpt-agent.cc/v1/chat/completions';
@@ -20,15 +17,54 @@ const MAX_MESSAGES = 60;
 const MAX_TOTAL_CHARS = 120000; // combined conversation history cap (~30k tokens)
 const MAX_OUTPUT_TOKENS = 4096;
 
-// Verify a Supabase access token and return the authenticated user id,
-// or null when the token is missing/invalid/expired.
+// --- In-memory rate limiter (per warm function instance) ---
+interface Bucket { count: number; resetAt: number }
+const buckets = new Map<string, Bucket>();
+
+function getClientIp(req: any): string {
+  const fwd = req.headers?.['x-forwarded-for'];
+  if (typeof fwd === 'string' && fwd.trim()) return fwd.split(',')[0].trim();
+  const realIp = req.headers?.['x-real-ip'];
+  if (typeof realIp === 'string' && realIp.trim()) return realIp.trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function enforceRateLimit(req: any, res: any, limit: number, windowMs: number, key: string): boolean {
+  const now = Date.now();
+  const bucket = buckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    buckets.set(key, { count: 1, resetAt: now + windowMs });
+    res.setHeader('X-RateLimit-Limit', String(limit));
+    res.setHeader('X-RateLimit-Remaining', String(limit - 1));
+    return true;
+  }
+  bucket.count += 1;
+  if (bucket.count > limit) {
+    res.setHeader('Retry-After', String(Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))));
+    res.setHeader('X-RateLimit-Limit', String(limit));
+    res.setHeader('X-RateLimit-Remaining', '0');
+    res.status(429).json({ error: 'Too many requests. Please slow down and try again later.' });
+    return false;
+  }
+  res.setHeader('X-RateLimit-Limit', String(limit));
+  res.setHeader('X-RateLimit-Remaining', String(limit - bucket.count));
+  return true;
+}
+
+// Verify a Supabase access token via the Auth REST API (no server-side SDK
+// dependency). Returns the authenticated user id, or null when invalid/expired.
 async function verifySessionToken(token: string): Promise<string | null> {
   if (!token) return null;
   try {
-    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data, error } = await sb.auth.getUser(token);
-    if (error || !data?.user) return null;
-    return data.user.id;
+    const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return typeof data?.id === 'string' ? data.id : null;
   } catch {
     return null;
   }

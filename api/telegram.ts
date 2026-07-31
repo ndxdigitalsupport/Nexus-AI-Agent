@@ -2,8 +2,6 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- Vercel handler req/res are untyped */
 
-import { enforceRateLimit, getClientIp } from './lib/rateLimit';
-
 // Configuration is read from environment variables only (never hardcoded in source).
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
@@ -16,6 +14,40 @@ const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
 
 function isConfigured(): boolean {
   return Boolean(TELEGRAM_BOT_TOKEN && OPENAI_API_KEY);
+}
+
+// --- In-memory rate limiter (per warm function instance) ---
+interface Bucket { count: number; resetAt: number }
+const buckets = new Map<string, Bucket>();
+
+function getClientIp(req: any): string {
+  const fwd = req.headers?.['x-forwarded-for'];
+  if (typeof fwd === 'string' && fwd.trim()) return fwd.split(',')[0].trim();
+  const realIp = req.headers?.['x-real-ip'];
+  if (typeof realIp === 'string' && realIp.trim()) return realIp.trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function enforceRateLimit(req: any, res: any, limit: number, windowMs: number, key: string): boolean {
+  const now = Date.now();
+  const bucket = buckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    buckets.set(key, { count: 1, resetAt: now + windowMs });
+    res.setHeader('X-RateLimit-Limit', String(limit));
+    res.setHeader('X-RateLimit-Remaining', String(limit - 1));
+    return true;
+  }
+  bucket.count += 1;
+  if (bucket.count > limit) {
+    res.setHeader('Retry-After', String(Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))));
+    res.setHeader('X-RateLimit-Limit', String(limit));
+    res.setHeader('X-RateLimit-Remaining', '0');
+    res.status(429).json({ error: 'Too many requests. Please slow down and try again later.' });
+    return false;
+  }
+  res.setHeader('X-RateLimit-Limit', String(limit));
+  res.setHeader('X-RateLimit-Remaining', String(limit - bucket.count));
+  return true;
 }
 
 const SYSTEM_INSTRUCTION = `You are NEXUS, a friendly, general-purpose AI assistant developed by the NEXUS Digital Support team.
