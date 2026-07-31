@@ -26,8 +26,8 @@ export default function LoginPage() {
       return;
     }
 
-    // Quick Admin Override / Local Pass check
-    if (email.toLowerCase() === 'admin@nexus.ai' || password === '1234' || password === '8888') {
+    // Quick Admin Override for special admin account only
+    if (email.toLowerCase() === 'admin@nexus.ai' && (password === '1234' || password === '8888')) {
       loginUser(email, password);
       navigate('/');
       return;
