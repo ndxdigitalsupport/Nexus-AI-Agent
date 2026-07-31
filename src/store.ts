@@ -20,6 +20,27 @@ export type ChatMessagePayload =
   | { role: string; content: string }
   | { role: string; content: ChatContentPart[] };
 
+// Queries the serverless web-search proxy and formats results as context for
+// the AI. Returns an empty string when search is unavailable or misconfigured.
+async function performWebSearch(query: string): Promise<string> {
+  try {
+    const response = await fetch(import.meta.env.VITE_SEARCH_PROXY_URL || '/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query.slice(0, 400) })
+    });
+    if (!response.ok) return '';
+    const data = await response.json();
+    const results: Array<{ title?: string; url?: string; content?: string }> = data?.results || [];
+    if (results.length === 0) return '';
+    return results
+      .map((r, i) => `${i + 1}. ${r.title || 'Untitled'}\n   URL: ${r.url || ''}\n   ${(r.content || '').slice(0, 600)}`)
+      .join('\n\n');
+  } catch {
+    return '';
+  }
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -154,7 +175,7 @@ interface AppState {
   exportState: () => string;
   importState: (jsonString: string) => { success: boolean; error?: string };
   resetAllData: () => void;
-  processAgentResponse: (userContent: string, imageUrl?: string) => Promise<void>;
+  processAgentResponse: (userContent: string, imageUrl?: string, webSearch?: boolean) => Promise<void>;
   summarizeAndSaveChatToMemory: (conversationId?: string) => Promise<void>;
 }
 
@@ -700,7 +721,7 @@ ${chatText}`;
           });
         },
 
-        processAgentResponse: async (userContent, imageUrl) => {
+        processAgentResponse: async (userContent, imageUrl, webSearch) => {
           const { activeConversationId, conversations, updateConversationTitle, setProcessing, knowledgeArticles, personas, activePersonaId, addTask } = get();
           
           if (!activeConversationId) {
@@ -841,6 +862,16 @@ ${chatText}`;
             }
             // --- End RAG Search Engine ---
 
+            // --- Optional Live Web Search (when the user toggles it on) ---
+            let webSearchContent = '';
+            if (webSearch && userContent.trim()) {
+              const searchContext = await performWebSearch(userContent);
+              if (searchContext) {
+                webSearchContent = `\n\n=== LIVE WEB SEARCH RESULTS (up-to-date) ===\n${searchContext}\n======================================================\n`;
+              }
+            }
+            // --- End Live Web Search ---
+
             // --- Live Project Board & Tasks Context Injection ---
             const currentTasks = get().tasks;
             let projectBoardContext = '';
@@ -866,6 +897,7 @@ ${chatText}`;
 Answer questions directly, write clean code, and execute user requests efficiently.
 ${customInstructions ? `Role / Persona Instructions: ${customInstructions}` : ''}
 ${knowledgeBaseContent}
+${webSearchContent}
 ${projectBoardContext}
 
 TASK & PROJECT PLAN INSTRUCTION:
@@ -958,6 +990,14 @@ Rules for Action Items:
             });
 
             if (!response.ok) {
+              // Friendly messaging for proxy auth/rate-limit failures so guests
+              // understand why they were capped instead of seeing a raw error.
+              if (response.status === 429) {
+                throw new Error('You have reached the free guest limit (5 messages per hour). Sign in to your account for more messages.');
+              }
+              if (response.status === 401) {
+                throw new Error('Your session has expired. Please sign in again to continue chatting.');
+              }
               let userFriendlyMsg = `API Error ${response.status}`;
               try {
                 const rawErr = await response.text();

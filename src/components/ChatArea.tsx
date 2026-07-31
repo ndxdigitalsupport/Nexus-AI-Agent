@@ -29,6 +29,7 @@ export default function ChatArea() {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ isOpen: boolean; modelName?: string }>({ isOpen: false });
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   
   // Truly randomize 3 prompts on load and shuffle
   const getRandomPrompts = () => {
@@ -197,7 +198,7 @@ export default function ChatArea() {
 
     setInput('');
     setSelectedImage(null);
-    processAgentResponse(userMessage || (imageToAttach ? 'Please analyze this uploaded image.' : ''), imageToAttach);
+    processAgentResponse(userMessage || (imageToAttach ? 'Please analyze this uploaded image.' : ''), imageToAttach, webSearchEnabled);
   };
 
   return (
@@ -579,6 +580,18 @@ export default function ChatArea() {
               title="Attach an image or document"
             >
               <Paperclip className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+              className={`px-2.5 py-2 rounded-xl text-xs font-mono font-semibold border transition-all shrink-0 ${
+                webSearchEnabled
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-glow-cyan'
+                  : 'text-text-muted border-white/10 hover:bg-white/5 hover:text-text'
+              }`}
+              title="Toggle live web search so NEXUS answers with up-to-date information"
+            >
+              🌐 Web
             </button>
             <textarea
               value={input}

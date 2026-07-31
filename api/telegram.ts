@@ -5,6 +5,7 @@
 // Configuration is read from environment variables only (never hardcoded in source).
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
+const TAVILY_API_KEY = process.env.TAVILY_API_KEY || '';
 const AI_ENDPOINT = process.env.AI_ENDPOINT || 'https://gpt-agent.cc/v1/chat/completions';
 const DEFAULT_MODEL = 'deepseek-v4-flash';
 // Set TELEGRAM_WEBHOOK_SECRET in Vercel and re-register the webhook with the same
@@ -19,6 +20,22 @@ function isConfigured(): boolean {
 // --- In-memory rate limiter (per warm function instance) ---
 interface Bucket { count: number; resetAt: number }
 const buckets = new Map<string, Bucket>();
+
+// Telegram retries webhook deliveries when our function times out, which would
+// otherwise produce duplicate replies. Track recent update_ids to skip repeats.
+const processedUpdateIds = new Set<number>();
+const MAX_PROCESSED_UPDATES = 500;
+
+function isDuplicateUpdate(updateId: number | undefined): boolean {
+  if (typeof updateId !== 'number') return false;
+  if (processedUpdateIds.has(updateId)) return true;
+  processedUpdateIds.add(updateId);
+  if (processedUpdateIds.size > MAX_PROCESSED_UPDATES) {
+    const overflow = Array.from(processedUpdateIds).slice(0, 100);
+    overflow.forEach((id) => processedUpdateIds.delete(id));
+  }
+  return false;
+}
 
 function getClientIp(req: any): string {
   const fwd = req.headers?.['x-forwarded-for'];
@@ -85,6 +102,11 @@ export default async function handler(req: any, res: any) {
   // Light per-IP guard against webhook spam.
   if (!enforceRateLimit(req, res, 180, 60 * 1000, `telegram:${getClientIp(req)}`)) return;
 
+  // Skip retried deliveries that were already handled.
+  if (isDuplicateUpdate(req.body?.update_id)) {
+    return res.status(200).json({ ok: true, deduped: true });
+  }
+
   try {
     const update = req.body;
 
@@ -135,8 +157,29 @@ export default async function handler(req: any, res: any) {
       // Send typing status indicator to Telegram while generating AI response
       await sendTelegramChatAction(chatId, 'typing');
 
+      // Detect explicit web-search requests (/search <query>, "search the web",
+      // "search online", etc.) and give the AI up-to-date context.
+      const searchIntent =
+        /^(?:\/search)\s+/i.test(userText) ||
+        /search\s+(?:the\s+)?(?:web|online|internet)/i.test(userText) ||
+        /look\s+(?:it|this|that)\s+up\s+online/i.test(userText);
+
+      let aiPrompt = userText;
+      if (searchIntent) {
+        const searchQuery = userText
+          .replace(/^(?:\/search)\s+/i, '')
+          .replace(/search\s+(?:the\s+)?(?:web|online|internet)[:,]?\s*/i, '')
+          .trim();
+        const searchContext = TAVILY_API_KEY ? await searchWeb(searchQuery) : '';
+        if (searchContext) {
+          aiPrompt = `Question: ${searchQuery || userText}\n\n=== LIVE WEB SEARCH RESULTS ===\n${searchContext}\n\nAnswer the question using the search results above. Cite the source URLs. If the results are insufficient, say so.`;
+        } else {
+          aiPrompt = `Question: ${searchQuery || userText}\n\n(Web search is not configured on the server, so answer from your own knowledge.)`;
+        }
+      }
+
       // Call AI Engine Backend
-      const rawAiReply = await fetchAiResponse(userText);
+      const rawAiReply = await fetchAiResponse(aiPrompt);
 
       // Clean Markdown formatting into Telegram-compatible HTML tags
       const formattedReply = convertMarkdownToTelegramHtml(rawAiReply);
@@ -169,6 +212,32 @@ function convertMarkdownToTelegramHtml(text: string): string {
     .replace(/`(.*?)`/g, '<code>$1</code>')
     // Clean remaining loose asterisks
     .replace(/^\*\s+/gm, '• ');
+}
+
+// Search the web via Tavily and return trimmed, formatted results.
+async function searchWeb(query: string): Promise<string> {
+  try {
+    const response = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: TAVILY_API_KEY,
+        query: query.slice(0, 400),
+        max_results: 5,
+        search_depth: 'basic',
+        include_answer: false
+      })
+    });
+    if (!response.ok) return '';
+    const data = await response.json();
+    const results = data.results || [];
+    if (results.length === 0) return '';
+    return results
+      .map((r: any, i: number) => `${i + 1}. ${r.title || 'Untitled'}\n   URL: ${r.url || ''}\n   ${(r.content || '').slice(0, 600)}`)
+      .join('\n\n');
+  } catch {
+    return '';
+  }
 }
 
 // Fetch response from AI Engine
