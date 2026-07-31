@@ -56,6 +56,17 @@ export async function getSupabaseUser(): Promise<{ id: string; email: string } |
   }
 }
 
+// Returns the current session access token, used to authenticate requests to
+// serverless endpoints like /api/chat. Returns null when signed out.
+export async function getSessionAccessToken(): Promise<string | null> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
 export interface SupabaseConversationPayload {
   id: string;
   title: string;

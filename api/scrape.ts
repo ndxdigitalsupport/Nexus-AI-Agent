@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Vercel handler req/res are untyped */
 
 import { lookup } from 'dns/promises';
+import { enforceRateLimit, getClientIp } from './lib/rateLimit';
 
 export const config = { runtime: 'nodejs' };
 
@@ -67,6 +68,9 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Prevent the scraper from being used as a free proxy for arbitrary pages.
+  if (!enforceRateLimit(req, res, 30, 60 * 60 * 1000, `scrape:${getClientIp(req)}`)) return;
 
   const body = readJsonBody(req);
   const rawUrl = body?.url;

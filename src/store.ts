@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, devtools, createJSONStorage } from 'zustand/middleware';
-import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase, getProfileRole, supabase } from '@/lib/supabase';
+import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase, getProfileRole, getSessionAccessToken, supabase } from '@/lib/supabase';
 
 export interface Message {
   id: string;
@@ -369,7 +369,14 @@ ${chatText}`;
               : endpoint;
 
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (!useServerProxy && apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+            if (useServerProxy) {
+              const sessionToken = await getSessionAccessToken();
+              if (sessionToken) {
+                headers['Authorization'] = `Bearer ${sessionToken}`;
+              }
+            } else if (apiKey) {
+              headers['Authorization'] = `Bearer ${apiKey}`;
+            }
 
             const response = await fetch(requestUrl, {
               method: 'POST',
@@ -909,7 +916,13 @@ Rules for Action Items:
             const headers: Record<string, string> = {
               'Content-Type': 'application/json'
             };
-            if (!useServerProxy) {
+            if (useServerProxy) {
+              // Authenticate the proxy call with the signed-in user's session.
+              const sessionToken = await getSessionAccessToken();
+              if (sessionToken) {
+                headers['Authorization'] = `Bearer ${sessionToken}`;
+              }
+            } else {
               if (apiKey) {
                 headers['Authorization'] = `Bearer ${apiKey}`;
               }

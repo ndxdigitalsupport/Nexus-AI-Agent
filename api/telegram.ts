@@ -1,10 +1,18 @@
 // Native Telegram Bot Webhook Vercel Serverless Function
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- Vercel handler req/res are untyped */
+
+import { enforceRateLimit, getClientIp } from './lib/rateLimit';
+
 // Configuration is read from environment variables only (never hardcoded in source).
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
 const AI_ENDPOINT = process.env.AI_ENDPOINT || 'https://gpt-agent.cc/v1/chat/completions';
 const DEFAULT_MODEL = 'deepseek-v4-flash';
+// Set TELEGRAM_WEBHOOK_SECRET in Vercel and re-register the webhook with the same
+// secret_token. Requests from Telegram will then include the header and this
+// function will reject spoofed updates that lack it.
+const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
 
 function isConfigured(): boolean {
   return Boolean(TELEGRAM_BOT_TOKEN && OPENAI_API_KEY);
@@ -35,6 +43,15 @@ export default async function handler(req: any, res: any) {
     console.error('Telegram webhook is not configured: missing TELEGRAM_BOT_TOKEN or OPENAI_API_KEY env vars.');
     return res.status(500).json({ error: 'Webhook not configured' });
   }
+
+  // Verify the secret token Telegram sends on every webhook request so that
+  // fabricated updates cannot trigger paid AI calls on this endpoint.
+  if (TELEGRAM_WEBHOOK_SECRET && req.headers['x-telegram-bot-api-secret-token'] !== TELEGRAM_WEBHOOK_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Light per-IP guard against webhook spam.
+  if (!enforceRateLimit(req, res, 180, 60 * 1000, `telegram:${getClientIp(req)}`)) return;
 
   try {
     const update = req.body;
