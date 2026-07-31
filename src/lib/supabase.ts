@@ -185,8 +185,12 @@ export async function supabaseSignUp(email: string, pass: string) {
     return { user: { id: data.user.id, email: data.user.email || '' }, error: null };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (message.includes('rate limit')) {
-      return { user: null, error: 'Sign-ups are temporarily rate-limited. Please try again in about an hour.' };
+    const status = (err as { status?: number })?.status;
+    if (status === 429 || message.toLowerCase().includes('rate limit') || message.toLowerCase().includes('invalid')) {
+      return {
+        user: null,
+        error: 'Sign-ups are temporarily rate-limited by Supabase (free tier allows ~2/hour while "Confirm email" is enabled). Wait about an hour, or turn off "Confirm email" in Supabase → Authentication → Sign In / Providers → Email to remove the limit.'
+      };
     }
     return { user: null, error: message || 'Sign up failed' };
   }
