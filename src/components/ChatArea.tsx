@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, Target, Menu, X, FileText, Sparkles, ChevronDown } from 'lucide-react';
+import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, Target, Menu, X, FileText, Sparkles, ChevronDown, Download, Volume2, VolumeX, Layout, Square } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -24,12 +24,15 @@ import { MODEL_PRESETS } from '@/lib/modelPresets';
 import UpgradeModal from '@/components/UpgradeModal';
 
 export default function ChatArea() {
-  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, updateSettings, personas, activePersonaId, setActivePersona, tasks, isActionBoardOpen, toggleActionBoard, toggleMobileSidebar, openArtifact, isAdminAuthenticated } = useStore();
+  const { conversations, activeConversationId, isProcessing, processAgentResponse, stopGeneration, settings, updateSettings, personas, activePersonaId, setActivePersona, tasks, isActionBoardOpen, toggleActionBoard, toggleMobileSidebar, openArtifact, isAdminAuthenticated } = useStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ isOpen: boolean; modelName?: string }>({ isOpen: false });
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [simpleMode, setSimpleMode] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   
   // Truly randomize 3 prompts on load and shuffle
   const getRandomPrompts = () => {
@@ -93,6 +96,97 @@ export default function ChatArea() {
     navigator.clipboard.writeText(content);
     setCopiedMessageId(msgId);
     setTimeout(() => setCopiedMessageId(null), 2500);
+  };
+
+  const exportConversation = (format: 'md' | 'txt' | 'pdf') => {
+    if (!activeConversation) return;
+    const safeTitle = activeConversation.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'conversation';
+
+    const header = `# Conversation Log: ${activeConversation.title}\nDate: ${new Date(activeConversation.createdAt).toLocaleString()}\n\n`;
+    const body = activeMessages
+      .filter(m => m.id !== 'welcome-msg')
+      .map(m => `### ${m.role === 'user' ? '👤 User' : '🤖 NEXUS Agent'} (${new Date(m.timestamp).toLocaleTimeString()})\n\n${m.content}\n`)
+      .join('\n---\n\n');
+
+    if (format === 'md') {
+      downloadBlob(header + body, `${safeTitle}_log.md`, 'text/markdown;charset=utf-8;');
+    } else if (format === 'txt') {
+      const txtBody = activeMessages
+        .filter(m => m.id !== 'welcome-msg')
+        .map(m => `[${m.role.toUpperCase()}] ${new Date(m.timestamp).toLocaleTimeString()}:\n${m.content}\n`)
+        .join('\n\n');
+      downloadBlob(`Conversation Log: ${activeConversation.title}\n\n${txtBody}`, `${safeTitle}_log.txt`, 'text/plain;charset=utf-8;');
+    } else {
+      exportConversationPdf(safeTitle);
+    }
+    setShowExportMenu(false);
+  };
+
+  const downloadBlob = (content: string, filename: string, type: string) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportConversationPdf = (safeTitle: string) => {
+    if (!activeConversation) return;
+    const element = document.createElement('div');
+    element.style.padding = '40px';
+    element.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    element.style.color = '#0f172a';
+    element.style.background = '#ffffff';
+
+    const rows = activeMessages
+      .filter(m => m.id !== 'welcome-msg')
+      .map(m =>
+        `<p style="margin:0 0 18px;"><strong style="color:#0284c7;">${m.role === 'user' ? 'User' : 'NEXUS Agent'}</strong> <span style="color:#64748b;font-size:11px;">${new Date(m.timestamp).toLocaleString()}</span></p>` +
+        `<p style="margin:0 0 24px;white-space:pre-wrap;">${m.content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`
+      )
+      .join('');
+
+    element.innerHTML =
+      `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #cbd5e1;padding-bottom:12px;font-size:11px;color:#64748b;font-family:monospace;text-transform:uppercase;margin-bottom:25px;">` +
+      `<div><strong>NEXUS AI AGENT</strong> - CHAT EXPORT</div><div>${new Date().toLocaleDateString()}</div></div>` +
+      `<h1 style="color:#0284c7;border-bottom:2px solid #e2e8f0;padding-bottom:10px;font-size:24px;margin-bottom:20px;">${activeConversation.title}</h1>` +
+      `<div style="font-size:14px;line-height:1.7;">${rows}</div>`;
+
+    const generate = () => {
+      window.html2pdf?.().set({
+        margin: 10,
+        filename: `${safeTitle}_log.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(element).save();
+    };
+
+    if (window.html2pdf) {
+      generate();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = generate;
+      document.body.appendChild(script);
+    }
+  };
+
+  const handleSpeak = (content: string, msgId: string) => {
+    if (speakingMessageId === msgId) {
+      window.speechSynthesis?.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+    window.speechSynthesis?.cancel();
+    const cleanText = content.replace(/[#*`_~>|]/g, '').slice(0, 3000);
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.onend = () => setSpeakingMessageId(null);
+    utterance.onerror = () => setSpeakingMessageId(null);
+    window.speechSynthesis?.speak(utterance);
+    setSpeakingMessageId(msgId);
   };
 
   const scrollToBottom = () => {
@@ -233,6 +327,8 @@ export default function ChatArea() {
             <Menu className="w-5 h-5" />
           </button>
 
+          {!simpleMode && (
+            <>
           {/* Interactive AI Model Dropdown Selector */}
           <div className="relative">
             <button
@@ -337,11 +433,13 @@ export default function ChatArea() {
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
 
         {/* Right Side: Project Plans & Settings Navigation Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Project Plans Button (Desktop Only) */}
+          {!simpleMode && (
           <button
             onClick={toggleActionBoard}
             className={`hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition-all duration-200 shrink-0 ${
@@ -359,6 +457,7 @@ export default function ChatArea() {
               </span>
             )}
           </button>
+          )}
 
           {/* Settings Link (Desktop Only - Hidden on Mobile) */}
           <Link
@@ -369,6 +468,46 @@ export default function ChatArea() {
             <SettingsIcon className="w-3.5 h-3.5 text-cyan-400" />
             <span className="font-mono font-semibold">Settings</span>
           </Link>
+
+          {/* Export Conversation Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-text-muted hover:text-text transition-all active:scale-95"
+              title="Download conversation log"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden lg:inline font-mono font-semibold">Export</span>
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-slate-950/95 border border-cyan-500/30 shadow-2xl p-2 z-40 font-sans text-xs space-y-1 backdrop-blur-2xl animate-fadeIn">
+                {(['md', 'txt', 'pdf'] as const).map(fmt => (
+                  <button
+                    key={fmt}
+                    onClick={() => exportConversation(fmt)}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-text transition-all flex items-center gap-2"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="font-mono font-semibold uppercase">.{fmt}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Simple Mode Toggle */}
+          <button
+            onClick={() => setSimpleMode(!simpleMode)}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition-all duration-200 active:scale-95 ${
+              simpleMode
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-text border-white/10'
+            }`}
+            title={simpleMode ? 'Exit simple mode (show all options)' : 'Enter simple mode (hide advanced options)'}
+          >
+            <Layout className={`w-3.5 h-3.5 shrink-0 ${simpleMode ? 'text-emerald-300' : 'text-text-muted'}`} />
+            <span className="font-mono font-semibold whitespace-nowrap">{simpleMode ? 'Simple' : 'Simple'}</span>
+          </button>
         </div>
       </header>
 
@@ -458,6 +597,30 @@ export default function ChatArea() {
                     )}
                   </button>
 
+                  {msg.role === 'agent' && (
+                    <button
+                      onClick={() => handleSpeak(msg.content, msg.id)}
+                      className={`flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-lg transition-all border ${
+                        speakingMessageId === msg.id
+                          ? 'text-emerald-300 bg-emerald-500/20 border-emerald-500/40'
+                          : 'text-text-muted hover:text-emerald-300 bg-white/5 hover:bg-emerald-500/10 border-white/10'
+                      }`}
+                      title={speakingMessageId === msg.id ? 'Stop speaking' : 'Listen to this message (TTS)'}
+                    >
+                      {speakingMessageId === msg.id ? (
+                        <>
+                          <VolumeX className="w-3 h-3" />
+                          <span>Stop</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3 h-3" />
+                          <span>Listen</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
                   {msg.role === 'agent' && msg.content.length > 80 && (
                     <button
                       onClick={() => {
@@ -515,7 +678,7 @@ export default function ChatArea() {
       {/* Pinned Bottom Input Area */}
       <div className="shrink-0 p-2.5 sm:p-4 border-t border-white/10 bg-slate-900/90 backdrop-blur-xl">
         {/* Sleek Minimal Starter Prompt Chips (Auto-rotating every 9s) */}
-        {activeMessages.length <= 1 && (
+        {activeMessages.length <= 1 && !simpleMode && (
           <div className="max-w-7xl mx-auto mb-3 flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
             <div className="flex flex-wrap items-center gap-2 w-full">
               {activePrompts.map((item, idx) => {
@@ -607,6 +770,16 @@ export default function ChatArea() {
               className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-36 min-h-[40px] p-2 text-text placeholder:text-text-muted/50 focus:outline-none text-base sm:text-sm font-sans truncate"
               rows={1}
             />
+            {isProcessing ? (
+              <button
+                type="button"
+                onClick={stopGeneration}
+                className="p-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white font-bold rounded-xl hover:brightness-110 transition-all duration-200 shadow-glow-red active:scale-95 shrink-0"
+                title="Stop generating"
+              >
+                <Square className="w-4 h-4" />
+              </button>
+            ) : (
             <button 
               type="submit" 
               disabled={!input.trim() || isProcessing}
@@ -614,6 +787,7 @@ export default function ChatArea() {
             >
               <Send className="w-4 h-4" />
             </button>
+            )}
           </div>
         </form>
       </div>

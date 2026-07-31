@@ -20,6 +20,11 @@ export type ChatMessagePayload =
   | { role: string; content: string }
   | { role: string; content: ChatContentPart[] };
 
+// Abort controller for the in-flight streaming request, used by the
+// "Stop generating" button so the user can halt output mid-stream.
+let activeAbortController: AbortController | null = null;
+let activeImageGenTimer: ReturnType<typeof setTimeout> | null = null;
+
 // Queries the serverless web-search proxy and formats results as context for
 // the AI. Returns an empty string when search is unavailable or misconfigured.
 async function performWebSearch(query: string): Promise<string> {
@@ -176,6 +181,7 @@ interface AppState {
   importState: (jsonString: string) => { success: boolean; error?: string };
   resetAllData: () => void;
   processAgentResponse: (userContent: string, imageUrl?: string, webSearch?: boolean) => Promise<void>;
+  stopGeneration: () => void;
   summarizeAndSaveChatToMemory: (conversationId?: string) => Promise<void>;
 }
 
@@ -613,6 +619,18 @@ ${chatText}`;
 
         setProcessing: (status) => set({ isProcessing: status }),
 
+        stopGeneration: () => {
+          if (activeAbortController) {
+            activeAbortController.abort();
+            activeAbortController = null;
+          }
+          if (activeImageGenTimer) {
+            clearTimeout(activeImageGenTimer);
+            activeImageGenTimer = null;
+          }
+          set({ isProcessing: false });
+        },
+
         addPersona: (name, instructions) => set((state) => {
           const newPersona = { id: Math.random().toString(36).substr(2, 9), name, instructions };
           return { 
@@ -753,7 +771,7 @@ ${chatText}`;
             }
 
             setProcessing(true);
-            setTimeout(() => {
+            activeImageGenTimer = setTimeout(() => {
               const cleanPrompt = userContent
                 .replace(/^Generate a realistic image in\s*/i, '')
                 .replace(/^Generate an image of\s*/i, '')
@@ -772,6 +790,7 @@ ${chatText}`;
                 role: 'agent',
                 content: `🎨 **Ultra HD 4K Generated Image:** *${cleanPrompt}*\n\n![${cleanPrompt}](${generatedUrl})`
               });
+              activeImageGenTimer = null;
               setProcessing(false);
             }, 600);
             return;
@@ -798,6 +817,11 @@ ${chatText}`;
           
           setProcessing(true);
           
+          // Set up abort handling so the user can stop output mid-stream.
+          activeAbortController?.abort();
+          const controller = new AbortController();
+          activeAbortController = controller;
+
           const { settings } = get();
           const userKey = (settings?.apiKey || '').trim();
           const envKey = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || '';
@@ -978,9 +1002,18 @@ Rules for Action Items:
               }
             }
 
+            // If the user pressed Stop while pre-fetch context (web search etc.)
+            // was resolving, bail out before hitting the network.
+            if (controller.signal.aborted) {
+              setProcessing(false);
+              activeAbortController = null;
+              return;
+            }
+
             const response = await fetch(requestUrl, {
               method: 'POST',
               headers,
+              signal: controller.signal,
               body: JSON.stringify({
                 model: model, 
                 temperature: temperature,
@@ -1060,6 +1093,8 @@ Rules for Action Items:
                 }
               }
             }
+
+            activeAbortController = null;
 
             // After streaming finishes, check if cleanedContent is empty
             const finalCleanedContent = fullContent
@@ -1171,6 +1206,12 @@ Rules for Action Items:
 
           } catch (error: unknown) {
             setProcessing(false);
+            activeAbortController = null;
+            // User stopped generation — partial content already streamed in, so
+            // exit quietly instead of surfacing an error message.
+            if (error instanceof DOMException && error.name === 'AbortError') {
+              return;
+            }
             const errMessage = error instanceof Error ? error.message : String(error);
             // Add error message to active conversation
             set((state) => ({
