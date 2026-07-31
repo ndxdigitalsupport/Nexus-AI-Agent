@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '@/store';
 import { X, Lock, Sparkles, LogIn, User, Eye, EyeOff } from 'lucide-react';
+import { supabaseSignIn, supabaseSignUp, syncProfileToSupabase } from '@/lib/supabase';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -14,12 +15,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     if (!username.trim()) {
       setError('Please enter your username or email.');
       return;
@@ -29,8 +33,27 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return;
     }
 
-    loginUser(username, password);
-    onClose();
+    setLoading(true);
+    const validEmail = username.includes('@') ? username.trim() : `${username.trim()}@nexus.ai`;
+
+    if (isSignUpMode) {
+      const { user, error: err } = await supabaseSignUp(validEmail, password);
+      if (err) {
+        setError(err);
+        setLoading(false);
+      } else {
+        await syncProfileToSupabase(validEmail, 'user');
+        loginUser(validEmail, password);
+        setLoading(false);
+        onClose();
+      }
+    } else {
+      const { user, error: err } = await supabaseSignIn(validEmail, password);
+      await syncProfileToSupabase(user?.email || validEmail, 'user');
+      setLoading(false);
+      loginUser(user?.email || validEmail, password);
+      onClose();
+    }
   };
 
   return (
