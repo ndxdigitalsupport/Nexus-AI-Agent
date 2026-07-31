@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
-import { Key, Cpu, Sliders, Check, Eye, EyeOff, RotateCcw, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft, ShieldCheck, Lock, Unlock } from 'lucide-react';
+import { Key, Cpu, Sliders, Check, Eye, EyeOff, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 import UpgradeModal from '@/components/UpgradeModal';
 
@@ -64,7 +64,7 @@ export const MODEL_PRESETS: ModelPreset[] = [
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { settings, updateSettings, exportState, importState, resetAllData, isAdminAuthenticated, verifyAdminPin, lockAdminMode } = useStore();
+  const { settings, updateSettings, exportState, importState, resetAllData, isAdminAuthenticated } = useStore();
 
   const isPresetModel = MODEL_PRESETS.some(p => p.id === (settings?.selectedModel || 'openrouter/free'));
   const [apiKey, setApiKey] = useState(settings?.apiKey || '');
@@ -72,23 +72,6 @@ export default function Settings() {
   const [customModelInput, setCustomModelInput] = useState(!isPresetModel ? (settings?.selectedModel || '') : '');
   const [customEndpoint, setCustomEndpoint] = useState(settings?.customEndpoint || 'https://openrouter.ai/api/v1/chat/completions');
   const [temperature, setTemperature] = useState(settings?.temperature ?? 0.7);
-
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
-  const [pinSuccess, setPinSuccess] = useState(false);
-
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (verifyAdminPin(pinInput)) {
-      setPinError(false);
-      setPinSuccess(true);
-      setPinInput('');
-      setTimeout(() => setPinSuccess(false), 3000);
-    } else {
-      setPinError(true);
-      setTimeout(() => setPinError(false), 3000);
-    }
-  };
 
   const [showApiKey, setShowApiKey] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -130,28 +113,6 @@ export default function Settings() {
     });
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
-  };
-
-  const handleReset = () => {
-    const defaultKey = 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8';
-    const defaultModel = 'claude-fable-5';
-    const defaultEndpoint = 'https://gpt-agent.cc/v1/chat/completions';
-    const defaultTemp = 0.7;
-
-    setApiKey(defaultKey);
-    setSelectedModel(defaultModel);
-    setCustomModelInput('');
-    setCustomEndpoint(defaultEndpoint);
-    setTemperature(defaultTemp);
-
-    updateSettings({
-      apiKey: defaultKey,
-      selectedModel: defaultModel,
-      customEndpoint: defaultEndpoint,
-      temperature: defaultTemp,
-    });
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   const handleDownloadBackup = () => {

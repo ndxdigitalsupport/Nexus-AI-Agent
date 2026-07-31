@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '@/store';
-import { FileText, Code, Check, Copy, Download, X, Edit2, Sparkles, CheckCircle2, FileSpreadsheet, Scale, ExternalLink } from 'lucide-react';
+import { FileText, Code, Check, Copy, Download, X, Edit2, FileSpreadsheet, Scale } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -11,6 +11,14 @@ export default function ArtifactStudio() {
   const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
 
   if (!isArtifactStudioOpen || !activeArtifact) return null;
+
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
 
   const handleCopy = () => {
     navigator.clipboard.writeText(activeArtifact.content);
@@ -24,7 +32,7 @@ export default function ArtifactStudio() {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '<em>$1</em>')
       .replace(/^###\s*(.+)$/gm, '<h3>$1</h3>')
-      .replace(/^##\s*(.+)$/gm, '<h2>$2</h2>')
+      .replace(/^##\s*(.+)$/gm, '<h2>$1</h2>')
       .replace(/^#\s*(.+)$/gm, '<h1>$1</h1>')
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br />');
@@ -47,7 +55,7 @@ export default function ArtifactStudio() {
         <div><strong>NEXUS AI AGENT</strong> - ${activeArtifact.type.toUpperCase()} EXPORT</div>
         <div>${new Date().toLocaleDateString()}</div>
       </div>
-      <h1 style="color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 24px; margin-bottom: 20px;">${activeArtifact.title}</h1>
+      <h1 style="color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 24px; margin-bottom: 20px;">${escapeHtml(activeArtifact.title)}</h1>
       <div style="background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.7;">
         <p>${cleanHtmlContent}</p>
       </div>
@@ -91,7 +99,7 @@ export default function ArtifactStudio() {
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
         <head>
           <meta charset="utf-8">
-          <title>${activeArtifact.title}</title>
+          <title>${escapeHtml(activeArtifact.title)}</title>
           <style>
             body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.6; color: #0f172a; padding: 20px; }
             h1 { color: #0284c7; font-size: 20pt; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
@@ -101,7 +109,7 @@ export default function ArtifactStudio() {
           </style>
         </head>
         <body>
-          <h1>${activeArtifact.title}</h1>
+          <h1>${escapeHtml(activeArtifact.title)}</h1>
           <div>${cleanText}</div>
         </body>
       </html>
@@ -155,11 +163,7 @@ export default function ArtifactStudio() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => {
-              if (!isEditing && activeArtifact) {
-                // Strip raw markdown bold/italic asterisks for clean text editing
-                const cleanedText = activeArtifact.content.replace(/\*\*/g, '').replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '$1');
-                updateActiveArtifactContent(cleanedText);
-              }
+              // Toggle edit mode without modifying the underlying markdown content.
               setIsEditing(!isEditing);
             }}
             className={`px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 shadow-md ${

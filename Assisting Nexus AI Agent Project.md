@@ -959,7 +959,7 @@ If you want to share your API key/custom endpoint so anyone who visits your webs
 
 ### User Input
 
-sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8  https://gpt-agent.cc/v1/chat/completions do these first i'll give you list of model after
+[REDACTED API KEY]  https://gpt-agent.cc/v1/chat/completions do these first i'll give you list of model after
 
 *Viewed [store.ts](file:///c:/Users/Asus/Desktop/Nexus%20AI%20Agent%20test/src/store.ts) *
 
@@ -983,7 +983,7 @@ sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8  https://gpt-agent.cc/v1/cha
 
 Done! I have configured the default API Key and Custom Endpoint across the system codebase:
 
-- **Default API Key**: `sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8`
+- **Default API Key**: `[REDACTED - moved to Vercel environment variable OPENAI_API_KEY]`
 - **Default Custom Endpoint**: `https://gpt-agent.cc/v1/chat/completions`
 
 Now, whenever anyone opens your deployed site on Vercel, it will automatically connect using your endpoint and key without requiring manual setup!

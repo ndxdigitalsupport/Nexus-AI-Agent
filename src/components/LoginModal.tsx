@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '@/store';
 import { X, Lock, Sparkles, LogIn, User, Eye, EyeOff } from 'lucide-react';
 import { supabaseSignIn, supabaseSignUp, syncProfileToSupabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -14,15 +15,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNotice('');
 
     if (!username.trim()) {
       setError('Please enter your username or email.');
@@ -37,22 +39,44 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const validEmail = username.includes('@') ? username.trim() : `${username.trim()}@nexus.ai`;
 
     if (isSignUpMode) {
-      const { user, error: err } = await supabaseSignUp(validEmail, password);
+      const { error: err } = await supabaseSignUp(validEmail, password);
       if (err) {
         setError(err);
         setLoading(false);
-      } else {
-        await syncProfileToSupabase(validEmail, 'user');
-        loginUser(validEmail, password);
-        setLoading(false);
-        onClose();
+        return;
       }
+      await syncProfileToSupabase(validEmail, 'user');
+      await loginUser(validEmail);
+      setLoading(false);
+      onClose();
     } else {
       const { user, error: err } = await supabaseSignIn(validEmail, password);
-      await syncProfileToSupabase(user?.email || validEmail, 'user');
+      if (err) {
+        setError(err);
+        setLoading(false);
+        return;
+      }
+      const signedInEmail = user?.email || validEmail;
+      await syncProfileToSupabase(signedInEmail, 'user');
+      await loginUser(signedInEmail);
       setLoading(false);
-      loginUser(user?.email || validEmail, password);
       onClose();
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setError('');
+    setNotice('');
+    if (!username.trim()) {
+      setError('Please enter your email address first.');
+      return;
+    }
+    const validEmail = username.includes('@') ? username.trim() : `${username.trim()}@nexus.ai`;
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(validEmail);
+    if (resetError) {
+      setError(resetError.message);
+    } else {
+      setNotice('Password reset link sent to your email.');
     }
   };
 
@@ -88,6 +112,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           {error && (
             <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-mono">
               {error}
+            </div>
+          )}
+
+          {notice && (
+            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono">
+              {notice}
             </div>
           )}
 
@@ -133,21 +163,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </div>
           </div>
 
-          {/* Remember Me & Forgot Password Row */}
+          {/* Forgot Password Row */}
           {!isSignUpMode && (
-            <div className="flex items-center justify-between text-xs pt-0.5">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-text-muted hover:text-text transition-colors">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded bg-slate-900 border-white/20 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
-                />
-                <span>Remember me</span>
-              </label>
+            <div className="flex items-center justify-end text-xs pt-0.5">
               <button
                 type="button"
-                onClick={() => alert('Password reset link sent to your email.')}
+                onClick={handleForgotPassword}
                 className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
               >
                 Forgot password?
@@ -158,7 +179,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           {/* Primary Glow Sign In / Sign Up Button */}
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-primary text-slate-950 font-bold text-sm shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2"
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-primary text-slate-950 font-bold text-sm shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <LogIn className="w-4 h-4" />
             <span>{isSignUpMode ? 'Create Account' : 'Sign In'}</span>

@@ -131,15 +131,37 @@ export async function supabaseSignUp(email: string, pass: string) {
 
 export async function syncProfileToSupabase(email: string, role: string = 'user') {
   try {
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('role, plan, created_at')
+      .eq('id', email)
+      .maybeSingle();
+
     await supabase.from('profiles').upsert({
       id: email,
       email: email,
-      role: role,
-      plan: role === 'admin' ? 'pro' : 'free',
-      created_at: Date.now()
+      role: existing?.role || role,
+      plan: existing?.plan || (existing?.role === 'admin' ? 'pro' : 'free'),
+      created_at: existing?.created_at || Date.now()
     });
-  } catch (err) {
+  } catch {
     // Ignore profile sync errors
+  }
+}
+
+// Read the role stored for an account in the profiles table.
+// Returns 'user' as the default when no explicit role has been assigned.
+export async function getProfileRole(email: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', email)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data.role || 'user';
+  } catch {
+    return null;
   }
 }
 

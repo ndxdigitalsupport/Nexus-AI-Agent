@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, devtools, createJSONStorage } from 'zustand/middleware';
-import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase } from '@/lib/supabase';
+import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase, getProfileRole } from '@/lib/supabase';
 
 export interface Message {
   id: string;
@@ -75,7 +75,7 @@ export interface UserAccount {
 interface AppState {
   currentUser: UserAccount | null;
   isAuthenticated: boolean;
-  loginUser: (emailOrUser: string, pass: string) => boolean;
+  loginUser: (emailOrUser: string) => Promise<boolean>;
   logoutUser: () => void;
 
   conversations: Conversation[]; // Now an array of conversations
@@ -198,15 +198,14 @@ export const useStore = create<AppState>()(
         currentUser: null,
         isAuthenticated: false,
 
-        loginUser: (emailOrUser: string, pass: string) => {
+        loginUser: async (emailOrUser: string) => {
           const cleanUser = emailOrUser.trim();
-          const cleanPass = pass.trim();
-          const customPin = get().settings?.adminPin?.trim();
 
-          // Strict Admin Credentials Check:
-          // Admin mode requires typing 'admin' as username OR entering exact secret admin PIN ('1234', '8888', or custom PIN)
-          const isAdmin = cleanUser.toLowerCase() === 'admin' || cleanUser.toLowerCase() === 'admin@nexus.ai' || (customPin && cleanPass === customPin) || cleanPass === '8888';
-          
+          // Admin status comes ONLY from the account role stored in Supabase —
+          // never from a username or password checked in the browser.
+          const profileRole = await getProfileRole(cleanUser);
+          const isAdmin = profileRole === 'admin';
+
           const newUser: UserAccount = {
             id: isAdmin ? 'admin-1' : `user-${Math.random().toString(36).substr(2, 5)}`,
             name: cleanUser.includes('@') ? cleanUser.split('@')[0] : cleanUser,
@@ -271,7 +270,7 @@ export const useStore = create<AppState>()(
         activePersonaId: 'nexus-personal-assistant',
         knowledgeArticles: [],
         settings: {
-          apiKey: 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8',
+          apiKey: '',
           selectedModel: 'deepseek-v4-flash',
           customEndpoint: 'https://gpt-agent.cc/v1/chat/completions',
           temperature: 0.7,
@@ -302,14 +301,10 @@ export const useStore = create<AppState>()(
           isMobileSidebarOpen: isOpen !== undefined ? isOpen : !state.isMobileSidebarOpen
         })),
 
-        verifyAdminPin: (pin: string) => {
-          const customPin = get().settings?.adminPin?.trim();
-          const enteredPin = pin.trim();
-          if ((customPin && enteredPin === customPin) || enteredPin === '1234' || enteredPin === '8888' || enteredPin === 'admin') {
-            set({ isAdminAuthenticated: true });
-            return true;
-          }
-          return false;
+        verifyAdminPin: () => {
+          // Admin access is granted only by the account role stored in Supabase,
+          // never by a client-side PIN or hardcoded password.
+          return get().isAdminAuthenticated;
         },
 
         lockAdminMode: () => set({ isAdminAuthenticated: false }),
@@ -352,19 +347,28 @@ export const useStore = create<AppState>()(
 Conversation Log:
 ${chatText}`;
 
+            const userKey = (get().settings?.apiKey || '').trim();
+            const envKey = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || '';
+            const apiKey = userKey || envKey;
             const endpoint = get().settings?.customEndpoint || 'https://openrouter.ai/api/v1/chat/completions';
-            const apiKey = get().settings?.apiKey || '';
-            const model = get().settings?.selectedModel || 'openrouter/free';
+            const model = get().settings?.selectedModel || 'deepseek-v4-flash';
+
+            // When no client key is configured, route through the serverless proxy
+            // so the server-side API key never ships to the browser.
+            const useServerProxy = !apiKey;
+            const requestUrl = useServerProxy
+              ? (import.meta.env.VITE_CHAT_PROXY_URL || '/api/chat')
+              : endpoint;
 
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+            if (!useServerProxy && apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
-
-            const response = await fetch(endpoint, {
+            const response = await fetch(requestUrl, {
               method: 'POST',
               headers,
               body: JSON.stringify({
                 model,
+                stream: false,
                 messages: [
                   { role: 'system', content: 'You are NEXUS Memory Engine. Output concise, structured, high-density markdown summaries of user conversations for long-term memory retrieval.' },
                   { role: 'user', content: prompt }
@@ -663,7 +667,7 @@ ${chatText}`;
             activePersonaId: null,
             knowledgeArticles: [],
             settings: {
-              apiKey: 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8',
+              apiKey: '',
               selectedModel: 'claude-fable-5',
               customEndpoint: 'https://gpt-agent.cc/v1/chat/completions',
               temperature: 0.7,
@@ -749,21 +753,19 @@ ${chatText}`;
           setProcessing(true);
           
           const { settings } = get();
-          const apiKey = settings?.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8';
+          const userKey = (settings?.apiKey || '').trim();
+          const envKey = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || '';
+          const apiKey = userKey || envKey;
           const endpoint = settings?.customEndpoint || 'https://gpt-agent.cc/v1/chat/completions';
-          const model = settings?.selectedModel || 'claude-fable-5';
+          const model = settings?.selectedModel || 'deepseek-v4-flash';
           const temperature = settings?.temperature ?? 0.7;
-          
-          const isLocal = endpoint.includes('localhost') || endpoint.includes('127.0.0.1');
 
-          if (!apiKey && !isLocal) {
-            setProcessing(false);
-            get().addMessage({ 
-              role: 'agent', 
-              content: '⚠️ **API Key Required**\n\nPlease add your API key in the **Settings** page or configure it in `.env.local`.' 
-            });
-            return;
-          }
+          // When no client key is configured, route through the serverless proxy
+          // (/api/chat) so the server-side API key never ships to the browser.
+          const useServerProxy = !apiKey;
+          const requestUrl = useServerProxy
+            ? (import.meta.env.VITE_CHAT_PROXY_URL || '/api/chat')
+            : endpoint;
 
           try {
             const updatedConversation = get().conversations.find(conv => conv.id === activeConversationId);
@@ -896,20 +898,20 @@ Rules for Action Items:
               ...sanitizedHistory
             ];
 
-            console.log("NEXUS Debug: Sanitized Messages sent to AI:", messagesPayload);
-
             const headers: Record<string, string> = {
               'Content-Type': 'application/json'
             };
-            if (apiKey) {
-              headers['Authorization'] = `Bearer ${apiKey}`;
-            }
-            if (endpoint.includes('openrouter.ai')) {
-              headers['HTTP-Referer'] = window.location.href;
-              headers['X-Title'] = 'NEXUS-Agent Dashboard';
+            if (!useServerProxy) {
+              if (apiKey) {
+                headers['Authorization'] = `Bearer ${apiKey}`;
+              }
+              if (endpoint.includes('openrouter.ai')) {
+                headers['HTTP-Referer'] = window.location.href;
+                headers['X-Title'] = 'NEXUS-Agent Dashboard';
+              }
             }
 
-            const response = await fetch(endpoint, {
+            const response = await fetch(requestUrl, {
               method: 'POST',
               headers,
               body: JSON.stringify({
@@ -920,7 +922,6 @@ Rules for Action Items:
               })
             });
 
-            console.log(`NEXUS Debug: API Response Status: ${response.status} ${response.statusText}`);
             if (!response.ok) {
               let userFriendlyMsg = `API Error ${response.status}`;
               try {
@@ -957,9 +958,6 @@ Rules for Action Items:
                 
                 const chunk = decoder.decode(value, { stream: true });
                 
-                // Log raw chunk for debugging
-                console.log("NEXUS Debug: Received API chunk:", chunk);
-
                 const lines = chunk.split('\n');
                 
                 for (const line of lines) {

@@ -32,6 +32,14 @@ export default function AdminDashboard() {
     }
   };
 
+  // Handles both numeric epoch timestamps and ISO date strings from Supabase.
+  const formatDate = (value: any): string => {
+    if (!value) return 'Recent';
+    const num = typeof value === 'number' ? value : Number(value);
+    const date = isNaN(num) ? new Date(value) : new Date(num);
+    return isNaN(date.getTime()) ? 'Recent' : date.toLocaleString();
+  };
+
   useEffect(() => {
     loadAdminData();
   }, []);
@@ -95,7 +103,7 @@ export default function AdminDashboard() {
             <span className="text-xs font-mono text-text-muted uppercase tracking-wider">Registered Accounts</span>
             <Users className="w-5 h-5 text-cyan-400" />
           </div>
-          <div className="text-3xl font-extrabold font-mono text-cyan-300">{profiles.length || 1}</div>
+          <div className="text-3xl font-extrabold font-mono text-cyan-300">{profiles.length}</div>
           <span className="text-[11px] text-emerald-400 font-mono mt-1 block">● Real-time Supabase Auth</span>
         </div>
 
@@ -174,7 +182,7 @@ export default function AdminDashboard() {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-text-muted">
-                      {p.created_at ? new Date(Number(p.created_at)).toLocaleString() : 'Recent'}
+                      {formatDate(p.created_at)}
                     </td>
                   </tr>
                 ))

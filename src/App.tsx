@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import ArtifactStudio from "@/components/ArtifactStudio";
 import Home from "@/pages/Home";
@@ -12,8 +12,19 @@ import ActionBoardPage from "@/pages/ActionBoardPage";
 import LoginModal from "@/components/LoginModal";
 import { useStore } from "@/store";
 
+// Admin-only routes are guarded by the account role resolved from Supabase.
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { isAdminAuthenticated } = useStore();
+  const location = useLocation();
+
+  if (!isAdminAuthenticated) {
+    return <Navigate to="/" replace state={{ from: location }} />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppLayout() {
-  const { isAuthenticated } = useStore();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
@@ -48,9 +59,9 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/history" element={<History />} />
           <Route path="/action-board" element={<ActionBoardPage />} />
-          <Route path="/agents" element={<Agents />} />
-          <Route path="/knowledge-base" element={<KnowledgeBase />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/agents" element={<RequireAdmin><Agents /></RequireAdmin>} />
+          <Route path="/knowledge-base" element={<RequireAdmin><KnowledgeBase /></RequireAdmin>} />
+          <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
         </Route>
       </Routes>
     </Router>

@@ -1,10 +1,14 @@
 // Native Telegram Bot Webhook Vercel Serverless Function
 
-// Default configuration fallback values
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8965138171:AAEvStnqro33T8u28CrKRQdlyINkkB8qKKc';
-const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'sk-7QqlOxkiFQ0WV917iwvBdAeMVQqzgYViZ8oU0chwKYUXYFt8';
-const AI_ENDPOINT = process.env.VITE_CUSTOM_AI_ENDPOINT || 'https://gpt-agent.cc/v1/chat/completions';
+// Configuration is read from environment variables only (never hardcoded in source).
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
+const AI_ENDPOINT = process.env.AI_ENDPOINT || 'https://gpt-agent.cc/v1/chat/completions';
 const DEFAULT_MODEL = 'deepseek-v4-flash';
+
+function isConfigured(): boolean {
+  return Boolean(TELEGRAM_BOT_TOKEN && OPENAI_API_KEY);
+}
 
 const SYSTEM_INSTRUCTION = `You are NEXUS, an advanced autonomous AI Agent developed by the NEXUS Digital Support team.
 You are interacting natively inside a Telegram chat conversation with the user (Manus Agent style).
@@ -24,9 +28,13 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!isConfigured()) {
+    console.error('Telegram webhook is not configured: missing TELEGRAM_BOT_TOKEN or OPENAI_API_KEY env vars.');
+    return res.status(500).json({ error: 'Webhook not configured' });
+  }
+
   try {
     const update = req.body;
-    console.log('Received Telegram Webhook update:', JSON.stringify(update, null, 2));
 
     if (update && update.message && update.message.text) {
       const chatId = update.message.chat.id;

@@ -61,79 +61,36 @@ export default function KnowledgeBase() {
     setUrlFetchSuccess(null);
 
     try {
-      let rawHtml = '';
-      let fetchSuccess = false;
-      const originHost = new URL(targetUrl).hostname;
-
-      // Primary Proxy 1: AllOrigins
+      let originHost = '';
       try {
-        const proxyUrl1 = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-        const res1 = await fetch(proxyUrl1);
-        if (res1.ok) {
-          const data1 = await res1.json();
-          if (data1.contents) {
-            rawHtml = data1.contents;
-            fetchSuccess = true;
-          }
-        }
-      } catch (err) {
-        console.warn('Proxy 1 (AllOrigins) failed, trying Proxy 2...', err);
+        originHost = new URL(targetUrl).hostname;
+      } catch {
+        throw new Error('Invalid URL. Please check the link and try again.');
       }
 
-      // Fallback Proxy 2: CorsProxy.io
-      if (!fetchSuccess) {
-        try {
-          const proxyUrl2 = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-          const res2 = await fetch(proxyUrl2);
-          if (res2.ok) {
-            rawHtml = await res2.text();
-            fetchSuccess = true;
-          }
-        } catch (err) {
-          console.warn('Proxy 2 (CorsProxy) failed, trying Proxy 3...', err);
-        }
+      // Server-side scraper: fetches the page securely and never exposes
+      // the user's URLs to third-party public proxies.
+      const fetchPage = async (pageUrl: string): Promise<string> => {
+        const res = await fetch('/api/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: pageUrl })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch the website.');
+        return data.html || '';
+      };
+
+      let rawHtml = '';
+      try {
+        rawHtml = await fetchPage(targetUrl);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Unable to fetch this website. Please copy/paste the webpage text directly into the article editor below!';
+        throw new Error(msg);
       }
 
-      // Fallback Proxy 3: CodeTabs
-      if (!fetchSuccess) {
-        try {
-          const proxyUrl3 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
-          const res3 = await fetch(proxyUrl3);
-          if (res3.ok) {
-            rawHtml = await res3.text();
-            fetchSuccess = true;
-          }
-        } catch (err) {
-          console.warn('Proxy 3 (CodeTabs) failed, trying Jina Reader...', err);
-        }
-      }
-
-      // Fallback Proxy 4: Jina AI Reader API
-      if (!fetchSuccess) {
-        try {
-          const proxyUrl4 = `https://r.jina.ai/${targetUrl}`;
-          const res4 = await fetch(proxyUrl4);
-          if (res4.ok) {
-            const jinaMarkdown = await res4.text();
-            if (jinaMarkdown && jinaMarkdown.length > 50) {
-              const domainTag = originHost.replace(/^www\./, '');
-              const articleTitle = `🌐 ${domainTag}`;
-              const articleContent = `Source URL: ${targetUrl}\n\n=== WEBSITE CONTENT ===\n${jinaMarkdown.substring(0, 20000)}`;
-              addArticle(articleTitle, articleContent, ['web-scrape', domainTag, 'url-import']);
-              setUrlFetchSuccess(`Successfully scraped and stored "${domainTag}" in Knowledge Base!`);
-              setWebUrlInput('');
-              setTimeout(() => setUrlFetchSuccess(null), 4000);
-              setIsFetchingUrl(false);
-              return;
-            }
-          }
-        } catch (err) {
-          console.warn('Proxy 4 (Jina) failed.', err);
-        }
-      }
-
-      if (!rawHtml) {
-        throw new Error('Unable to bypass website security or network blocks. Please copy/paste the webpage text directly into the article editor below!');
+      if (!rawHtml || rawHtml.trim().length === 0) {
+        throw new Error('The website returned no readable content. Please copy/paste the webpage text directly into the article editor below!');
       }
 
       // Parse HTML title and clean text body
@@ -151,7 +108,7 @@ export default function KnowledgeBase() {
           if (parsedLinkHost === originHost && !internalLinks.includes(absoluteUrl) && absoluteUrl !== targetUrl && !href.startsWith('#') && !href.startsWith('javascript:')) {
             internalLinks.push(absoluteUrl);
           }
-        } catch (e) {
+        } catch {
           // ignore invalid URLs
         }
       });
@@ -169,28 +126,22 @@ export default function KnowledgeBase() {
         throw new Error('Extracted website text is too short or protected by JavaScript anti-bot protection.');
       }
 
-      // Attempt to crawl up to 4 internal sub-pages for complete site coverage!
+      // Crawl up to 2 internal sub-pages (server-side) for complete site coverage!
       const subPageTexts: string[] = [];
-      const subPagesToCrawl = internalLinks.slice(0, 4);
+      const subPagesToCrawl = internalLinks.slice(0, 2);
 
       for (const subUrl of subPagesToCrawl) {
         try {
-          const subProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(subUrl)}`;
-          const subRes = await fetch(subProxyUrl);
-          if (subRes.ok) {
-            const subData = await subRes.json();
-            if (subData.contents) {
-              const subDoc = parser.parseFromString(subData.contents, 'text/html');
-              subDoc.querySelectorAll('script, style, noscript, svg, iframe, nav, footer').forEach(el => el.remove());
-              const subTitle = subDoc.querySelector('title')?.textContent?.trim() || subUrl;
-              let subBody = subDoc.body.innerText || subDoc.body.textContent || '';
-              subBody = subBody.replace(/\n\s*\n/g, '\n\n').trim();
-              if (subBody.length > 50) {
-                subPageTexts.push(`--- SUB-PAGE: ${subTitle} (${subUrl}) ---\n${subBody.substring(0, 4000)}`);
-              }
-            }
+          const subHtml = await fetchPage(subUrl);
+          const subDoc = parser.parseFromString(subHtml, 'text/html');
+          subDoc.querySelectorAll('script, style, noscript, svg, iframe, nav, footer').forEach(el => el.remove());
+          const subTitle = subDoc.querySelector('title')?.textContent?.trim() || subUrl;
+          let subBody = subDoc.body.innerText || subDoc.body.textContent || '';
+          subBody = subBody.replace(/\n\s*\n/g, '\n\n').trim();
+          if (subBody.length > 50) {
+            subPageTexts.push(`--- SUB-PAGE: ${subTitle} (${subUrl}) ---\n${subBody.substring(0, 4000)}`);
           }
-        } catch (e) {
+        } catch {
           // Ignore individual sub-page crawl failures
         }
       }
@@ -211,9 +162,9 @@ export default function KnowledgeBase() {
       setUrlFetchSuccess(`Successfully scraped homepage & ${subPageTexts.length} sub-page(s) for "${pageTitle}"!`);
       setWebUrlInput('');
       setTimeout(() => setUrlFetchSuccess(null), 4000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('NEXUS URL Fetch Error:', err);
-      setUrlFetchError(err.message || 'Failed to fetch website URL. Please check the URL or copy the webpage text manually.');
+      setUrlFetchError(err instanceof Error ? err.message : 'Failed to fetch website URL. Please check the URL or copy the webpage text manually.');
     } finally {
       setIsFetchingUrl(false);
     }
@@ -232,8 +183,22 @@ export default function KnowledgeBase() {
   const handleFileProcess = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
+    // Guard against storage blow-up: cap file size and batch count.
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB per file
+    const MAX_FILES = 10;
+
+    const acceptedFiles = Array.from(files)
+      .slice(0, MAX_FILES)
+      .filter(file => file.size <= MAX_FILE_SIZE);
+
+    if (acceptedFiles.length === 0) {
+      setImportedFileCount(0);
+      setTimeout(() => setImportedFileCount(null), 3000);
+      return;
+    }
+
     let count = 0;
-    Array.from(files).forEach((file) => {
+    acceptedFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const text = event.target?.result as string;
@@ -419,7 +384,7 @@ export default function KnowledgeBase() {
             Drag & Drop Files to Index Document Memory
           </h3>
           <p className="text-xs text-text-muted font-mono max-w-md">
-            Supports <strong className="text-primary">.md, .txt, .json, .csv, .js, .py</strong> files. Files are automatically chunked and indexed into your AI RAG memory.
+            Supports <strong className="text-primary">.md, .txt, .json, .csv, .js, .py</strong> files (max 1 MB each, up to 10 files). Files are automatically chunked and indexed into your AI RAG memory.
           </p>
 
           {importedFileCount !== null && (

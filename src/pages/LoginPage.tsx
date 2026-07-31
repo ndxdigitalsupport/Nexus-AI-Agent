@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
-import { ShieldCheck, User, ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 import { supabaseSignIn, supabaseSignUp, syncProfileToSupabase } from '@/lib/supabase';
 
@@ -10,7 +10,6 @@ export default function LoginPage() {
   const { loginUser } = useStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'admin' | 'user'>('admin');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,52 +25,36 @@ export default function LoginPage() {
       return;
     }
 
-    // Quick Admin Override for special admin account only
-    if (email.toLowerCase() === 'admin@nexus.ai' && (password === '1234' || password === '8888')) {
-      loginUser(email, password);
-      navigate('/');
-      return;
-    }
-
     setLoading(true);
 
     // Format email if user typed a plain username e.g. "jisu" -> "jisu@nexus.ai"
     const validEmail = email.includes('@') ? email.trim() : `${email.trim()}@nexus.ai`;
 
     if (isSignUp) {
-      const { user, error: err } = await supabaseSignUp(validEmail, password);
+      const { error: err } = await supabaseSignUp(validEmail, password);
       if (err) {
         setError(err);
         setLoading(false);
-      } else {
-        setNotice('✅ Account created successfully! Logging you in...');
-        await syncProfileToSupabase(validEmail, selectedRole);
-        loginUser(validEmail, password);
-        setLoading(false);
-        setTimeout(() => navigate('/'), 1000);
+        return;
       }
+      await syncProfileToSupabase(validEmail, 'user');
+      setNotice('✅ Account created successfully! Logging you in...');
+      await loginUser(validEmail);
+      setLoading(false);
+      setTimeout(() => navigate('/'), 1000);
     } else {
       const { user, error: err } = await supabaseSignIn(validEmail, password);
-      await syncProfileToSupabase(user?.email || validEmail, selectedRole);
-      setLoading(false);
       if (err) {
-        // Fallback to local session login if offline or custom login
-        loginUser(validEmail, password);
-        navigate('/');
-      } else {
-        loginUser(user?.email || validEmail, password);
-        navigate('/');
+        setError(err);
+        setLoading(false);
+        return;
       }
+      const signedInEmail = user?.email || validEmail;
+      await syncProfileToSupabase(signedInEmail, 'user');
+      await loginUser(signedInEmail);
+      setLoading(false);
+      navigate('/');
     }
-  };
-
-  const handleQuickPresetLogin = (role: 'admin' | 'user') => {
-    if (role === 'admin') {
-      loginUser('admin@nexus.ai', '1234');
-    } else {
-      loginUser('team.member@nexus.ai', '1234');
-    }
-    navigate('/');
   };
 
   return (
@@ -90,41 +73,14 @@ export default function LoginPage() {
           <p className="text-sm text-text-muted mt-1 font-sans">Enterprise Team Assistant & Portal Gateway</p>
         </div>
 
-        {/* Login Box */}
-        <div className="p-6 sm:p-8 rounded-3xl glass-panel border border-white/15 bg-slate-900/80 shadow-2xl backdrop-blur-2xl">
-          <h2 className="text-lg font-bold text-text mb-4 text-center">Sign in to your Team Portal</h2>
+          {/* Login Box */}
+          <div className="p-6 sm:p-8 rounded-3xl glass-panel border border-white/15 bg-slate-900/80 shadow-2xl backdrop-blur-2xl">
+            <h2 className="text-lg font-bold text-text mb-4 text-center">Sign in to your Team Portal</h2>
 
-          {/* Quick Preset Buttons */}
-          <div className="grid grid-cols-2 gap-2.5 mb-6">
-            <button
-              type="button"
-              onClick={() => handleQuickPresetLogin('admin')}
-              className="p-3 rounded-2xl border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 transition-all text-left group flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">👑 Admin Mode</span>
-                <ShieldCheck className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
-              </div>
-              <span className="text-[11px] text-text-muted mt-2 block">1-Click Full Admin Access</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickPresetLogin('user')}
-              className="p-3 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-text-muted hover:text-text transition-all text-left group flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">👤 Team Member</span>
-                <User className="w-4 h-4 text-slate-400 group-hover:scale-110 transition-transform" />
-              </div>
-              <span className="text-[11px] text-text-muted mt-2 block">Standard AI Assistant</span>
-            </button>
-          </div>
-
-          <div className="relative flex items-center justify-center mb-6">
-            <div className="border-t border-white/10 w-full"></div>
-            <span className="bg-slate-900 px-3 text-[11px] font-mono text-text-muted uppercase tracking-wider absolute">or enter details</span>
-          </div>
+            <div className="relative flex items-center justify-center mb-6">
+              <div className="border-t border-white/10 w-full"></div>
+              <span className="bg-slate-900 px-3 text-[11px] font-mono text-text-muted uppercase tracking-wider absolute">or enter details</span>
+            </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             {notice && (
@@ -180,34 +136,6 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-slate-950/90 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-cyan-400 transition-colors font-mono"
               />
-            </div>
-
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-xs text-text-muted font-mono">Role:</span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('admin')}
-                  className={`px-3 py-1 rounded-lg text-xs font-mono transition-all ${
-                    selectedRole === 'admin' 
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold' 
-                      : 'text-text-muted hover:text-text'
-                  }`}
-                >
-                  👑 Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('user')}
-                  className={`px-3 py-1 rounded-lg text-xs font-mono transition-all ${
-                    selectedRole === 'user' 
-                      ? 'bg-white/10 text-text border border-white/20 font-bold' 
-                      : 'text-text-muted hover:text-text'
-                  }`}
-                >
-                  👤 Member
-                </button>
-              </div>
             </div>
 
             <button

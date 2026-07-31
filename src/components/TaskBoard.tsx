@@ -22,8 +22,7 @@ export default function TaskBoard() {
     toggleActionBoard,
     executeTaskWithAI,
     extractTasksFromChat,
-    clearCompletedTasks,
-    isProcessing
+    clearCompletedTasks
   } = useStore();
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -287,7 +286,6 @@ export default function TaskBoard() {
                 projectName={projectName}
                 phases={phases}
                 executingTaskId={executingTaskId}
-                isProcessing={isProcessing}
                 toggleTask={toggleTask}
                 deleteTask={deleteTask}
                 editTask={editTask}
@@ -305,7 +303,6 @@ function ProjectPlanFolder({
   projectName,
   phases,
   executingTaskId,
-  isProcessing,
   toggleTask,
   deleteTask,
   editTask,
@@ -314,7 +311,6 @@ function ProjectPlanFolder({
   projectName: string;
   phases: Record<string, Task[]>;
   executingTaskId: string | null;
-  isProcessing: boolean;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
   editTask: (id: string, newTitle?: string, newDueDate?: number, newPriority?: 'low' | 'medium' | 'high') => void;
@@ -360,7 +356,6 @@ function ProjectPlanFolder({
               phaseName={phaseName}
               tasks={phaseTasks}
               executingTaskId={executingTaskId}
-              isProcessing={isProcessing}
               toggleTask={toggleTask}
               deleteTask={deleteTask}
               editTask={editTask}
@@ -377,7 +372,6 @@ function CollapsiblePhaseFolder({
   phaseName,
   tasks,
   executingTaskId,
-  isProcessing,
   toggleTask,
   deleteTask,
   editTask,
@@ -386,7 +380,6 @@ function CollapsiblePhaseFolder({
   phaseName: string;
   tasks: Task[];
   executingTaskId: string | null;
-  isProcessing: boolean;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
   editTask: (id: string, newTitle?: string, newDueDate?: number, newPriority?: 'low' | 'medium' | 'high') => void;
@@ -422,7 +415,7 @@ function CollapsiblePhaseFolder({
             <TaskCard
               key={task.id}
               task={task}
-              isExecuting={executingTaskId === task.id || (isProcessing && executingTaskId === task.id)}
+              isExecuting={executingTaskId === task.id}
               onToggle={() => toggleTask(task.id)}
               onDelete={() => deleteTask(task.id)}
               onEdit={editTask}
@@ -496,29 +489,41 @@ function TaskCard({ task, isExecuting, onToggle, onDelete, onEdit, onExecute }: 
                 type="text"
                 value={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
-                onBlur={handleSaveEdit}
-                onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLElement).blur()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveEdit();
+                  if (e.key === 'Escape') setIsEditing(false);
+                }}
                 autoFocus
                 className="w-full bg-slate-950 border border-primary/50 rounded-lg px-2 py-1 text-xs text-text focus:outline-none"
               />
-              <div className="flex gap-2 text-xs">
+              <div className="flex flex-wrap gap-2 text-xs items-center">
                 <input
                   type="date"
                   value={editedDueDate}
                   onChange={(e) => setEditedDueDate(e.target.value)}
-                  onBlur={handleSaveEdit}
                   className="bg-slate-950 border border-white/10 rounded px-1.5 py-0.5 text-text text-[11px]"
                 />
                 <select
                   value={editedPriority}
                   onChange={(e) => setEditedPriority(e.target.value as 'low' | 'medium' | 'high')}
-                  onBlur={handleSaveEdit}
                   className="bg-slate-950 border border-white/10 rounded px-1.5 py-0.5 text-text text-[11px]"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
                 </select>
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-2.5 py-0.5 bg-primary text-slate-950 font-bold rounded-lg text-[11px] shadow-glow-cyan"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-2.5 py-0.5 bg-white/5 border border-white/10 text-text-muted rounded-lg text-[11px]"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           ) : (
