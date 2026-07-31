@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
 import { ShieldCheck, User, ArrowRight, Sparkles } from 'lucide-react';
 
-import { supabaseSignIn, supabaseSignUp } from '@/lib/supabase';
+import { supabaseSignIn, supabaseSignUp, syncProfileToSupabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -42,12 +42,14 @@ export default function LoginPage() {
         setError(err);
       } else {
         setNotice('✅ Account created successfully! Logging you in...');
+        syncProfileToSupabase(email, selectedRole);
         loginUser(email, password);
         setTimeout(() => navigate('/'), 1200);
       }
     } else {
       const { user, error: err } = await supabaseSignIn(email, password);
       setLoading(false);
+      syncProfileToSupabase(user?.email || email, selectedRole);
       if (err) {
         // Fallback to local session login if offline or demo email
         loginUser(email, password);
