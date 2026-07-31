@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
 import { Key, Cpu, Sliders, Check, Eye, EyeOff, RotateCcw, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft, ShieldCheck, Lock, Unlock } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
+import UpgradeModal from '@/components/UpgradeModal';
 
 export interface ModelPreset {
   id: string;
@@ -93,6 +94,11 @@ export default function Settings() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [providerFilter, setProviderFilter] = useState<string>('All');
   const [importMessage, setImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const [upgradeModal, setUpgradeModal] = useState<{ isOpen: boolean; modelName: string }>({
+    isOpen: false,
+    modelName: ''
+  });
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -340,6 +346,10 @@ export default function Settings() {
                     <div
                       key={preset.id}
                       onClick={() => {
+                        if (isPaid && !isAdminAuthenticated) {
+                          setUpgradeModal({ isOpen: true, modelName: preset.name });
+                          return;
+                        }
                         setSelectedModel(preset.id);
                         setCustomModelInput('');
                         saveSettingsToStore(apiKey, preset.id, '', customEndpoint, temperature);
@@ -604,6 +614,12 @@ export default function Settings() {
         message={confirmModal.message}
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={() => setUpgradeModal({ isOpen: false, modelName: '' })}
+        selectedModelName={upgradeModal.modelName}
       />
     </div>
   );
