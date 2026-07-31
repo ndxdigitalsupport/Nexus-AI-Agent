@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '@/store';
 import { X, Lock, Sparkles, LogIn, User, Eye, EyeOff } from 'lucide-react';
-import { supabaseSignIn, supabaseSignUp, syncProfileToSupabase } from '@/lib/supabase';
-import { supabase } from '@/lib/supabase';
+import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, syncProfileToSupabase } from '@/lib/supabase';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -81,9 +80,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return;
     }
     const validEmail = username.includes('@') ? username.trim() : `${username.trim()}@nexus.ai`;
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(validEmail);
+    const { error: resetError } = await supabaseResetPassword(validEmail);
     if (resetError) {
-      setError(resetError.message);
+      setError(resetError);
     } else {
       setNotice('Password reset link sent to your email.');
     }

@@ -1,4 +1,4 @@
-import { Sparkles, Check, Zap, X, ShieldCheck, Crown } from 'lucide-react';
+import { Check, Zap, X, Crown } from 'lucide-react';
 
 interface UpgradeModalProps {
   isOpen: boolean;

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, Task } from '@/store';
-import { Zap, CheckCircle2, Circle, Trash2, Plus, CalendarDays, ArrowLeft, Folder, Sparkles, Filter, Check, ChevronDown, ChevronRight, Target, Edit2 } from 'lucide-react';
+import { Zap, CheckCircle2, Circle, Trash2, Plus, CalendarDays, ArrowLeft, Folder, Sparkles, Filter, ChevronDown, ChevronRight, Target, Edit2 } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
@@ -25,7 +25,7 @@ export default function ActionBoardPage() {
   const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [filterPriority, setFilterPriority] = useState<FilterPriority>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [executingTaskId, setExecutingTaskId] = useState<string | null>(null);
 
   const [confirmModal, setConfirmModal] = useState<{

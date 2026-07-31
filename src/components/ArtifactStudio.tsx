@@ -4,6 +4,18 @@ import { FileText, Code, Check, Copy, Download, X, Edit2, FileSpreadsheet, Scale
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+interface Html2PdfInstance {
+  set: (opt: Record<string, unknown>) => Html2PdfInstance;
+  from: (el: Element) => Html2PdfInstance;
+  save: () => Promise<void>;
+}
+
+declare global {
+  interface Window {
+    html2pdf?: () => Html2PdfInstance;
+  }
+}
+
 export default function ArtifactStudio() {
   const { activeArtifact, isArtifactStudioOpen, closeArtifactStudio, updateActiveArtifactContent } = useStore();
   const [isEditing, setIsEditing] = useState(false);
@@ -70,12 +82,12 @@ export default function ArtifactStudio() {
         html2canvas:  { scale: 2 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
-      (window as any).html2pdf().set(opt).from(element).save();
+      window.html2pdf?.().set(opt).from(element).save();
       setDownloadNotice(`Downloaded ${safeTitle}.pdf`);
       setTimeout(() => setDownloadNotice(null), 3000);
     };
 
-    if ((window as any).html2pdf) {
+    if (window.html2pdf) {
       generatePdf();
     } else {
       const script = document.createElement('script');

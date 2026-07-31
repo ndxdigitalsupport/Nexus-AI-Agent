@@ -4,11 +4,29 @@ import { useStore } from '@/store';
 import { ShieldCheck, Users, Database, RefreshCw, Search, Activity, Lock, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+interface AdminProfile {
+  id: string;
+  email: string | null;
+  role: string | null;
+  plan: string | null;
+  created_at: number | string | null;
+}
+
+interface AdminTask {
+  id: string;
+  user_id: string;
+  title: string;
+  completed: boolean | null;
+  created_at: number | string | null;
+  due_date: number | null;
+  priority: string | null;
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { isAdminAuthenticated } = useStore();
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<AdminProfile[]>([]);
+  const [tasks, setTasks] = useState<AdminTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -30,7 +48,7 @@ export default function AdminDashboard() {
   };
 
   // Handles both numeric epoch timestamps and ISO date strings from Supabase.
-  const formatDate = (value: any): string => {
+  const formatDate = (value: string | number | null): string => {
     if (!value) return 'Recent';
     const num = typeof value === 'number' ? value : Number(value);
     const date = isNaN(num) ? new Date(value) : new Date(num);

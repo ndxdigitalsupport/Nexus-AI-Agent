@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Terminal, Settings, History, Cpu, Hexagon, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Zap, Target, LogOut, LogIn, Edit2, ShieldCheck } from 'lucide-react';
+import { Terminal, Settings, History, Cpu, Book, MessageSquarePlus, Trash2, MessageSquare, Search, Star, FolderPlus, Plus, Folder, Check, X, ChevronDown, ChevronRight, GripVertical, Target, LogOut, LogIn, Edit2, ShieldCheck } from 'lucide-react';
 import { useStore } from '../store';
 import ConfirmModal from './ConfirmModal';
 

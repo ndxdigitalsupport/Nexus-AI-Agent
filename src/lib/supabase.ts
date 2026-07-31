@@ -175,6 +175,34 @@ export async function supabaseSignIn(email: string, pass: string) {
   }
 }
 
+// Sends a password-reset email. The recovery link points back to the site,
+// where the ResetPassword page lets the user choose a new password.
+export async function supabaseResetPassword(email: string) {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+    if (error) throw error;
+    return { error: null };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { error: message || 'Failed to send password reset email' };
+  }
+}
+
+// Completes a password reset using the recovery session that Supabase
+// attached to the reset link. Only callable while on the recovery page.
+export async function supabaseUpdatePassword(newPassword: string) {
+  try {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return { error: null };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { error: message || 'Failed to update password' };
+  }
+}
+
 export async function supabaseSignUp(email: string, pass: string) {
   try {
     const { data, error } = await supabase.auth.signUp({

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, PlusCircle, Sparkles, Zap, Download, Brain, CheckCircle2, Target, Menu, X, FileText, Volume2, VolumeX, Lightbulb, Compass, FileCheck, HelpCircle, RefreshCw, ChevronDown } from 'lucide-react';
+import { Send, Bot, User, Paperclip, Cpu, Settings as SettingsIcon, Copy, Check, Target, Menu, X, FileText, Sparkles, ChevronDown } from 'lucide-react';
 import { useStore } from '@/store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -20,14 +20,13 @@ const PROMPT_POOL = [
   { category: '🛠️ Productivity', title: 'How to organize daily tasks & manage team work?', prompt: 'Give me a simple daily task management framework for leading a small 5-person team.' }
 ];
 
-import { MODEL_PRESETS } from '@/pages/Settings';
+import { MODEL_PRESETS } from '@/lib/modelPresets';
 import UpgradeModal from '@/components/UpgradeModal';
 
 export default function ChatArea() {
-  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, updateSettings, personas, activePersonaId, setActivePersona, addTask, tasks, isActionBoardOpen, toggleActionBoard, summarizeAndSaveChatToMemory, toggleMobileSidebar, openArtifact, isAdminAuthenticated } = useStore();
+  const { conversations, activeConversationId, isProcessing, processAgentResponse, settings, updateSettings, personas, activePersonaId, setActivePersona, tasks, isActionBoardOpen, toggleActionBoard, toggleMobileSidebar, openArtifact, isAdminAuthenticated } = useStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const [addedTaskMessageId, setAddedTaskMessageId] = useState<string | null>(null);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ isOpen: boolean; modelName?: string }>({ isOpen: false });
   
@@ -68,14 +67,15 @@ export default function ChatArea() {
   };
 
   // Auto-randomize every 6 seconds with staggered sequential wave animation
+  const triggerStaggeredShuffleRef = useRef(triggerStaggeredShuffle);
+  triggerStaggeredShuffleRef.current = triggerStaggeredShuffle;
+
   useEffect(() => {
     const timer = setInterval(() => {
-      triggerStaggeredShuffle();
+      triggerStaggeredShuffleRef.current();
     }, 6000);
     return () => clearInterval(timer);
   }, []);
-  const [isMemorySaved, setIsMemorySaved] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPersonaMenu, setShowPersonaMenu] = useState(false);
 
   const pendingTasksCount = tasks.filter(t => !t.completed).length;
@@ -92,51 +92,6 @@ export default function ChatArea() {
     navigator.clipboard.writeText(content);
     setCopiedMessageId(msgId);
     setTimeout(() => setCopiedMessageId(null), 2500);
-  };
-
-  const handleConvertToTask = (content: string, msgId: string) => {
-    const cleanTitle = content.replace(/[#*`_~]/g, '').trim().split('\n')[0].substring(0, 100);
-    if (cleanTitle) {
-      addTask(cleanTitle);
-      setAddedTaskMessageId(msgId);
-      setTimeout(() => setAddedTaskMessageId(null), 2500);
-    }
-  };
-
-  const handleSaveSummaryToMemory = async () => {
-    if (activeConversationId && activeMessages.length > 1) {
-      await summarizeAndSaveChatToMemory(activeConversationId);
-      setIsMemorySaved(true);
-      setTimeout(() => setIsMemorySaved(false), 3500);
-    }
-  };
-
-  const handleExportMarkdown = () => {
-    if (!activeConversation) return;
-    const content = `# Conversation Log: ${activeConversation.title}\nDate: ${new Date(activeConversation.createdAt).toLocaleString()}\n\n` +
-      activeMessages.map(m => `### ${m.role === 'user' ? '👤 User' : '🤖 NEXUS Agent'} (${new Date(m.timestamp).toLocaleTimeString()})\n\n${m.content}\n`).join('\n---\n\n');
-    
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeConversation.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_log.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
-  };
-
-  const handleExportText = () => {
-    if (!activeConversation) return;
-    const content = activeMessages.map(m => `[${m.role.toUpperCase()}] ${new Date(m.timestamp).toLocaleTimeString()}:\n${m.content}\n`).join('\n\n');
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeConversation.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_log.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
   };
 
   const scrollToBottom = () => {

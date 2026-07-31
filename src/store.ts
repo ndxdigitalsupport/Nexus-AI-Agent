@@ -10,6 +10,16 @@ export interface Message {
   timestamp: number;
 }
 
+// Chat payload sent to the AI engine: either plain text content or a
+// multimodal content array (text + image_url parts) for vision models.
+export type ChatContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
+export type ChatMessagePayload =
+  | { role: string; content: string }
+  | { role: string; content: ChatContentPart[] };
+
 export interface Task {
   id: string;
   title: string;
@@ -884,7 +894,7 @@ Rules for Action Items:
 - Do NOT generate "### Action Items" for casual conversational turns (like "hello", "yes", or simple factual questions).`;
 
             // Clean up and format chat messages for OpenAI Vision & text compatibility:
-            const sanitizedHistory: any[] = [];
+            const sanitizedHistory: ChatMessagePayload[] = [];
             (updatedConversation?.messages || [])
               .filter(m => m.id !== 'welcome-msg' && (m.content.trim().length > 0 || m.imageUrl))
               .slice(-10)
@@ -892,7 +902,7 @@ Rules for Action Items:
                 const role = m.role === 'agent' ? 'assistant' : 'user';
                 
                 // Build message content payload (Vision base64 image or text string)
-                let messageContent: any = m.content;
+                let messageContent: string | ChatContentPart[] = m.content;
                 if (m.imageUrl) {
                   messageContent = [
                     { type: 'text', text: m.content || 'Analyze this image.' },
@@ -904,7 +914,11 @@ Rules for Action Items:
                 if (last && last.role === role && typeof last.content === 'string' && typeof messageContent === 'string') {
                   last.content += `\n${messageContent}`;
                 } else {
-                  sanitizedHistory.push({ role, content: messageContent });
+                  const payload: ChatMessagePayload =
+                    typeof messageContent === 'string'
+                      ? { role, content: messageContent }
+                      : { role, content: messageContent };
+                  sanitizedHistory.push(payload);
                 }
               });
 

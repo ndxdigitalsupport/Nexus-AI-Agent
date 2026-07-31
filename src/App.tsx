@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import ArtifactStudio from "@/components/ArtifactStudio";
-import Home from "@/pages/Home";
-import Settings from "@/pages/Settings";
-import History from "@/pages/History";
-import Agents from "@/pages/Agents";
-import KnowledgeBase from "@/pages/KnowledgeBase";
-import AdminDashboard from "@/pages/AdminDashboard";
-import ActionBoardPage from "@/pages/ActionBoardPage";
 import LoginModal from "@/components/LoginModal";
 import { useStore } from "@/store";
+
+// Pages are lazy-loaded so the main bundle stays small and each route loads
+// on demand instead of on first paint.
+const Home = lazy(() => import("@/pages/Home"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const History = lazy(() => import("@/pages/History"));
+const Agents = lazy(() => import("@/pages/Agents"));
+const KnowledgeBase = lazy(() => import("@/pages/KnowledgeBase"));
+const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
+const ActionBoardPage = lazy(() => import("@/pages/ActionBoardPage"));
+const ResetPasswordPage = lazy(() => import("@/pages/ResetPassword"));
 
 // Admin-only routes are guarded by the account role resolved from Supabase.
 function RequireAdmin({ children }: { children: React.ReactNode }) {
@@ -53,17 +57,20 @@ function AppLayout() {
 export default function App() {
   return (
     <Router>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/action-board" element={<ActionBoardPage />} />
-          <Route path="/agents" element={<RequireAdmin><Agents /></RequireAdmin>} />
-          <Route path="/knowledge-base" element={<RequireAdmin><KnowledgeBase /></RequireAdmin>} />
-          <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<div className="h-full w-full flex items-center justify-center bg-[#070913] text-cyan-400 font-mono text-sm">Loading...</div>}>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/action-board" element={<ActionBoardPage />} />
+            <Route path="/agents" element={<RequireAdmin><Agents /></RequireAdmin>} />
+            <Route path="/knowledge-base" element={<RequireAdmin><KnowledgeBase /></RequireAdmin>} />
+            <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+          </Route>
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
