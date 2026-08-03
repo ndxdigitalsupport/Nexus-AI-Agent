@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, devtools, createJSONStorage } from 'zustand/middleware';
 import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase, getProfileRole, getSessionAccessToken, supabase } from '@/lib/supabase';
+import { SKILLOS_LIBRARY, SKILL_LIBRARY_VERSION } from '@/lib/skillLibrary';
 
 export interface Message {
   id: string;
@@ -59,6 +60,8 @@ export interface Persona {
   id: string;
   name: string;
   instructions: string;
+  category?: string;
+  knowledgeTags?: string[];
 }
 
 export interface KnowledgeArticle {
@@ -78,6 +81,7 @@ export interface AppSettings {
   temperature: number;
   adminPin?: string;
   paidModelIds?: string[]; // Admin configurable list of paid PRO models
+  skillLibraryVersion?: number; // Tracks which SkillOS seed batch has been installed
 }
 
 // New Conversation Interface
@@ -853,6 +857,10 @@ ${chatText}`;
             const searchContext = `${userContent} ${recentUserMessages}`.toLowerCase();
             const terms = Array.from(new Set(searchContext.match(/[a-z0-9]+/g) || [])).filter(t => t.length >= 3);
 
+            // Persona-driven RAG boost: the active agent's knowledgeTags make its
+            // skill articles surface even when the user's question phrasing differs.
+            const personaTags = (activePersona?.knowledgeTags || []).map(t => t.toLowerCase());
+
             const scoredArticles = unpinnedArticles.map(article => {
               const titleText = article.title.toLowerCase();
               const bodyText = article.content.toLowerCase();
@@ -864,6 +872,12 @@ ${chatText}`;
                 if (tagText.includes(term)) score += 3;
                 if (bodyText.includes(term)) score += 1;
               });
+
+              // Tag overlap with the active agent's knowledge domain.
+              if (personaTags.length > 0) {
+                const overlap = article.tags.filter(t => personaTags.includes(t.toLowerCase())).length;
+                if (overlap > 0) score += 3 + overlap * 2;
+              }
 
               return { article, score };
             });
@@ -1264,6 +1278,37 @@ Rules for Action Items:
               selectedModel: 'deepseek-chat',
               customEndpoint: 'https://api.deepseek.com/chat/completions',
               temperature: 0.7,
+            };
+          }
+
+          // Seed the SkillOS library additively — never overwrite personas or
+          // articles the user has edited. Bump SKILL_LIBRARY_VERSION in
+          // skillLibrary.ts to re-seed new items after a content update.
+          if (savedState.settings.skillLibraryVersion !== SKILL_LIBRARY_VERSION) {
+            const knownPersonaIds = new Set((savedState.personas || []).map(p => p.id));
+            const knownArticleIds = new Set((savedState.knowledgeArticles || []).map(a => a.id));
+            const now = Date.now();
+
+            const missingPersonas = SKILLOS_LIBRARY
+              .map(entry => entry.persona)
+              .filter(p => !knownPersonaIds.has(p.id));
+
+            if (missingPersonas.length > 0) {
+              savedState.personas = [...(savedState.personas || []), ...missingPersonas];
+            }
+
+            const missingArticles = SKILLOS_LIBRARY
+              .flatMap(entry => entry.articles)
+              .filter(a => !knownArticleIds.has(a.id))
+              .map(a => ({ ...a, pinned: false, createdAt: now, updatedAt: now }));
+
+            if (missingArticles.length > 0) {
+              savedState.knowledgeArticles = [...(savedState.knowledgeArticles || []), ...missingArticles];
+            }
+
+            savedState.settings = {
+              ...savedState.settings,
+              skillLibraryVersion: SKILL_LIBRARY_VERSION,
             };
           }
           if (!savedState.conversations || savedState.conversations.length === 0) {

@@ -228,6 +228,11 @@ export default function Agents() {
                         <p className="text-xs text-text-muted leading-relaxed whitespace-pre-wrap bg-slate-950/40 p-4 rounded-xl border border-white/5 font-sans">
                           {persona.instructions}
                         </p>
+                        {persona.category && (
+                          <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold">
+                            {persona.category}
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between pt-3 border-t border-white/5">
