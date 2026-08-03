@@ -153,3 +153,61 @@ CREATE POLICY "tasks_delete_own" ON public.tasks
 --    DELETE FROM public.tasks        WHERE user_id NOT IN (SELECT id::text FROM auth.users);
 --    DELETE FROM public.profiles     WHERE id NOT IN (SELECT id::text FROM auth.users);
 -- ============================================================================
+
+-- ============================================================================
+-- PRO BILLING — Admin-only plan toggle (GRANT / REVOKE)
+--
+-- Run this ONCE after the RLS policies above. It lets admins flip a user's
+-- plan between 'free' and 'pro' without needing direct Dashboard access.
+-- ============================================================================
+
+-- 1) Update the sanitize trigger to allow the bypass flag set by admin_set_plan.
+DROP TRIGGER IF EXISTS trg_sanitize_profile_role ON public.profiles;
+CREATE TRIGGER trg_sanitize_profile_role
+  BEFORE INSERT OR UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.sanitize_profile_role();
+
+CREATE OR REPLACE FUNCTION public.sanitize_profile_role()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF auth.uid() IS NOT NULL THEN
+    IF TG_OP = 'INSERT' THEN
+      NEW.role := 'user';
+      NEW.plan := 'free';
+    ELSIF TG_OP = 'UPDATE' THEN
+      NEW.role := OLD.role;
+      -- Allow plan change only when admin_set_plan sets the bypass flag.
+      IF current_setting('app.bypass_plan_sanitize', true) <> 'true' THEN
+        NEW.plan := OLD.plan;
+      END IF;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- 2) Admin-only function to grant/revoke PRO.
+-- Uses SECURITY DEFINER + the bypass flag to override the sanitize trigger.
+-- Only callers with role='admin' in profiles can execute it.
+CREATE OR REPLACE FUNCTION public.admin_set_plan(target_id text, new_plan text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'not authorized';
+  END IF;
+  IF new_plan NOT IN ('free', 'pro') THEN
+    RAISE EXCEPTION 'invalid plan: %', new_plan;
+  END IF;
+  PERFORM set_config('app.bypass_plan_sanitize', 'true', true);
+  UPDATE public.profiles SET plan = new_plan WHERE id = target_id;
+END;
+$$;
+
+-- 3) Allow authenticated users (admins) to call admin_set_plan via the API.
+GRANT EXECUTE ON FUNCTION public.admin_set_plan(text, text) TO authenticated;

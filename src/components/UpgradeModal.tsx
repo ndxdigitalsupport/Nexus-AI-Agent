@@ -1,4 +1,8 @@
-import { Check, Zap, X, Crown } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Zap, X, Crown, Loader2 } from 'lucide-react';
+import { useStore } from '@/store';
+import { BILLING_CONFIG } from '@/lib/billingConfig';
+import { getSessionAccessToken } from '@/lib/supabase';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -7,7 +11,44 @@ interface UpgradeModalProps {
 }
 
 export default function UpgradeModal({ isOpen, onClose, selectedModelName }: UpgradeModalProps) {
+  const { isAuthenticated } = useStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   if (!isOpen) return null;
+
+  const handleUpgrade = async () => {
+    if (!isAuthenticated) {
+      setError('Please sign in first to upgrade to PRO.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = await getSessionAccessToken();
+      const res = await fetch(BILLING_CONFIG.checkoutUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({})
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || 'Failed to start checkout. Please try again.');
+        setLoading(false);
+      }
+    } catch {
+      setError('Network error. Please try again.');
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
@@ -38,7 +79,7 @@ export default function UpgradeModal({ isOpen, onClose, selectedModelName }: Upg
             Unlock {selectedModelName || 'Premium AI Models'}
           </h2>
           <p className="text-sm text-text-muted mt-2 leading-relaxed">
-            This model is part of the <span className="text-amber-300 font-semibold">NEXUS PRO Tier</span>. Upgrade your plan or log in as Admin to access frontier reasoning models.
+            This model is part of the <span className="text-amber-300 font-semibold">NEXUS PRO Tier</span>. Upgrade your plan to access frontier reasoning models.
           </p>
         </div>
 
@@ -73,17 +114,33 @@ export default function UpgradeModal({ isOpen, onClose, selectedModelName }: Upg
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center">
+            {error}
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="space-y-3">
-          <a
-            href="https://t.me/aiagentnexusbot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-[0_0_25px_rgba(245,158,11,0.5)]"
+          <button
+            onClick={handleUpgrade}
+            disabled={loading || !isAuthenticated}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-[0_0_25px_rgba(245,158,11,0.5)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Zap className="w-4 h-4 fill-slate-950" />
-            <span>Upgrade to PRO ($19/mo)</span>
-          </a>
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Zap className="w-4 h-4 fill-slate-950" />
+            )}
+            <span>{loading ? 'Redirecting to Stripe...' : `Upgrade to PRO (${BILLING_CONFIG.planPrice})`}</span>
+          </button>
+
+          {!isAuthenticated && (
+            <p className="text-center text-text-muted text-xs">
+              Sign in first to upgrade.
+            </p>
+          )}
 
           <button
             onClick={onClose}

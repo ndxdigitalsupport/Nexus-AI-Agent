@@ -1,14 +1,16 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
-import { Key, Cpu, Sliders, Check, Eye, EyeOff, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Key, Cpu, Sliders, Check, Eye, EyeOff, Sparkles, Server, Download, Upload, Database, AlertTriangle, ArrowLeft, CreditCard, ExternalLink, Loader2, Zap } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 import UpgradeModal from '@/components/UpgradeModal';
 import { MODEL_PRESETS } from '@/lib/modelPresets';
+import { BILLING_CONFIG } from '@/lib/billingConfig';
+import { getSessionAccessToken } from '@/lib/supabase';
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { settings, updateSettings, exportState, importState, resetAllData, isAdminAuthenticated } = useStore();
+  const { settings, updateSettings, exportState, importState, resetAllData, isAdminAuthenticated, isPro } = useStore();
 
   const isPresetModel = MODEL_PRESETS.some(p => p.id === (settings?.selectedModel || 'openrouter/free'));
   const [apiKey, setApiKey] = useState(settings?.apiKey || '');
@@ -38,6 +40,32 @@ export default function Settings() {
     message: '',
     onConfirm: () => {},
   });
+
+  const [manageSubLoading, setManageSubLoading] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setManageSubLoading(true);
+    try {
+      const token = await getSessionAccessToken();
+      const res = await fetch(BILLING_CONFIG.portalUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to open subscription management.');
+      }
+    } catch {
+      alert('Network error. Please try again.');
+    } finally {
+      setManageSubLoading(false);
+    }
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -251,7 +279,7 @@ export default function Settings() {
                     <div
                       key={preset.id}
                       onClick={() => {
-                        if (isPaid && !isAdminAuthenticated) {
+                        if (isPaid && !isPro && !isAdminAuthenticated) {
                           setUpgradeModal({ isOpen: true, modelName: preset.name });
                           return;
                         }
@@ -317,6 +345,43 @@ export default function Settings() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* PRO Subscription Status */}
+            <div className="p-4 rounded-2xl border border-white/10 bg-slate-950/50 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="w-5 h-5 text-amber-400" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-text">NEXUS PRO Subscription</h3>
+                    <p className="text-xs text-text-muted">
+                      {isPro ? 'Your plan: PRO — all premium models unlocked' : 'Your plan: FREE — upgrade to unlock premium models'}
+                    </p>
+                  </div>
+                </div>
+                {isPro ? (
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={manageSubLoading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-all text-xs font-medium disabled:opacity-50"
+                  >
+                    {manageSubLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    )}
+                    <span>{manageSubLoading ? 'Loading...' : 'Manage Subscription'}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setUpgradeModal({ isOpen: true, modelName: '' })}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 font-bold text-xs hover:brightness-110 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-slate-950" />
+                    <span>Upgrade to PRO</span>
+                  </button>
+                )}
               </div>
             </div>
 

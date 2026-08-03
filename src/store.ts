@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, devtools, createJSONStorage } from 'zustand/middleware';
-import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase, getProfileRole, getSessionAccessToken, supabase } from '@/lib/supabase';
+import { syncConversationToSupabase, fetchUserConversationsFromSupabase, syncTaskToSupabase, deleteTaskFromSupabase, getProfileRole, getProfilePlan, getSessionAccessToken, supabase } from '@/lib/supabase';
 import { SKILLOS_LIBRARY, SKILL_LIBRARY_VERSION } from '@/lib/skillLibrary';
 
 export interface Message {
@@ -130,6 +130,7 @@ interface AppState {
   isActionBoardOpen: boolean;
   isMobileSidebarOpen: boolean;
   isAdminAuthenticated: boolean;
+  isPro: boolean;
   
   // Artifact Studio State
   activeArtifact: Artifact | null;
@@ -223,6 +224,10 @@ export const useStore = create<AppState>()(
           const profileRole = await getProfileRole(user.id);
           const isAdmin = profileRole === 'admin';
 
+          // PRO status comes from the plan column in Supabase profiles.
+          const profilePlan = await getProfilePlan(user.id);
+          const isPro = profilePlan === 'pro' || isAdmin;
+
           const newUser: UserAccount = {
             id: user.id,
             name: user.email.includes('@') ? user.email.split('@')[0] : user.email,
@@ -234,7 +239,8 @@ export const useStore = create<AppState>()(
           set({
             currentUser: newUser,
             isAuthenticated: true,
-            isAdminAuthenticated: isAdmin
+            isAdminAuthenticated: isAdmin,
+            isPro
           });
 
           // Fetch user-specific conversations from Supabase cloud for this logged in account
@@ -283,6 +289,7 @@ export const useStore = create<AppState>()(
             currentUser: null,
             isAuthenticated: false,
             isAdminAuthenticated: false,
+            isPro: false,
             conversations: [freshConv],
             activeConversationId: freshConv.id,
             tasks: []
@@ -315,6 +322,7 @@ export const useStore = create<AppState>()(
         isActionBoardOpen: false,
         isMobileSidebarOpen: false,
         isAdminAuthenticated: false,
+        isPro: false,
         activeArtifact: null,
         isArtifactStudioOpen: false,
 

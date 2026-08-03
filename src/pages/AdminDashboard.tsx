@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/store';
-import { ShieldCheck, Users, Database, RefreshCw, Search, Activity, Lock, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Users, Database, RefreshCw, Search, Activity, Lock, ArrowLeft, Crown, UserMinus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface AdminProfile {
@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [tasks, setTasks] = useState<AdminTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [planToggling, setPlanToggling] = useState<string | null>(null);
 
   const loadAdminData = async () => {
     setLoading(true);
@@ -57,6 +58,39 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadAdminData();
+  }, []);
+
+  const toggleUserPlan = useCallback(async (userId: string, currentPlan: string | null) => {
+    const newPlan = currentPlan === 'pro' ? 'free' : 'pro';
+    setPlanToggling(userId);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)('admin_set_plan', {
+        target_id: userId,
+        new_plan: newPlan
+      });
+      if (error) {
+        // Fallback: direct update (requires service role or admin bypass)
+        console.warn('RPC failed, trying direct update:', error.message);
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ plan: newPlan })
+          .eq('id', userId);
+        if (updateError) {
+          alert(`Failed to update plan: ${updateError.message}`);
+          return;
+        }
+      }
+      // Refresh the profiles list
+      setProfiles(prev => prev.map(p =>
+        p.id === userId ? { ...p, plan: newPlan } : p
+      ));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      alert(`Error: ${message}`);
+    } finally {
+      setPlanToggling(null);
+    }
   }, []);
 
   if (!isAdminAuthenticated) {
@@ -160,12 +194,13 @@ export default function AdminDashboard() {
                 <th className="pb-3 px-4">Role</th>
                 <th className="pb-3 px-4">Plan Tier</th>
                 <th className="pb-3 px-4">Registered Date</th>
+                <th className="pb-3 px-4">Manage</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {filteredProfiles.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-6 text-center text-text-muted">
+                  <td colSpan={5} className="py-6 text-center text-text-muted">
                     No users registered in database yet.
                   </td>
                 </tr>
@@ -189,6 +224,29 @@ export default function AdminDashboard() {
                     </td>
                     <td className="py-3.5 px-4 text-text-muted">
                       {formatDate(p.created_at)}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <button
+                        onClick={() => toggleUserPlan(p.id, p.plan)}
+                        disabled={planToggling === p.id || p.role === 'admin'}
+                        title={p.role === 'admin' ? 'Admin accounts always have PRO' : p.plan === 'pro' ? 'Revoke PRO access' : 'Grant PRO access'}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                          p.role === 'admin'
+                            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 cursor-not-allowed opacity-50'
+                            : p.plan === 'pro'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20'
+                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20'
+                        }`}
+                      >
+                        {planToggling === p.id ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : p.plan === 'pro' ? (
+                          <UserMinus className="w-3 h-3" />
+                        ) : (
+                          <Crown className="w-3 h-3" />
+                        )}
+                        <span>{p.plan === 'pro' ? 'Revoke' : 'Grant PRO'}</span>
+                      </button>
                     </td>
                   </tr>
                 ))

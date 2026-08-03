@@ -274,3 +274,19 @@ export async function getProfileRole(userId: string): Promise<string | null> {
     return null;
   }
 }
+
+// Read the plan stored for an account in the profiles table.
+// Returns 'free' as the default when no explicit plan has been assigned.
+export async function getProfilePlan(userId: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('plan')
+      .eq('id', userId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data.plan || 'free';
+  } catch {
+    return null;
+  }
+}

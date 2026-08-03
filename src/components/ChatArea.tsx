@@ -24,7 +24,7 @@ import { MODEL_PRESETS } from '@/lib/modelPresets';
 import UpgradeModal from '@/components/UpgradeModal';
 
 export default function ChatArea() {
-  const { conversations, activeConversationId, isProcessing, processAgentResponse, stopGeneration, settings, updateSettings, personas, activePersonaId, setActivePersona, tasks, isActionBoardOpen, toggleActionBoard, toggleMobileSidebar, openArtifact, isAdminAuthenticated } = useStore();
+  const { conversations, activeConversationId, isProcessing, processAgentResponse, stopGeneration, settings, updateSettings, personas, activePersonaId, setActivePersona, tasks, isActionBoardOpen, toggleActionBoard, toggleMobileSidebar, openArtifact, isAdminAuthenticated, isPro } = useStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [showModelMenu, setShowModelMenu] = useState(false);
@@ -357,7 +357,7 @@ export default function ChatArea() {
                     <button
                       key={m.id}
                       onClick={() => {
-                        if (isPaid && !isAdminAuthenticated) {
+                        if (isPaid && !isPro && !isAdminAuthenticated) {
                           setShowModelMenu(false);
                           setUpgradeModal({ isOpen: true, modelName: m.name });
                           return;
