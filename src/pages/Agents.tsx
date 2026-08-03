@@ -259,15 +259,13 @@ export default function Agents() {
                               <Edit className="w-4 h-4" />
                             </button>
 
-                            {!['nexus-growth-advisor', 'tech-architect', 'product-strategist', 'seo-content-specialist'].includes(persona.id) && (
-                              <button
-                                onClick={() => deletePersona(persona.id)}
-                                className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-white/10 transition-colors"
-                                title="Delete Persona"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => deletePersona(persona.id)}
+                              className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-white/10 transition-colors"
+                              title="Delete Persona"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         )}
                       </div>

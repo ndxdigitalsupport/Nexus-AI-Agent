@@ -204,34 +204,6 @@ const createNewConversation = (): Conversation => ({
   updatedAt: Date.now(),
 });
 
-const DEFAULT_PERSONAS: Persona[] = [
-  {
-    id: 'nexus-personal-assistant',
-    name: '🤖 NEXUS Executive Assistant',
-    instructions: 'You are NEXUS, a highly proactive, intelligent Executive Personal Assistant and Daily Co-Pilot. Help the user manage daily tasks, organize schedules, brainstorm ideas, answer any general question across all topics (science, life, business, coding, arts), draft messages, and boost daily productivity with warm, clear, and proactive support.'
-  },
-  {
-    id: 'nexus-growth-advisor',
-    name: '🚀 NEXUS Digital Growth Advisor',
-    instructions: 'You are the official NEXUS Digital Growth Advisor. Answer inquiries about web development, e-commerce, enterprise automation, SEO, and digital consulting. Provide strategic guidance tailored for Phnom Penh, Cambodia, and the Asian digital ecosystem.'
-  },
-  {
-    id: 'tech-architect',
-    name: '🛠️ Senior Tech Architect',
-    instructions: 'You are a Senior Full-Stack Software Architect. Focus on robust system architecture, clean TypeScript code, security, performance, and scalability. Provide production-ready code with detailed architectural rationale.'
-  },
-  {
-    id: 'product-strategist',
-    name: '📝 Product & Task Strategist',
-    instructions: 'You are an agile Product Strategist and Engineering Lead. Help break down ambitious user goals into clear, prioritized action items, MVP features, data requirements, and execution roadmaps.'
-  },
-  {
-    id: 'seo-content-specialist',
-    name: '✍️ SEO & Marketing Specialist',
-    instructions: 'You are a Data-Driven SEO & Digital Marketing Specialist. Provide high-converting marketing copy, keyword strategies, technical SEO audit checklists, and content recommendations.'
-  }
-];
-
 export const useStore = create<AppState>()(
   devtools(
     persist(
@@ -240,6 +212,12 @@ export const useStore = create<AppState>()(
         isAuthenticated: false,
 
         loginUser: async (user: { id: string; email: string }) => {
+          // Re-entrancy guard: the auth state listener and the login form can
+          // both trigger this for the same session — skip if already signed in.
+          if (get().isAuthenticated && get().currentUser?.id === user.id) {
+            return true;
+          }
+
           // Admin status comes ONLY from the account role stored in Supabase —
           // never from a username or password checked in the browser.
           const profileRole = await getProfileRole(user.id);
@@ -315,8 +293,8 @@ export const useStore = create<AppState>()(
         activeConversationId: '' as string, // Will be set in onRehydrateStorage or by startNewConversation
         folders: [],
         tasks: [],
-        personas: DEFAULT_PERSONAS,
-        activePersonaId: 'nexus-personal-assistant',
+        personas: [],
+        activePersonaId: '',
         knowledgeArticles: [],
         settings: {
           apiKey: '',
@@ -1263,10 +1241,14 @@ Rules for Action Items:
           const savedState = state as AppState;
           if (!savedState) return;
 
-          if (!savedState.personas || savedState.personas.length === 0 || !savedState.personas.some(p => p.id === 'nexus-personal-assistant')) {
-            savedState.personas = DEFAULT_PERSONAS;
-            savedState.activePersonaId = 'nexus-personal-assistant';
+          if (!savedState.personas || savedState.personas.length === 0) {
+            savedState.personas = [];
           }
+
+          // Remove the legacy default personas that shipped before the SkillOS
+          // library, so only the SkillOS agents remain.
+          const LEGACY_DEFAULT_PERSONA_IDS = ['nexus-personal-assistant', 'nexus-growth-advisor', 'tech-architect', 'product-strategist', 'seo-content-specialist'];
+          savedState.personas = savedState.personas.filter(p => !LEGACY_DEFAULT_PERSONA_IDS.includes(p.id));
 
           if (!savedState.folders) {
             savedState.folders = [];
@@ -1311,6 +1293,12 @@ Rules for Action Items:
               skillLibraryVersion: SKILL_LIBRARY_VERSION,
             };
           }
+
+          // Ensure the active persona still exists after legacy cleanup + seeding.
+          if (!savedState.activePersonaId || !savedState.personas.some(p => p.id === savedState.activePersonaId)) {
+            savedState.activePersonaId = savedState.personas[0]?.id || null;
+          }
+
           if (!savedState.conversations || savedState.conversations.length === 0) {
             savedState.conversations = [createNewConversation()];
             savedState.activeConversationId = savedState.conversations[0].id;

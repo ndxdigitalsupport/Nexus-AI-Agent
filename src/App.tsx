@@ -1,9 +1,10 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import ArtifactStudio from "@/components/ArtifactStudio";
 import LoginModal from "@/components/LoginModal";
 import { useStore } from "@/store";
+import { supabase } from "@/lib/supabase";
 
 // Pages are lazy-loaded so the main bundle stays small and each route loads
 // on demand instead of on first paint.
@@ -28,6 +29,44 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Restores the signed-in session on page load so a refresh does not log the
+// user out. Auth state is deliberately NOT persisted in the app store — it is
+// re-derived from Supabase (the source of truth) once the store has hydrated.
+function SessionRestore() {
+  useEffect(() => {
+    const cleanups: Array<() => void> = [];
+
+    const startListening = () => {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        const store = useStore.getState();
+        if (session?.user) {
+          if (!store.isAuthenticated) {
+            store.loginUser({ id: session.user.id, email: session.user.email || '' });
+          }
+        } else if (store.isAuthenticated) {
+          store.logoutUser();
+        }
+      });
+      cleanups.push(() => data.subscription.unsubscribe());
+    };
+
+    // Wait for the persisted store to hydrate so it can't clobber the restore.
+    if (useStore.persist?.hasHydrated?.()) {
+      startListening();
+    } else {
+      const unsub = useStore.persist.onFinishHydration(() => {
+        unsub();
+        startListening();
+      });
+      cleanups.push(unsub);
+    }
+
+    return () => { cleanups.forEach((fn) => fn()); };
+  }, []);
+
+  return null;
+}
+
 function AppLayout() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -36,6 +75,9 @@ function AppLayout() {
       {/* Background Subtle Ambient Glows */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-violet-600/5 rounded-full blur-[140px] pointer-events-none" />
+
+      {/* Restores the Supabase session after refresh */}
+      <SessionRestore />
 
       {/* Persistent Sidebar */}
       <Sidebar onOpenLoginModal={() => setIsLoginModalOpen(true)} />
