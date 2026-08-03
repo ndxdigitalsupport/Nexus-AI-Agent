@@ -6,9 +6,7 @@
 export const config = { runtime: 'nodejs' };
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
-const SITE_URL = process.env.SITE_URL || process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL || 'nexus-ai-agent-beta.vercel.app'}`
-  : 'https://nexus-ai-agent-beta.vercel.app';
+const SITE_URL = process.env.SITE_URL || 'https://nexus-ai-agent-beta.vercel.app';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://dabzjdeswxdhfcczprup.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_3T2sWbwkD_jZDI8CQ9QgCw_u0edN5a-';
